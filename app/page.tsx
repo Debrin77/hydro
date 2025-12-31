@@ -96,6 +96,7 @@ export default function HydroponicTowerApp() {
     </div>
   );
 
+  // Pantalla de Configuración Inicial
   if (!isSetupComplete) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
@@ -103,24 +104,37 @@ export default function HydroponicTowerApp() {
           <h2 className="text-3xl font-black italic text-green-600 text-center mb-8 uppercase tracking-tighter">HydroCaru</h2>
           {setupStep === 1 ? (
             <div className="space-y-6">
-              <div className="bg-slate-50 p-6 rounded-[2rem] border-2">
+              <div className="bg-slate-50 p-6 rounded-[2rem] border-2 text-center">
                 <span className="text-[10px] text-slate-400 font-black uppercase">Capacidad Depósito (L)</span>
-                <input type="number" value={initialVol} onChange={e => {setInitialVol(e.target.value); setParams({...params, waterVol: e.target.value})}} className="w-full bg-transparent text-4xl font-black outline-none mt-2" />
+                <input type="number" value={initialVol} onChange={e => {setInitialVol(e.target.value); setParams({...params, waterVol: e.target.value})}} className="w-full bg-transparent text-4xl font-black outline-none mt-2 text-center" />
               </div>
-              <button onClick={() => setSetupStep(2)} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase">Siguiente</button>
+              <button onClick={() => setSetupStep(2)} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase shadow-lg">Siguiente</button>
             </div>
           ) : (
             <div className="space-y-6">
-              <p className="text-center text-slate-400 font-bold uppercase text-[10px]">Paso 2: Rellena el Nivel 1</p>
+              <p className="text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest">Paso 2: Añade tus primeras plantas</p>
               {renderLevelUI(1)}
-              <button disabled={plants.filter(p => p.level === 1).length < 6} onClick={() => setIsSetupComplete(true)} className="w-full bg-green-600 text-white p-6 rounded-[2rem] font-black shadow-xl disabled:opacity-20 uppercase">Comenzar</button>
+              <button onClick={() => setIsSetupComplete(true)} className="w-full bg-green-600 text-white p-6 rounded-[2rem] font-black shadow-xl uppercase">Comenzar Sistema</button>
             </div>
           )}
         </Card>
+
+        {showPlantSelector && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-end p-4">
+            <div className="bg-white w-full max-w-md mx-auto rounded-[3rem] p-8">
+              <h3 className="font-black text-center text-xs uppercase mb-4 text-slate-400">Seleccionar Variedad</h3>
+              {Object.keys(VARIETY_CONFIG).map(v => (
+                <button key={v} onClick={() => { setPlants([...plants, {id: Date.now(), variety: v, level: showPlantSelector.lvl, position: showPlantSelector.pos}]); setShowPlantSelector(null); }} className={`w-full p-4 mb-2 rounded-2xl font-black text-left ${VARIETY_CONFIG[v].bg} text-white`}>{v}</button>
+              ))}
+              <button onClick={() => setShowPlantSelector(null)} className="w-full mt-2 p-2 text-slate-400 font-bold uppercase text-[10px]">Cerrar</button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  // Pantalla Principal (Tablero)
   return (
     <div className="min-h-screen bg-slate-50 pb-32 font-sans">
       <header className="bg-white border-b p-6 flex justify-between items-center sticky top-0 z-50 shadow-sm">
@@ -182,13 +196,13 @@ export default function HydroponicTowerApp() {
             {[1, 2, 3].map(lvl => renderLevelUI(lvl))}
           </TabsContent>
 
-          <TabsContent value="calendar" className="space-y-4">
-             <Card className="p-8 rounded-[2.5rem] bg-slate-900 text-white text-center">
-                <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Próxima Rotación</p>
+          <TabsContent value="calendar" className="space-y-4 text-center">
+             <Card className="p-8 rounded-[2.5rem] bg-slate-900 text-white">
+                <p className="text-[10px] font-black uppercase text-slate-500 mb-2 tracking-widest">Próxima Rotación</p>
                 <p className="text-4xl font-black tracking-tighter italic">{new Date(new Date(lastRotation).getTime() + 14 * 86400000).toLocaleDateString()}</p>
                 <button onClick={() => setLastRotation(new Date().toISOString())} className="mt-4 text-[10px] bg-white/10 px-4 py-2 rounded-full font-bold uppercase">Reiniciar Ciclo Hoy</button>
              </Card>
-
+             
              <Card className="p-6 rounded-[2.5rem] bg-white border">
                 <p className="text-[10px] font-black uppercase text-slate-400 mb-4 text-center tracking-widest">Días con Mediciones</p>
                 <div className="grid grid-cols-7 gap-2">
@@ -207,23 +221,19 @@ export default function HydroponicTowerApp() {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-3">
-             {history.length === 0 ? (
-               <div className="text-center py-10 text-slate-400 font-bold uppercase text-xs">Sin registros aún</div>
-             ) : (
-               history.map(h => (
+             {history.map(h => (
                 <Card key={h.id} className="p-5 rounded-3xl bg-white border font-black shadow-sm">
                   <p className="text-[8px] text-slate-400 mb-1 tracking-widest uppercase">{h.date}</p>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-800">pH {h.pH} | EC {h.ec}</span>
-                    <Badge className="bg-blue-50 text-blue-600 border-none px-3">{h.waterVol}L</Badge>
+                    <span>pH {h.pH} | EC {h.ec}</span>
+                    <Badge className="bg-slate-100 text-slate-600 border-none">{h.waterVol}L</Badge>
                   </div>
                 </Card>
-               ))
-             )}
+             ))}
           </TabsContent>
 
           <TabsContent value="settings" className="py-10">
-             <button onClick={() => {if(confirm('¿BORRAR TODO?')) {localStorage.clear(); window.location.reload();}}} className="w-full bg-red-100 text-red-600 p-8 rounded-[2.5rem] font-black uppercase text-xs tracking-widest">Reset Total de Datos</button>
+             <button onClick={() => {localStorage.clear(); window.location.reload();}} className="w-full bg-red-100 text-red-600 p-8 rounded-[2.5rem] font-black uppercase text-xs tracking-widest">Reset Total</button>
           </TabsContent>
         </Tabs>
       </main>
@@ -231,13 +241,11 @@ export default function HydroponicTowerApp() {
       {showPlantSelector && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-end p-4">
             <div className="bg-white w-full max-w-md mx-auto rounded-[3rem] p-8">
-              <h3 className="font-black text-center text-xs uppercase mb-4 text-slate-400">Seleccionar Variedad</h3>
-              <div className="grid grid-cols-1 gap-2">
-                {Object.keys(VARIETY_CONFIG).map(v => (
-                  <button key={v} onClick={() => { setPlants([...plants, {id: Date.now(), variety: v, level: showPlantSelector.lvl, position: showPlantSelector.pos}]); setShowPlantSelector(null); }} className={`w-full p-5 rounded-2xl font-black text-left ${VARIETY_CONFIG[v].bg} text-white shadow-sm`}>{v}</button>
-                ))}
-              </div>
-              <button onClick={() => setShowPlantSelector(null)} className="w-full mt-4 p-4 text-slate-400 font-black uppercase text-xs">Cancelar</button>
+              <h3 className="font-black text-center text-xs uppercase mb-4 text-slate-400">Variedad</h3>
+              {Object.keys(VARIETY_CONFIG).map(v => (
+                <button key={v} onClick={() => { setPlants([...plants, {id: Date.now(), variety: v, level: showPlantSelector.lvl, position: showPlantSelector.pos}]); setShowPlantSelector(null); }} className={`w-full p-4 mb-2 rounded-2xl font-black text-left ${VARIETY_CONFIG[v].bg} text-white`}>{v}</button>
+              ))}
+              <button onClick={() => setShowPlantSelector(null)} className="w-full mt-2 p-2 text-slate-400 font-bold uppercase text-[10px]">Cerrar</button>
             </div>
           </div>
       )}
