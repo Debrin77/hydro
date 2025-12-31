@@ -5,15 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Sprout, Activity, Layers, Beaker, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-// Importaciones con nombres exactos de tus archivos
+// IMPORTACIONES
 import SetupWizard from "@/components/setup-wizard"
 import SystemOverview from "@/components/system-overview"
 import MeasurementInput from "@/components/measurement-input"
 import TowerVisualizer from "@/components/tower-visualizer"
 import PlantManagement from "@/components/plant-management"
-
-// --- TIPOS BÁSICOS ---
-export type LettuceVariety = "Romana" | "Iceberg" | "Hoja de Roble" | "Lollo Rosso" | "Trocadero"
 
 export default function HydroponicTowerApp() {
   const [isSetupComplete, setIsSetupComplete] = useState(false)
@@ -23,7 +20,7 @@ export default function HydroponicTowerApp() {
     pH: 6.0, ec: 1.2, waterTemp: 20, waterVolume: 20, nutrientsA: 100, nutrientsB: 100
   })
 
-  // --- CARGA DE DATOS ---
+  // CARGA DE DATOS
   useEffect(() => {
     const saved = localStorage.getItem("hydroCaruData")
     if (saved) {
@@ -31,14 +28,14 @@ export default function HydroponicTowerApp() {
         const d = JSON.parse(saved)
         if (d.isSetupComplete) {
           setIsSetupComplete(true)
-          setPlants(d.plants || [])
-          setParameters(d.parameters || parameters)
+          setPlants(Array.isArray(d.plants) ? d.plants : [])
+          setParameters(d.parameters || { pH: 6.0, ec: 1.2, waterTemp: 20, waterVolume: 20 })
         }
-      } catch (e) { console.error("Error cargando datos", e) }
+      } catch (e) { console.error("Error en carga", e) }
     }
   }, [])
 
-  // --- GUARDADO ---
+  // GUARDADO
   useEffect(() => {
     if (isSetupComplete) {
       localStorage.setItem("hydroCaruData", JSON.stringify({
@@ -47,62 +44,66 @@ export default function HydroponicTowerApp() {
     }
   }, [isSetupComplete, plants, parameters])
 
-  // Lógica de EC Recomendada
-  const recommendedEC = plants.length === 0 ? 1.2 : 1.5
+  // Lógica de EC Objetivo: 1.2 para bebés, 1.5 para jóvenes, 1.8 para adultas
+  const getRecommendedEC = () => {
+    if (plants.length === 0) return 1.2
+    return 1.5 // Valor medio por defecto
+  }
 
-  // --- FUNCIONES DE ACCIÓN ---
-  const handleAddPlant = (variety: LettuceVariety, level: number) => {
+  // FUNCIONES DE TORRE (Añadir/Quitar)
+  const handleAddPlant = (variety: string, level: number) => {
     const newPlant = {
       id: `p-${Date.now()}`,
-      variety,
+      variety: variety || "Romana",
       level: Number(level),
       position: plants.filter(p => p.level === Number(level)).length + 1,
-      weeksSincePlanted: 0,
       plantedDate: new Date().toISOString(),
       stage: "young"
     }
-    setPlants([...plants, newPlant])
+    setPlants(prev => [...prev, newPlant])
     return true
   }
 
   const handleRemovePlant = (id: string) => {
-    setPlants(plants.filter(p => p.id !== id))
+    setPlants(prev => prev.filter(p => p.id !== id))
   }
 
-  // PANTALLA INICIAL (Si no hay configuración)
+  // PANTALLA DE BIENVENIDA
   if (!isSetupComplete) {
-    return <SetupWizard onComplete={(p: any) => { setParameters(p); setIsSetupComplete(true); }} />
+    return (
+      <SetupWizard onComplete={(p: any) => {
+        setParameters(p)
+        setIsSetupComplete(true)
+      }} />
+    )
   }
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      {/* CABECERA */}
       <header className="bg-white border-b p-4 sticky top-0 z-50 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-2 font-bold text-green-600">
           <Sprout className="w-6 h-6" />
-          <span className="text-xl tracking-tight">HydroCaru</span>
+          <span className="text-xl font-black tracking-tighter">HydroCaru</span>
         </div>
-        <Badge variant="secondary" className="font-mono">
-          {parameters.waterVolume}L | Obj: {recommendedEC}
+        <Badge variant="outline" className="font-mono text-[10px] bg-slate-50">
+          {parameters.waterVolume}L | EC OBJ: {getRecommendedEC()}
         </Badge>
       </header>
 
       <main className="container mx-auto p-4 max-w-md">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* MENÚ DE ICONOS */}
-          <TabsList className="grid grid-cols-4 w-full mb-8 bg-white border shadow-sm h-14">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-4 w-full mb-6 bg-white border shadow-sm h-14 p-1">
             <TabsTrigger value="overview"><Activity className="w-5 h-5" /></TabsTrigger>
             <TabsTrigger value="measurements"><Beaker className="w-5 h-5" /></TabsTrigger>
             <TabsTrigger value="tower"><Layers className="w-5 h-5" /></TabsTrigger>
             <TabsTrigger value="plants"><Plus className="w-5 h-5" /></TabsTrigger>
           </TabsList>
 
-          {/* CONTENIDOS */}
-          <TabsContent value="overview">
+          <TabsContent value="overview" className="mt-0">
             <SystemOverview 
               plants={plants} 
               parameters={parameters} 
-              recommendedEC={recommendedEC} 
+              recommendedEC={getRecommendedEC()} 
               daysUntilCleaning={14} 
             />
           </TabsContent>
@@ -111,19 +112,18 @@ export default function HydroponicTowerApp() {
             <MeasurementInput
               parameters={parameters}
               setParameters={setParameters}
-              recommendedEC={recommendedEC}
+              recommendedEC={getRecommendedEC()}
               totalPlants={plants.length}
               onMeasurementComplete={(m: any) => {
-                setParameters({ ...parameters, ...m })
-                setActiveTab("overview")
+                setParameters(prev => ({ ...prev, ...m }))
+                setActiveTab("overview") // Salta a la receta tras medir
               }}
               onCorrectiveAction={() => {}}
             />
           </TabsContent>
 
           <TabsContent value="tower">
-            <div className="bg-white rounded-3xl p-6 shadow-xl border min-h-[500px]">
-              <h2 className="text-center font-bold mb-4 text-slate-400 uppercase text-xs">Vista de la Torre</h2>
+            <div className="bg-white rounded-3xl p-4 shadow-xl border">
               <TowerVisualizer 
                 plants={plants} 
                 onRemovePlant={handleRemovePlant} 
