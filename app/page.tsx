@@ -13,7 +13,7 @@ import SystemOverview from "@/components/system-overview"
 import PumpControl from "@/components/pump-control"
 import { Badge } from "@/components/ui/badge"
 
-// --- DEFINICIÓN DE TIPOS ---
+// --- CONFIGURACIÓN DE VARIEDADES (Indispensable para que funcione la gestión) ---
 export type LettuceVariety = "Romana" | "Iceberg" | "Hoja de Roble" | "Lollo Rosso" | "Trocadero"
 export type PlantStage = "young" | "medium" | "harvest"
 
@@ -28,22 +28,11 @@ export interface Plant {
 }
 
 export interface SystemParameters {
-  pH: number
-  ec: number
-  waterTemp: number
-  waterVolume: number
-  nutrientsA: number
-  nutrientsB: number
+  pH: number; ec: number; waterTemp: number; waterVolume: number; nutrientsA: number; nutrientsB: number;
 }
 
 export interface MeasurementRecord {
-  id: string
-  timestamp: Date
-  pH: number
-  ec: number
-  waterTemp: number
-  waterVolume: number
-  inRange: boolean
+  id: string; timestamp: Date; pH: number; ec: number; waterTemp: number; waterVolume: number; inRange: boolean;
 }
 
 export default function HydroponicTowerApp() {
@@ -57,52 +46,61 @@ export default function HydroponicTowerApp() {
   const [measurementHistory, setMeasurementHistory] = useState<MeasurementRecord[]>([])
   const [activeTab, setActiveTab] = useState("overview")
 
-  // --- CARGA DE DATOS AL INICIAR ---
+  // --- CARGA DE DATOS ---
   useEffect(() => {
     const saved = localStorage.getItem("hydroCaruData")
     if (saved) {
       try {
         const d = JSON.parse(saved)
-        setIsSetupComplete(d.isSetupComplete || false)
-        setPlants((d.plants || []).map((p: any) => ({ ...p, plantedDate: new Date(p.plantedDate) })))
-        setParameters(d.parameters || { pH: 6.0, ec: 1.2, waterTemp: 20, waterVolume: 20, nutrientsA: 100, nutrientsB: 100 })
-        setSystemStartDate(d.systemStartDate ? new Date(d.systemStartDate) : null)
-        setLastCleaningDate(d.lastCleaningDate ? new Date(d.lastCleaningDate) : null)
-        setMeasurementHistory((d.measurementHistory || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })))
-      } catch (e) {
-        console.error("Error cargando datos:", e)
-      }
+        if (d.isSetupComplete) {
+          setIsSetupComplete(true)
+          setPlants((d.plants || []).map((p: any) => ({ ...p, plantedDate: new Date(p.plantedDate) })))
+          setParameters(d.parameters)
+          setSystemStartDate(d.systemStartDate ? new Date(d.systemStartDate) : null)
+          setLastCleaningDate(d.lastCleaningDate ? new Date(d.lastCleaningDate) : null)
+          setMeasurementHistory((d.measurementHistory || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })))
+        }
+      } catch (e) { console.error(e) }
     }
   }, [])
 
-  // --- GUARDADO AUTOMÁTICO ---
+  // --- GUARDADO ---
   useEffect(() => {
     if (isSetupComplete) {
       localStorage.setItem("hydroCaruData", JSON.stringify({
         isSetupComplete, plants, parameters, systemStartDate, lastCleaningDate, measurementHistory
       }))
     }
-  }, [isSetupComplete, plants, parameters, measurementHistory, lastCleaningDate, systemStartDate])
+  }, [isSetupComplete, plants, parameters, measurementHistory])
 
-  // --- LÓGICA DE NUTRIENTES (HY-PRO) ---
+  // --- LÓGICA DE NUTRIENTES ---
   const calculateRecommendedEC = () => {
     if (plants.length === 0) return 1.2
     const avgWeeks = plants.reduce((sum, p) => sum + p.weeksSincePlanted, 0) / plants.length
-    if (avgWeeks < 2) return 1.2 // Plántulas
-    if (avgWeeks < 4) return 1.5 // Crecimiento
-    return 1.8 // Adultas
+    return avgWeeks < 2 ? 1.2 : avgWeeks < 4 ? 1.5 : 1.8
   }
 
-  // --- GESTIÓN DE PLANTAS ---
+  // --- GESTIÓN DE PLANTAS (CORREGIDO PARA LA TORRE) ---
   const handleAddPlant = (variety: LettuceVariety, level: number) => {
+    const levelPlants = plants.filter((p) => p.level === level)
+    if (levelPlants.length >= 6) return false
+
+    const usedPositions = levelPlants.map((p) => p.position)
+    let position = 1
+    for (let i = 1; i <= 6; i++) {
+      if (!usedPositions.includes(i)) {
+        position = i; break
+      }
+    }
+
     const newPlant: Plant = {
-      id: `plant-${Date.now()}`,
+      id: `plant-${Date.now()}-${Math.random()}`,
       variety,
       level,
-      position: plants.filter(p => p.level === level).length + 1,
+      position,
       weeksSincePlanted: 0,
       plantedDate: new Date(),
-      stage: "young"
+      stage: "young",
     }
     setPlants([...plants, newPlant])
     return true
@@ -112,23 +110,15 @@ export default function HydroponicTowerApp() {
     setPlants(plants.filter(p => p.id !== id))
   }
 
-  // --- FLUJO DE INICIALIZACIÓN ---
   if (!isSetupComplete) {
-    return (
-      <SetupWizard 
-        onComplete={(initialParams) => {
-          setParameters(initialParams)
-          setSystemStartDate(new Date())
-          setLastCleaningDate(new Date())
-          setIsSetupComplete(true)
-        }} 
-      />
-    )
+    return <SetupWizard onComplete={(p) => { 
+      setParameters(p); setSystemStartDate(new Date()); setLastCleaningDate(new Date()); setIsSetupComplete(true); 
+    }} />
   }
 
   return (
     <div className="min-h-screen bg-background pb-20 font-sans">
-      <header className="border-b bg-card sticky top-0 z-10 p-4 shadow-sm">
+      <header className="border-b bg-card sticky top-0 z-50 p-4 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2 text-primary font-black text-xl">
             <Sprout className="w-6 h-6" /> HydroCaru
@@ -141,7 +131,7 @@ export default function HydroponicTowerApp() {
 
       <main className="container mx-auto p-4 max-w-4xl">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full sticky top-[72px] z-10 bg-background/95 backdrop-blur">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full sticky top-[72px] z-40 bg-background/95 backdrop-blur border shadow-sm">
             <TabsTrigger value="overview"><Activity className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="measurements"><Beaker className="w-4 h-4" /></TabsTrigger>
             <TabsTrigger value="tower"><Layers className="w-4 h-4" /></TabsTrigger>
@@ -168,8 +158,8 @@ export default function HydroponicTowerApp() {
               totalPlants={plants.length}
               onMeasurementComplete={(m) => {
                 setMeasurementHistory([{...m, id: Date.now().toString(), timestamp: new Date()}, ...measurementHistory])
-                setParameters({...parameters, pH: m.pH, ec: m.ec, waterVolume: m.waterVolume, waterTemp: m.waterTemp})
-                setActiveTab("overview") // Al medir, te lleva a ver la dosis
+                setParameters({...parameters, ...m})
+                setActiveTab("overview")
               }}
               onCorrectiveAction={() => {}}
             />
@@ -210,10 +200,7 @@ export default function HydroponicTowerApp() {
               measurementHistory={measurementHistory} 
               actionLog={[]} 
               plants={plants} 
-              onClearHistory={() => { 
-                localStorage.removeItem("hydroCaruData"); 
-                window.location.reload(); 
-              }} 
+              onClearHistory={() => { localStorage.removeItem("hydroCaruData"); window.location.reload(); }} 
             />
           </TabsContent>
         </Tabs>
