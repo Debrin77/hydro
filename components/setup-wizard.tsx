@@ -120,7 +120,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
               <div className="bg-primary/10 p-6 rounded-lg text-center">
                 <Beaker className="w-16 h-16 text-primary mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Nutrientes y EC</h3>
-                <p className="text-muted-foreground text-sm">Añade High-Pro A/B y mide la EC final.</p>
+                <p className="text-muted-foreground text-sm">Añade Hy-Pro A/B y mide la EC final.</p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
