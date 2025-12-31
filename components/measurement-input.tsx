@@ -27,45 +27,45 @@ export default function MeasurementInput({
   onMeasurementComplete,
   onCorrectiveAction,
 }: MeasurementInputProps) {
-  const [currentMeasurements, setCurrentMeasurements] = useState({
-    pH: parameters.pH,
-    ec: parameters.ec,
-    waterTemp: parameters.waterTemp,
-    waterVolume: parameters.waterVolume,
+  
+  // USAMOS STRINGS (TEXTO) PARA LOS INPUTS - ASÍ EL IPHONE NO SE LÍA CON COMAS
+  const [inputs, setInputs] = useState({
+    pH: parameters.pH.toString(),
+    ec: parameters.ec.toString(),
+    waterTemp: parameters.waterTemp.toString(),
+    waterVolume: parameters.waterVolume.toString(),
   })
 
   const [pendingActions, setPendingActions] = useState<string[]>([])
 
+  // Convertimos los textos a números para los cálculos de rangos
+  const currentNum = {
+    pH: parseFloat(inputs.pH.replace(',', '.')) || 0,
+    ec: parseFloat(inputs.ec.replace(',', '.')) || 0,
+    waterTemp: parseFloat(inputs.waterTemp.replace(',', '.')) || 0,
+    waterVolume: parseFloat(inputs.waterVolume.replace(',', '.')) || 0,
+  }
+
   useEffect(() => {
     checkRanges()
-  }, [currentMeasurements, recommendedEC])
+  }, [inputs, recommendedEC])
 
   const checkRanges = () => {
     const actions: string[] = []
+    const { pH, ec, waterTemp, waterVolume } = currentNum
 
-    if (currentMeasurements.pH < 5.5) {
-      actions.push("Subir pH: Añadir bicarbonato de potasio gradualmente")
-    } else if (currentMeasurements.pH > 6.5) {
-      actions.push("Bajar pH: Añadir ácido fosfórico o cítrico gradualmente")
+    if (pH < 5.5) actions.push("Subir pH: Añadir bicarbonato de potasio gradualmente")
+    else if (pH > 6.5) actions.push("Bajar pH: Añadir ácido fosfórico o cítrico gradualmente")
+
+    if (Math.abs(ec - recommendedEC) > 0.4) {
+      if (ec < recommendedEC) actions.push(`Subir EC: Añadir nutrientes A/B (Objetivo: ${recommendedEC.toFixed(1)})`)
+      else actions.push(`Bajar EC: Diluir con agua (Objetivo: ${recommendedEC.toFixed(1)})`)
     }
 
-    if (Math.abs(currentMeasurements.ec - recommendedEC) > 0.4) {
-      if (currentMeasurements.ec < recommendedEC) {
-        actions.push(`Subir EC: Añadir más nutrientes High-Pro A/B (objetivo: ${recommendedEC.toFixed(1)} mS/cm)`)
-      } else {
-        actions.push(`Bajar EC: Diluir con agua limpia (objetivo: ${recommendedEC.toFixed(1)} mS/cm)`)
-      }
-    }
+    if (waterTemp < 18) actions.push("Temperatura baja: Activar calentador")
+    else if (waterTemp > 24) actions.push("Temperatura alta: Enfriar o ventilar")
 
-    if (currentMeasurements.waterTemp < 18) {
-      actions.push("Temperatura baja: Activar o verificar el calentador")
-    } else if (currentMeasurements.waterTemp > 24) {
-      actions.push("Temperatura alta: Enfriar el agua o mejorar ventilación")
-    }
-
-    if (currentMeasurements.waterVolume < 15) {
-      actions.push("Nivel de agua bajo: Rellenar hasta 18-20 litros")
-    }
+    if (waterVolume < 15) actions.push("Nivel de agua bajo: Rellenar hasta 20L")
 
     setPendingActions(actions)
     return actions.length === 0
@@ -73,42 +73,23 @@ export default function MeasurementInput({
 
   const handleSaveMeasurement = () => {
     const inRange = checkRanges()
-
-    onMeasurementComplete({
-      pH: currentMeasurements.pH,
-      ec: currentMeasurements.ec,
-      waterTemp: currentMeasurements.waterTemp,
-      waterVolume: currentMeasurements.waterVolume,
+    const finalData = {
+      pH: currentNum.pH,
+      ec: currentNum.ec,
+      waterTemp: currentNum.waterTemp,
+      waterVolume: currentNum.waterVolume,
       inRange,
       correctiveActions: inRange ? undefined : pendingActions,
-    })
-
-    setParameters({
-      ...parameters,
-      pH: currentMeasurements.pH,
-      ec: currentMeasurements.ec,
-      waterTemp: currentMeasurements.waterTemp,
-      waterVolume: currentMeasurements.waterVolume,
-    })
-  }
-
-  const handleActionCompleted = (action: string) => {
-    onCorrectiveAction(action)
-    setPendingActions(pendingActions.filter((a) => a !== action))
-  }
-
-  // FUNCIÓN CORREGIDA PARA IPHONE: Acepta texto, cambia coma por punto y luego convierte a número
-  const updateMeasurementText = (key: keyof typeof currentMeasurements, textValue: string) => {
-    const sanitized = textValue.replace(',', '.');
-    
-    if (sanitized === "" || sanitized === ".") {
-      setCurrentMeasurements({ ...currentMeasurements, [key]: 0 });
-      return;
     }
 
-    const numericValue = Number.parseFloat(sanitized);
-    if (!isNaN(numericValue)) {
-      setCurrentMeasurements({ ...currentMeasurements, [key]: numericValue });
+    onMeasurementComplete(finalData)
+    setParameters({ ...parameters, ...finalData })
+  }
+
+  const handleInputChange = (key: string, value: string) => {
+    // Permitimos que el usuario escriba comas o puntos libremente
+    if (/^[0-9]*[.,]?[0-9]*$/.test(value) || value === "") {
+      setInputs({ ...inputs, [key]: value })
     }
   }
 
@@ -117,115 +98,31 @@ export default function MeasurementInput({
       <Card>
         <CardHeader>
           <CardTitle>Registrar Mediciones</CardTitle>
-          <CardDescription>
-            Introduce los valores medidos del sistema. El sistema calculará automáticamente si están en rango óptimo.
-          </CardDescription>
+          <CardDescription>Introduce los valores. Se acepta punto o coma.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-3">
-              <Label htmlFor="pH" className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                pH del Agua
-              </Label>
-              <Input
-                id="pH"
-                type="text"
-                inputMode="decimal"
-                placeholder="0.0"
-                value={currentMeasurements.pH === 0 ? "" : currentMeasurements.pH}
-                onChange={(e) => updateMeasurementText("pH", e.target.value)}
-                className="text-lg"
-              />
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">Rango óptimo: 5.5 - 6.5</span>
-                {currentMeasurements.pH >= 5.5 && currentMeasurements.pH <= 6.5 ? (
-                  <Badge variant="default" className="bg-green-600">
-                    En rango
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">Fuera de rango</Badge>
-                )}
+            {[
+              { id: "pH", label: "pH del Agua", icon: <Activity />, key: "pH", color: "text-primary" },
+              { id: "ec", label: "EC (mS/cm)", icon: <Activity />, key: "ec", color: "text-yellow-500" },
+              { id: "temp", label: "Temp (°C)", icon: <Thermometer />, key: "waterTemp", color: "text-destructive" },
+              { id: "vol", label: "Volumen (L)", icon: <Droplets />, key: "waterVolume", color: "text-blue-500" },
+            ].map((field) => (
+              <div key={field.id} className="space-y-3">
+                <Label htmlFor={field.id} className="flex items-center gap-2">
+                  <span className={field.color}>{field.icon}</span>
+                  {field.label}
+                </Label>
+                <Input
+                  id={field.id}
+                  type="text"
+                  inputMode="decimal"
+                  value={inputs[field.key as keyof typeof inputs]}
+                  onChange={(e) => handleInputChange(field.key, e.target.value)}
+                  className="text-lg"
+                />
               </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="ec" className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-yellow-300" />
-                EC (mS/cm)
-              </Label>
-              <Input
-                id="ec"
-                type="text"
-                inputMode="decimal"
-                placeholder="0.0"
-                value={currentMeasurements.ec === 0 ? "" : currentMeasurements.ec}
-                onChange={(e) => updateMeasurementText("ec", e.target.value)}
-                className="text-lg"
-              />
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">Recomendado: {recommendedEC.toFixed(1)} mS/cm</span>
-                {Math.abs(currentMeasurements.ec - recommendedEC) <= 0.4 ? (
-                  <Badge variant="default" className="bg-green-600">
-                    En rango
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">Ajustar</Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="temp" className="flex items-center gap-2">
-                <Thermometer className="w-4 h-4 text-destructive" />
-                Temperatura (°C)
-              </Label>
-              <Input
-                id="temp"
-                type="text"
-                inputMode="decimal"
-                placeholder="0.0"
-                value={currentMeasurements.waterTemp === 0 ? "" : currentMeasurements.waterTemp}
-                onChange={(e) => updateMeasurementText("waterTemp", e.target.value)}
-                className="text-lg"
-              />
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">Rango óptimo: 18 - 24°C</span>
-                {currentMeasurements.waterTemp >= 18 && currentMeasurements.waterTemp <= 24 ? (
-                  <Badge variant="default" className="bg-green-600">
-                    En rango
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">Fuera de rango</Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="volume" className="flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-chart-4" />
-                Volumen de Agua (L)
-              </Label>
-              <Input
-                id="volume"
-                type="text"
-                inputMode="decimal"
-                placeholder="0.0"
-                value={currentMeasurements.waterVolume === 0 ? "" : currentMeasurements.waterVolume}
-                onChange={(e) => updateMeasurementText("waterVolume", e.target.value)}
-                className="text-lg"
-              />
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">Capacidad: 20L / Mínimo: 15L</span>
-                {currentMeasurements.waterVolume >= 15 ? (
-                  <Badge variant="default" className="bg-green-600">
-                    Nivel OK
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">Rellenar</Badge>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
 
           <Button onClick={handleSaveMeasurement} size="lg" className="w-full">
@@ -235,68 +132,26 @@ export default function MeasurementInput({
         </CardContent>
       </Card>
 
+      {/* Acciones Correctoras */}
       {pendingActions.length > 0 && (
         <Card className="border-destructive">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              <CardTitle>Acciones Correctoras Necesarias</CardTitle>
-            </div>
-            <CardDescription>
-              Los siguientes parámetros están fuera de rango. Realiza las acciones indicadas y marca cuando estén
-              completadas.
-            </CardDescription>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <AlertTriangle /> Acciones Necesarias
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pendingActions.map((action, idx) => (
-                <Alert key={idx} variant="destructive">
-                  <AlertDescription className="flex items-center justify-between gap-4">
-                    <span className="flex-1">{action}</span>
-                    <Button size="sm" variant="outline" onClick={() => handleActionCompleted(action)}>
-                      Medida Efectuada
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              ))}
-            </div>
+          <CardContent className="space-y-2">
+            {pendingActions.map((action, i) => (
+              <Alert key={i} variant="destructive">
+                <AlertDescription className="flex justify-between items-center">
+                  {action}
+                  <Button size="sm" variant="outline" onClick={() => onCorrectiveAction(action)}>OK</Button>
+                </AlertDescription>
+              </Alert>
+            ))}
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Beaker className="w-5 h-5" />
-            Guía Rápida de Ajustes
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 p-3 bg-muted rounded-lg">
-              <h4 className="font-semibold">Ajustar pH</h4>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">↑ Subir:</strong> Bicarbonato de potasio
-              </p>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">↓ Bajar:</strong> Ácido fosfórico/cítrico
-              </p>
-              <p className="text-xs text-muted-foreground">Añadir poco a poco y volver a medir</p>
-            </div>
-
-            <div className="space-y-2 p-3 bg-muted rounded-lg">
-              <h4 className="font-semibold">Ajustar EC</h4>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">↑ Subir:</strong> Añadir High-Pro A/B (1:1)
-              </p>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">↓ Bajar:</strong> Diluir con agua limpia
-              </p>
-              <p className="text-xs text-muted-foreground">Nunca mezclar concentrados directamente</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
