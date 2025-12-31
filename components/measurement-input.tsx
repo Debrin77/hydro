@@ -97,8 +97,19 @@ export default function MeasurementInput({
     setPendingActions(pendingActions.filter((a) => a !== action))
   }
 
-  const updateMeasurement = (key: keyof typeof currentMeasurements, value: number) => {
-    setCurrentMeasurements({ ...currentMeasurements, [key]: value })
+  // FUNCIÓN CORREGIDA PARA IPHONE: Acepta texto, cambia coma por punto y luego convierte a número
+  const updateMeasurementText = (key: keyof typeof currentMeasurements, textValue: string) => {
+    const sanitized = textValue.replace(',', '.');
+    
+    if (sanitized === "" || sanitized === ".") {
+      setCurrentMeasurements({ ...currentMeasurements, [key]: 0 });
+      return;
+    }
+
+    const numericValue = Number.parseFloat(sanitized);
+    if (!isNaN(numericValue)) {
+      setCurrentMeasurements({ ...currentMeasurements, [key]: numericValue });
+    }
   }
 
   return (
@@ -120,13 +131,10 @@ export default function MeasurementInput({
               <Input
                 id="pH"
                 type="text"
-inputMode="decimal"
-step="any"
-                step="0.1"
-                min="0"
-                max="14"
-                value={currentMeasurements.pH}
-                onChange={(e) => updateMeasurement("pH", Number.parseFloat(e.target.value) || 0)}
+                inputMode="decimal"
+                placeholder="0.0"
+                value={currentMeasurements.pH === 0 ? "" : currentMeasurements.pH}
+                onChange={(e) => updateMeasurementText("pH", e.target.value)}
                 className="text-lg"
               />
               <div className="flex justify-between items-center">
@@ -149,13 +157,10 @@ step="any"
               <Input
                 id="ec"
                 type="text"
-inputMode="decimal"
-step="any"
-                step="0.1"
-                min="0"
-                max="5"
-                value={currentMeasurements.ec}
-                onChange={(e) => updateMeasurement("ec", Number.parseFloat(e.target.value) || 0)}
+                inputMode="decimal"
+                placeholder="0.0"
+                value={currentMeasurements.ec === 0 ? "" : currentMeasurements.ec}
+                onChange={(e) => updateMeasurementText("ec", e.target.value)}
                 className="text-lg"
               />
               <div className="flex justify-between items-center">
@@ -178,13 +183,10 @@ step="any"
               <Input
                 id="temp"
                 type="text"
-inputMode="decimal"
-step="any"
-                step="0.5"
-                min="0"
-                max="40"
-                value={currentMeasurements.waterTemp}
-                onChange={(e) => updateMeasurement("waterTemp", Number.parseFloat(e.target.value) || 0)}
+                inputMode="decimal"
+                placeholder="0.0"
+                value={currentMeasurements.waterTemp === 0 ? "" : currentMeasurements.waterTemp}
+                onChange={(e) => updateMeasurementText("waterTemp", e.target.value)}
                 className="text-lg"
               />
               <div className="flex justify-between items-center">
@@ -207,13 +209,10 @@ step="any"
               <Input
                 id="volume"
                 type="text"
-inputMode="decimal"
-step="any"
-                step="0.5"
-                min="0"
-                max="20"
-                value={currentMeasurements.waterVolume}
-                onChange={(e) => updateMeasurement("waterVolume", Number.parseFloat(e.target.value) || 0)}
+                inputMode="decimal"
+                placeholder="0.0"
+                value={currentMeasurements.waterVolume === 0 ? "" : currentMeasurements.waterVolume}
+                onChange={(e) => updateMeasurementText("waterVolume", e.target.value)}
                 className="text-lg"
               />
               <div className="flex justify-between items-center">
@@ -230,7 +229,7 @@ step="any"
           </div>
 
           <Button onClick={handleSaveMeasurement} size="lg" className="w-full">
-            <CheckCircle2 className="mr-2 h-[50px] w-[50px]" />
+            <CheckCircle2 className="mr-2 h-5 w-5" />
             Guardar Medición
           </Button>
         </CardContent>
@@ -265,7 +264,6 @@ step="any"
         </Card>
       )}
 
-      {/* Guía rápida */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -295,30 +293,6 @@ step="any"
                 <strong className="text-foreground">↓ Bajar:</strong> Diluir con agua limpia
               </p>
               <p className="text-xs text-muted-foreground">Nunca mezclar concentrados directamente</p>
-            </div>
-
-            <div className="space-y-2 p-3 bg-muted rounded-lg">
-              <h4 className="font-semibold">Temperatura</h4>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">❄ Frío:</strong> Activar calentador sumergible
-              </p>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">🔥 Calor:</strong> Mejorar ventilación/sombrear
-              </p>
-              <p className="text-xs text-muted-foreground">Ideal para Castellón: 20-22°C</p>
-            </div>
-
-            <div className="space-y-2 p-3 bg-muted rounded-lg">
-              <h4 className="font-semibold">Volumen de Agua</h4>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">Rellenar:</strong> Usar agua reposada 24h
-              </p>
-              <p className="text-muted-foreground">
-                <strong className="text-foreground">Ajustar:</strong> pH y EC tras rellenar
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Consumo: ~{(totalPlants * 0.5 || 0).toFixed(1)} L/día con {totalPlants} plantas
-              </p>
             </div>
           </div>
         </CardContent>
