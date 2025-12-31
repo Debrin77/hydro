@@ -119,7 +119,9 @@ export default function MeasurementInput({
               </Label>
               <Input
                 id="pH"
-                type="number"
+                type="text"
+inputMode="decimal"
+step="any"
                 step="0.1"
                 min="0"
                 max="14"
@@ -146,7 +148,9 @@ export default function MeasurementInput({
               </Label>
               <Input
                 id="ec"
-                type="number"
+                type="text"
+inputMode="decimal"
+step="any"
                 step="0.1"
                 min="0"
                 max="5"
@@ -173,7 +177,9 @@ export default function MeasurementInput({
               </Label>
               <Input
                 id="temp"
-                type="number"
+                type="text"
+inputMode="decimal"
+step="any"
                 step="0.5"
                 min="0"
                 max="40"
@@ -200,7 +206,9 @@ export default function MeasurementInput({
               </Label>
               <Input
                 id="volume"
-                type="number"
+                type="text"
+inputMode="decimal"
+step="any"
                 step="0.5"
                 min="0"
                 max="20"
