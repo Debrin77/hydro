@@ -307,4 +307,12 @@ export default function HydroponicTowerApp() {
             <div className="bg-white w-full max-w-md mx-auto rounded-[3.5rem] p-10 shadow-2xl animate-in slide-in-from-bottom">
               <h3 className="font-black text-center text-xs uppercase mb-6 text-slate-400 tracking-widest">Variedad de Lechuga</h3>
               {Object.keys(VARIETY_CONFIG).map(v => (
-                <button key={v} onClick={() => { setPlants([...plants, {id: Date.now(), variety: v, level: showPlantSelector.lvl, position: showPlantSelector.pos}]); setShowPlantSelector(null); }} className={`w-full p-5 mb-3 rounded-2xl font-black text-left ${VARIETY_CONFIG
+                <button key={v} onClick={() => { setPlants([...plants, {id: Date.now(), variety: v, level: showPlantSelector.lvl, position: showPlantSelector.pos}]); setShowPlantSelector(null); }} className={`w-full p-5 mb-3 rounded-2xl font-black text-left ${VARIETY_CONFIG[v].bg} text-white shadow-lg`}>{v}</button>
+              ))}
+              <button onClick={() => setShowPlantSelector(null)} className="w-full mt-4 p-2 text-slate-400 font-bold uppercase text-[10px]">Cerrar</button>
+            </div>
+          </div>
+      )}
+    </div>
+  );
+}
