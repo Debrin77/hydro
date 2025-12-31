@@ -1,16 +1,14 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle, Droplets, Activity, Thermometer, FlaskConical, CheckCircle2, ArrowUpCircle, ArrowDownCircle } from "lucide-react"
-import type { Plant, SystemParameters, MeasurementRecord, ActionLog } from "@/app/page"
+import { AlertTriangle, Droplets, Activity, Thermometer, FlaskConical, ArrowUpCircle, ArrowDownCircle } from "lucide-react"
+import type { Plant, SystemParameters } from "@/app/page"
 
 interface SystemOverviewProps {
   plants: Plant[]
   parameters: SystemParameters
   recommendedEC: number
   daysUntilCleaning: number
-  recentMeasurements: MeasurementRecord[]
-  recentActions: ActionLog[]
 }
 
 export default function SystemOverview({
@@ -20,157 +18,118 @@ export default function SystemOverview({
   daysUntilCleaning,
 }: SystemOverviewProps) {
   
-  const vol = parameters.waterVolume;
+  // Variables simplificadas para asegurar el renderizado
+  const vol = parameters.waterVolume || 20; // Si no hay valor, asume 20L por defecto
   const currentPH = parameters.pH;
   const currentEC = parameters.ec;
 
-  // --- LÓGICA DE CÁLCULO DE DOSIS ---
-  const calculateCorrections = () => {
-    let phText = null;
-    let ecText = null;
+  // --- CÁLCULO DE DOSIS DIRECTO ---
+  let phCorrection = null;
+  let ecCorrection = null;
 
-    // Lógica pH (Objetivo 6.0)
-    if (Math.abs(currentPH - 6.0) > 0.2) {
-      // Hy-Pro/Estándar: 0.1ml/L para mover 0.5 puntos
-      const ml = (Math.abs(currentPH - 6.0) / 0.5) * vol * 0.1;
-      phText = {
-        msg: `Añadir ${ml.toFixed(1)} ml de pH ${currentPH > 6.0 ? 'Down (-)' : 'Up (+)'}`,
-        type: currentPH > 6.0 ? 'down' : 'up'
-      };
-    }
+  // Lógica pH (Si el pH es menor a 5.8 o mayor a 6.2)
+  if (currentPH < 5.8 || currentPH > 6.2) {
+    const diff = Math.abs(currentPH - 6.0);
+    const ml = (diff / 0.5) * vol * 0.1;
+    phCorrection = {
+      ml: ml.toFixed(1),
+      type: currentPH > 6.0 ? 'pH Down (-)' : 'pH Up (+)',
+      isUp: currentPH < 6.0
+    };
+  }
 
-    // Lógica Hy-Pro A/B (Objetivo según edad plantas)
-    if (currentEC < recommendedEC - 0.05) {
-      const ecDiff = recommendedEC - currentEC;
-      // Hy-Pro A/B: 0.25ml/L de cada parte para subir 0.1 EC
-      const mlPerPart = (ecDiff / 0.1) * vol * 0.25;
-      ecText = `Añadir ${mlPerPart.toFixed(1)} ml de Hy-Pro A + ${mlPerPart.toFixed(1)} ml de B`;
-    }
-
-    return { phText, ecText };
-  };
-
-  const { phText, ecText } = calculateCorrections();
-
-  // Función para determinar el color de la barra según el rango
-  const getStatusColor = (val: number, min: number, max: number) => {
-    if (val < min || val > max) return "bg-red-500";
-    return "bg-green-500";
-  };
+  // Lógica Hy-Pro A/B (Si la EC es menor al objetivo)
+  if (currentEC < recommendedEC) {
+    const ecDiff = recommendedEC - currentEC;
+    // Fórmula Hy-Pro: 0.25ml por cada 0.1 de EC por litro
+    const mlAB = (ecDiff / 0.1) * vol * 0.25;
+    ecCorrection = mlAB.toFixed(1);
+  }
 
   return (
     <div className="space-y-6">
       
-      {/* SECCIÓN 1: RECETA DE CORRECCIÓN (Solo aparece si algo está mal) */}
-      {(phText || ecText) && (
-        <Card className="border-red-500 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
-          <CardHeader className="pb-2 bg-red-50 dark:bg-red-950/20">
-            <CardTitle className="text-red-600 flex items-center gap-2 text-sm uppercase font-black tracking-wider">
-              <AlertTriangle className="w-5 h-5 animate-pulse" /> Acción Inmediata Requerida
+      {/* PANEL DE DOSIS EXACTAS (FORZADO) */}
+      {(phCorrection || ecCorrection) ? (
+        <Card className="border-2 border-red-500 bg-white dark:bg-slate-950 shadow-xl">
+          <CardHeader className="bg-red-500 py-2">
+            <CardTitle className="text-white text-xs uppercase font-black flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" /> Receta de Ajuste Actual
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 pt-4">
-            {ecText && (
-              <div className="flex items-center gap-3 p-4 bg-blue-600 text-white rounded-xl shadow-md">
-                <FlaskConical className="w-6 h-6" />
+          <CardContent className="p-4 space-y-4">
+            
+            {ecCorrection && (
+              <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="bg-blue-600 p-2 rounded-lg">
+                   <FlaskConical className="w-6 h-6 text-white" />
+                </div>
                 <div>
-                  <p className="text-[10px] uppercase font-bold opacity-80">Dosis Hy-Pro A/B</p>
-                  <p className="text-md font-bold leading-tight">{ecText}</p>
+                  <p className="text-[10px] font-bold text-blue-800 uppercase">Añadir Hy-Pro A/B</p>
+                  <p className="text-lg font-black text-blue-900">
+                    {ecCorrection} ml <span className="text-sm font-normal">de A y de B</span>
+                  </p>
                 </div>
               </div>
             )}
-            {phText && (
-              <div className="flex items-center gap-3 p-4 bg-amber-500 text-white rounded-xl shadow-md">
-                {phText.type === 'up' ? <ArrowUpCircle className="w-6 h-6" /> : <ArrowDownCircle className="w-6 h-6" />}
+
+            {phCorrection && (
+              <div className="flex items-center gap-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <div className="bg-amber-500 p-2 rounded-lg">
+                   {phCorrection.isUp ? <ArrowUpCircle className="w-6 h-6 text-white" /> : <ArrowDownCircle className="w-6 h-6 text-white" />}
+                </div>
                 <div>
-                  <p className="text-[10px] uppercase font-bold opacity-80">Corrección de pH</p>
-                  <p className="text-md font-bold leading-tight">{phText.msg}</p>
+                  <p className="text-[10px] font-bold text-amber-800 uppercase">Ajustar pH</p>
+                  <p className="text-lg font-black text-amber-900">
+                    {phCorrection.ml} ml <span className="text-sm font-normal">de {phCorrection.type}</span>
+                  </p>
                 </div>
               </div>
             )}
-            <p className="text-[9px] text-center text-muted-foreground italic pt-1">
-              * Basado en {vol}L de agua y {plants.length} plantas activas.
+            
+            <p className="text-[10px] text-slate-500 text-center italic">
+              Cálculo para {vol}L de agua y objetivo EC {recommendedEC.toFixed(1)}
             </p>
           </CardContent>
         </Card>
+      ) : (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
+          <div className="bg-green-500 p-2 rounded-full">
+            <Activity className="w-4 h-4 text-white" />
+          </div>
+          <p className="text-green-800 font-bold text-sm">El agua está en niveles perfectos.</p>
+        </div>
       )}
 
-      {/* SECCIÓN 2: ESTADO ACTUAL (GRÁFICAS VISUALES) */}
-      <div className="grid gap-4 md:grid-cols-2">
-        
-        {/* Card pH */}
+      {/* GRÁFICAS INFERIORES */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="w-4 h-4 text-primary" /> pH del Agua
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-1">{currentPH.toFixed(1)}</div>
-            <div className="w-full bg-secondary h-3 rounded-full overflow-hidden mb-2">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-bold opacity-70">pH</span>
+              <span className="text-2xl font-black">{currentPH.toFixed(1)}</span>
+            </div>
+            <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
               <div 
-                className={`h-full transition-all duration-1000 ${getStatusColor(currentPH, 5.5, 6.5)}`}
+                className={`h-full ${currentPH < 5.5 || currentPH > 6.5 ? 'bg-red-500' : 'bg-green-500'}`}
                 style={{ width: `${(currentPH / 14) * 100}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground font-bold">
-              <span>CRÍTICO</span>
-              <span className="text-primary text-xs">ÓPTIMO: 5.5 - 6.5</span>
-              <span>ALCALINO</span>
-            </div>
           </CardContent>
         </Card>
 
-        {/* Card EC */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Droplets className="w-4 h-4 text-blue-500" /> Conductividad (EC)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-1">{currentEC.toFixed(1)} <span className="text-xs text-muted-foreground">mS/cm</span></div>
-            <div className="w-full bg-secondary h-3 rounded-full overflow-hidden mb-2">
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-bold opacity-70">EC</span>
+              <span className="text-2xl font-black">{currentEC.toFixed(1)}</span>
+            </div>
+            <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
               <div 
-                className={`h-full transition-all duration-1000 ${getStatusColor(currentEC, recommendedEC - 0.2, recommendedEC + 0.3)}`}
+                className={`h-full ${currentEC < recommendedEC ? 'bg-blue-500' : 'bg-green-500'}`}
                 style={{ width: `${(currentEC / 3) * 100}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground font-bold">
-              <span>BAJA</span>
-              <span className="text-blue-500 text-xs">OBJETIVO: {recommendedEC.toFixed(1)}</span>
-              <span>ALTA</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card Temperatura */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Thermometer className="w-4 h-4 text-red-500" /> Temperatura
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{parameters.waterTemp}º <span className="text-xs text-muted-foreground text-red-500">C</span></div>
-            <p className="text-[10px] text-muted-foreground mt-2">
-              {parameters.waterTemp > 25 ? "⚠️ Agua caliente: Riesgo de falta de oxígeno" : "✓ Temperatura ideal para raíces"}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Card Mantenimiento */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> Limpieza
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{daysUntilCleaning} <span className="text-xs text-muted-foreground font-normal">días</span></div>
-            <p className="text-[10px] text-muted-foreground mt-2 uppercase font-bold tracking-tight text-green-600">
-              Próximo mantenimiento general
-            </p>
           </CardContent>
         </Card>
       </div>
