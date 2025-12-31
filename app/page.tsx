@@ -128,3 +128,75 @@ export default function HydroponicTowerApp() {
 
   useEffect(() => {
     const savedData = localStorage.getItem("hydroponicTowerData")
+    if (savedData) {
+      const data = JSON.parse(savedData)
+      setIsSetupComplete(data.isSetupComplete || false)
+      setIsFirstSetup(data.isFirstSetup || false)
+      setPlants(
+        (data.plants || []).map((p: Plant) => ({
+          ...p,
+          plantedDate: new Date(p.plantedDate),
+        })),
+      )
+      setParameters(
+        data.parameters || {
+          pH: 6.0,
+          ec: 1.5,
+          waterTemp: 20,
+          waterVolume: 20,
+          nutrientsA: 100,
+          nutrientsB: 100,
+        },
+      )
+      setSystemStartDate(data.systemStartDate ? new Date(data.systemStartDate) : null)
+      setLastCleaningDate(data.lastCleaningDate ? new Date(data.lastCleaningDate) : null)
+      setMeasurementHistory(
+        (data.measurementHistory || []).map((m: MeasurementRecord) => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        })),
+      )
+      setActionLog(
+        (data.actionLog || []).map((a: ActionLog) => ({
+          ...a,
+          timestamp: new Date(a.timestamp),
+        })),
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isSetupComplete) {
+      const dataToSave = {
+        isSetupComplete,
+        isFirstSetup,
+        plants,
+        parameters,
+        systemStartDate,
+        lastCleaningDate,
+        measurementHistory,
+        actionLog,
+      }
+      localStorage.setItem("hydroponicTowerData", JSON.stringify(dataToSave))
+    }
+  }, [
+    isSetupComplete,
+    isFirstSetup,
+    plants,
+    parameters,
+    systemStartDate,
+    lastCleaningDate,
+    measurementHistory,
+    actionLog,
+  ])
+
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      setPlants((prevPlants) =>
+        prevPlants.map((plant) => {
+          const weeksPassed = Math.floor((Date.now() - plant.plantedDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
+          const info = lettuceData[plant.variety]
+
+          let stage: PlantStage = "young"
+          if (weeksPassed >= info.weeksToHarvest) {
+            stage = "harvest"
