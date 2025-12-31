@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
   History, Plus, Trash2, FlaskConical, 
-  ArrowDownCircle, ArrowUpCircle, AlertTriangle, RefreshCw, Check, Clock
+  ArrowDownCircle, ArrowUpCircle, AlertTriangle, RefreshCw, Check, Clock, Droplets
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -29,7 +29,7 @@ export default function HydroponicTowerApp() {
   const [params, setParams] = useState({ pH: "6.0", ec: "1.2", waterVol: "20" });
 
   useEffect(() => {
-    const saved = localStorage.getItem("hydroCaru_Final_V16");
+    const saved = localStorage.getItem("hydroCaru_Final_V17");
     if (saved) {
       const d = JSON.parse(saved);
       if (d.isSetupComplete) {
@@ -44,14 +44,9 @@ export default function HydroponicTowerApp() {
 
   useEffect(() => {
     if (isSetupComplete) {
-      localStorage.setItem("hydroCaru_Final_V16", JSON.stringify({ isSetupComplete, plants, params, history, lastRotation }));
+      localStorage.setItem("hydroCaru_Final_V17", JSON.stringify({ isSetupComplete, plants, params, history, lastRotation }));
     }
   }, [isSetupComplete, plants, params, history, lastRotation]);
-
-  const checkRotationNeeded = () => {
-    const last = new Date(lastRotation).getTime();
-    return (new Date().getTime() - last) / (1000 * 60 * 60 * 24) >= 14;
-  };
 
   const executeRotation = () => {
     let newPlants = plants.filter(p => p.level !== 3).map(p => ({ ...p, level: p.level + 1 }));
@@ -60,30 +55,25 @@ export default function HydroponicTowerApp() {
     setActiveTab("tower");
   };
 
+  // --- LÓGICA DE CÁLCULOS ---
   const currentPH = parseFloat(params.pH) || 0;
   const currentEC = parseFloat(params.ec) || 0;
   const vol = parseFloat(params.waterVol) || 0;
-  
-  // Lógica de pH
-  let phCorrection = { needed: false, type: "", ml: 0, color: "" };
-  if (currentPH > 6.2) {
-    phCorrection = { needed: true, type: "pH DOWN (Ácido)", ml: (currentPH - 6.0) * vol * 0.1, color: "bg-purple-600" };
-  } else if (currentPH < 5.8 && currentPH > 0) {
-    phCorrection = { needed: true, type: "pH UP (Base)", ml: (6.0 - currentPH) * vol * 0.1, color: "bg-orange-500" };
-  }
-
-  // EC y Horarios recomendados
   const targetEC = plants.length > 12 ? 1.6 : plants.length > 6 ? 1.4 : 1.2;
-  const mlNutrientes = (targetEC - currentEC) > 0 && vol > 0 ? ((targetEC - currentEC) / 0.1) * vol * 0.25 : 0;
 
-  // RECOMENDACIÓN DE TOMAS SEGÚN CARGA
-  const getRecommendedTasks = () => {
-    const pCount = plants.length;
-    const ratio = pCount / (vol || 1);
-    if (ratio > 0.8) return ["08:00", "12:00", "16:00", "21:00"]; // Carga alta o poco agua: 4 tomas
-    if (ratio > 0.4) return ["09:00", "15:00", "21:00"]; // Carga media: 3 tomas
-    return ["10:00", "20:00"]; // Carga baja: 2 tomas
-  };
+  // Alerta pH
+  let phCorr = { active: false, ml: 0, type: "", color: "" };
+  if (currentPH > 6.2) phCorr = { active: true, ml: (currentPH - 6.0) * vol * 0.1, type: "pH DOWN", color: "bg-purple-600" };
+  else if (currentPH < 5.8 && currentPH > 0) phCorr = { active: true, ml: (6.0 - currentPH) * vol * 0.1, type: "pH UP", color: "bg-orange-500" };
+
+  // Alerta EC
+  const mlNutri = (targetEC - currentEC) > 0 && vol > 0 ? ((targetEC - currentEC) / 0.1) * vol * 0.25 : 0;
+  
+  // Alerta Rotación
+  const needsRot = (new Date().getTime() - new Date(lastRotation).getTime()) / (1000 * 60 * 60 * 24) >= 14;
+
+  // Alerta Agua Baja (ejemplo: menos de 10L)
+  const lowWater = vol > 0 && vol < 10;
 
   const handlePlantClick = (lvl: number, pos: number) => {
     const exists = plants.find(p => p.level === lvl && p.position === pos);
@@ -116,4 +106,155 @@ export default function HydroponicTowerApp() {
         <div className="grid grid-cols-1 gap-2">
           {Object.keys(VARIETY_CONFIG).map(v => (
             <button key={v} onClick={() => { setPlants([...plants, {id: Date.now(), variety: v, level: showPlantSelector.lvl, position: showPlantSelector.pos}]); setShowPlantSelector(null); }} 
-              className={`w-full p-5 rounded-2xl font-black text-left flex
+              className={`w-full p-5 rounded-2xl font-black text-left flex justify-between items-center ${VARIETY_CONFIG[v].bg} text-white mb-1 shadow-sm`}>{v} <Plus className="w-5 h-5" /></button>
+          ))}
+          <button onClick={() => setShowPlantSelector(null)} className="w-full p-4 font-bold text-slate-400 text-[10px] uppercase mt-2">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!isSetupComplete) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-8 bg-white rounded-[3rem] shadow-2xl space-y-6">
+          <h2 className="text-3xl font-black italic text-green-600 tracking-tighter text-center">HydroCaru</h2>
+          {setupStep === 1 ? (
+            <div className="space-y-4">
+              <div className="bg-slate-50 p-4 rounded-2xl border-2"><span className="text-[9px] font-black text-slate-400 uppercase">Litros</span><input type="text" value={params.waterVol} onChange={e => setParams({...params, waterVol: e.target.value})} className="w-full bg-transparent text-2xl font-black outline-none" /></div>
+              <div className="bg-slate-50 p-4 rounded-2xl border-2"><span className="text-[9px] font-black text-slate-400 uppercase">pH</span><input type="text" value={params.pH} onChange={e => setParams({...params, pH: e.target.value})} className="w-full bg-transparent text-2xl font-black outline-none" /></div>
+              <button onClick={() => setSetupStep(2)} className="w-full bg-slate-900 text-white p-6 rounded-3xl font-black">SIGUIENTE</button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <p className="text-center text-slate-400 font-bold uppercase text-xs">Planta el Nivel 1 (Superior)</p>
+              <div className="max-h-[300px] overflow-y-auto">{renderLevel(1)}</div>
+              <button disabled={plants.length < 6} onClick={() => setIsSetupComplete(true)} className="w-full bg-green-600 text-white p-6 rounded-3xl font-black disabled:opacity-20 shadow-xl">INICIAR CULTIVO</button>
+            </div>
+          )}
+        </Card>
+        <SelectorModal />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-32">
+      <header className="bg-white border-b p-6 sticky top-0 z-50 flex justify-between items-center shadow-sm">
+        <div className="font-black text-green-600 text-2xl italic tracking-tighter">HydroCaru</div>
+        <Badge className="bg-slate-900 text-white rounded-full px-4">{params.waterVol}L</Badge>
+      </header>
+      <main className="container mx-auto p-4 max-w-md">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-6 h-16 bg-white border shadow-xl rounded-2xl p-1 mb-8">
+            <TabsTrigger value="overview"><Activity /></TabsTrigger>
+            <TabsTrigger value="measure"><Beaker /></TabsTrigger>
+            <TabsTrigger value="tower"><Layers /></TabsTrigger>
+            <TabsTrigger value="calendar"><Calendar /></TabsTrigger>
+            <TabsTrigger value="history"><History /></TabsTrigger>
+            <TabsTrigger value="settings"><Trash2 /></TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            {/* PANEL DE ALERTAS COMBINADAS */}
+            <div className="space-y-3">
+              {phCorr.active && (
+                <Card className={`${phCorr.color} text-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-lg border-none animate-in slide-in-from-left`}>
+                  <AlertTriangle className="w-10 h-10 shrink-0" />
+                  <div><p className="text-[10px] font-black uppercase opacity-70 leading-none mb-1">Corregir pH</p><p className="text-4xl font-black">{phCorr.ml.toFixed(1)} ml</p><p className="text-[10px] font-bold uppercase">{phCorr.type}</p></div>
+                </Card>
+              )}
+              
+              {mlNutri > 0 && (
+                <Card className="bg-blue-600 text-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-lg border-none animate-in slide-in-from-left delay-75">
+                  <FlaskConical className="w-10 h-10 shrink-0" />
+                  <div><p className="text-[10px] font-black uppercase opacity-70 leading-none mb-1">Nutrientes (Objetivo {targetEC})</p><p className="text-4xl font-black">{mlNutri.toFixed(1)} ml</p><p className="text-[10px] font-bold uppercase">Solución A+B</p></div>
+                </Card>
+              )}
+
+              {lowWater && (
+                <Card className="bg-amber-500 text-white p-6 rounded-[2.5rem] flex items-center gap-6 shadow-lg border-none animate-in slide-in-from-left delay-100">
+                  <Droplets className="w-10 h-10 shrink-0 animate-pulse" />
+                  <div><p className="text-[10px] font-black uppercase opacity-70 leading-none mb-1">Depósito Bajo</p><p className="text-2xl font-black">Rellenar Agua</p><p className="text-[10px] font-bold uppercase">Menos de 10 Litros</p></div>
+                </Card>
+              )}
+
+              {needsRot && (
+                <Card className="bg-red-600 text-white p-6 rounded-[2.5rem] shadow-xl flex items-start gap-4 animate-in slide-in-from-left delay-150">
+                  <RefreshCw className="w-10 h-10 shrink-0 animate-spin-slow" />
+                  <div className="flex-1">
+                    <p className="text-[10px] font-black uppercase mb-1">Toca Rotación</p>
+                    <button onClick={executeRotation} className="w-full bg-white text-red-600 p-3 rounded-2xl font-black text-[10px] uppercase mt-1 flex items-center justify-center gap-2"><Check className="w-4 h-4" /> Rotar Ahora</button>
+                  </div>
+                </Card>
+              )}
+            </div>
+
+            {/* VALORES ACTUALES */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm text-center">
+                <p className="text-[10px] font-black text-slate-300 uppercase mb-1">pH</p>
+                <p className={`text-5xl font-black ${currentPH < 5.8 || currentPH > 6.2 ? 'text-red-500' : 'text-slate-800'}`}>{params.pH}</p>
+              </div>
+              <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm text-center">
+                <p className="text-[10px] font-black text-slate-300 uppercase mb-1">EC</p>
+                <p className="text-5xl font-black text-slate-800">{params.ec}</p>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="measure">
+            <Card className="p-8 rounded-[3rem] space-y-6 shadow-2xl border-none">
+              <h2 className="text-center font-black text-2xl italic uppercase tracking-tighter">Nueva Medición</h2>
+              <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-3xl border-2"><label className="text-[10px] font-black text-slate-400 uppercase block mb-1 text-center">pH</label><input type="text" inputMode="decimal" value={params.pH} onChange={e => setParams({...params, pH: e.target.value})} className="w-full bg-transparent text-4xl font-black outline-none text-center" /></div>
+                <div className="bg-slate-50 p-4 rounded-3xl border-2"><label className="text-[10px] font-black text-slate-400 uppercase block mb-1 text-center">EC</label><input type="text" inputMode="decimal" value={params.ec} onChange={e => setParams({...params, ec: e.target.value})} className="w-full bg-transparent text-4xl font-black outline-none text-center" /></div>
+                <div className="bg-blue-50 p-4 rounded-3xl border-2 border-blue-100"><label className="text-[10px] font-black text-blue-400 uppercase block mb-1 text-center">Litros en Tanque</label><input type="text" inputMode="decimal" value={params.waterVol} onChange={e => setParams({...params, waterVol: e.target.value})} className="w-full bg-transparent text-4xl font-black outline-none text-center text-blue-600" /></div>
+                <button onClick={() => { setHistory([{...params, id: Date.now(), date: new Date().toLocaleString()}, ...history]); setActiveTab("overview"); }} className="w-full bg-slate-900 text-white p-7 rounded-[2.5rem] font-black text-xl shadow-lg">CALCULAR DOSIS</button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tower" className="space-y-2">
+            {[1, 2, 3].map(lvl => renderLevel(lvl))}
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <Card className="p-8 rounded-[3rem] shadow-sm space-y-4 text-center border-none">
+              <h3 className="font-black text-xl italic uppercase underline decoration-amber-400">Próxima Rotación</h3>
+              <p className="text-4xl font-black text-slate-800">{new Date(new Date(lastRotation).getTime() + 14 * 86400000).toLocaleDateString()}</p>
+            </Card>
+
+            <Card className="p-8 rounded-[3rem] shadow-sm space-y-4 border-none bg-slate-900 text-white">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-5 h-5 text-green-400" />
+                <h3 className="font-black text-lg uppercase tracking-tighter">Agenda de Tomas</h3>
+              </div>
+              <div className="space-y-2">
+                {(plants.length / (vol || 1) > 0.6 ? ["08:00", "12:00", "16:00", "21:00"] : ["10:00", "20:00"]).map(hora => (
+                  <div key={hora} className="flex justify-between items-center bg-white/10 p-4 rounded-2xl border border-white/5">
+                    <span className="text-xl font-black">{hora}</span>
+                    <span className="text-[9px] font-black uppercase text-green-400">Muestreo</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-2">
+            {history.map((h: any) => (
+              <div key={h.id} className="bg-white p-5 rounded-3xl border shadow-sm flex justify-between items-center">
+                <div><p className="text-[8px] font-black text-slate-300 uppercase mb-1">{h.date}</p><p className="font-black text-slate-800 text-xs leading-none">pH {h.pH} | EC {h.ec} | {h.waterVol}L</p></div>
+              </div>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="settings" className="py-20 text-center">
+            <button onClick={() => {localStorage.clear(); window.location.reload();}} className="w-full bg-red-100 text-red-600 p-10 rounded-[3rem] font-black border-2 border-red-200 uppercase text-xs">Borrar todo</button>
+          </TabsContent>
+        </Tabs>
+      </main>
+      <SelectorModal />
+    </div>
+  );
+}
