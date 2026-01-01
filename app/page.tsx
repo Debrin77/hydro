@@ -19,7 +19,6 @@ const VARIETY_CONFIG: { [key: string]: { color: string, bg: string } } = {
 };
 
 export default function HydroponicTowerApp() {
-  // --- ESTADOS ---
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [setupStep, setSetupStep] = useState(1);
   const [activeTab, setActiveTab] = useState("overview");
@@ -33,9 +32,8 @@ export default function HydroponicTowerApp() {
     pH: "6.0", ec: "1.2", waterVol: "20", temp: "22", manualTargetEC: "1.2" 
   });
 
-  // --- CARGA DE DATOS ---
   useEffect(() => {
-    const saved = localStorage.getItem("hydroCaru_ULTRA_V34");
+    const saved = localStorage.getItem("hydroCaru_ULTRA_V35_FINAL");
     if (saved) {
       const d = JSON.parse(saved);
       if (d.isSetupComplete) {
@@ -49,16 +47,14 @@ export default function HydroponicTowerApp() {
     }
   }, []);
 
-  // --- GUARDADO DE DATOS ---
   useEffect(() => {
     if (isSetupComplete) {
-      localStorage.setItem("hydroCaru_ULTRA_V34", JSON.stringify({
+      localStorage.setItem("hydroCaru_ULTRA_V35_FINAL", JSON.stringify({
         isSetupComplete, plants, params, initialVol, history, lastRotation
       }));
     }
   }, [isSetupComplete, plants, params, initialVol, history, lastRotation]);
 
-  // --- ALERTAS (VOLUMEN, PH, EC) ---
   const systemStatus = useMemo(() => {
     const ph = parseFloat(params.pH) || 0;
     const ec = parseFloat(params.ec) || 0;
@@ -67,34 +63,31 @@ export default function HydroponicTowerApp() {
     const targetEC = parseFloat(params.manualTargetEC) || 1.2;
     const alerts = [];
     
-    // Alerta de Agua (Prioritaria)
     if (currentVol < maxVol) {
         const diff = maxVol - currentVol;
         if (diff >= 0.5) {
             alerts.push({ 
                 title: 'RELLENAR AGUA', val: `${diff.toFixed(1)} L`, 
-                desc: `Nivel bajo: Faltan ${diff.toFixed(1)}L para llegar a ${maxVol}L`, 
+                desc: `Faltan ${diff.toFixed(1)}L para ${maxVol}L`, 
                 color: currentVol < (maxVol * 0.6) ? 'bg-orange-600' : 'bg-cyan-600', 
                 icon: <Droplets /> 
             });
         }
     }
 
-    // Alertas Químicas
     if (ph > 6.2) alerts.push({ title: 'pH ALTO', val: ((ph - 6.0) * currentVol * 0.1).toFixed(1) + ' ml', desc: 'Usar pH DOWN', color: 'bg-purple-600', icon: <ArrowDownCircle /> });
     if (ph < 5.8 && ph > 0) alerts.push({ title: 'pH BAJO', val: ((6.0 - ph) * currentVol * 0.1).toFixed(1) + ' ml', desc: 'Usar pH UP', color: 'bg-pink-600', icon: <ArrowDownCircle className="rotate-180" /> });
 
     if (ec > (targetEC + 0.1)) {
-      alerts.push({ title: 'EC ALTA', val: 'DILUIR', desc: `Añadir agua sola para bajar de ${ec} a ${targetEC}`, color: 'bg-sky-500', icon: <Droplets /> });
+      alerts.push({ title: 'EC ALTA', val: 'DILUIR', desc: `Añadir agua sola`, color: 'bg-sky-500', icon: <Droplets /> });
     } else if (ec < targetEC && ec > 0) {
       const nutrients = ((targetEC - ec) / 0.1) * currentVol * 0.25;
-      alerts.push({ title: 'EC BAJA', val: nutrients.toFixed(1) + ' ml', desc: `Añadir A+B (Objetivo ${targetEC})`, color: 'bg-blue-700', icon: <FlaskConical /> });
+      alerts.push({ title: 'EC BAJA', val: nutrients.toFixed(1) + ' ml', desc: `Añadir A+B`, color: 'bg-blue-700', icon: <FlaskConical /> });
     }
     
     return { alerts };
   }, [params, initialVol]);
 
-  // --- COMPONENTE DE PLANTA ---
   const LevelGrid = ({ lvl }: { lvl: number }) => (
     <div className="bg-slate-50 p-4 rounded-[2rem] border-2 border-dashed border-slate-200 grid grid-cols-3 gap-3">
       {[1, 2, 3, 4, 5, 6].map(pos => {
@@ -112,33 +105,42 @@ export default function HydroponicTowerApp() {
     </div>
   );
 
-  // --- VISTA 1: CONFIGURACIÓN INICIAL (BLOQUEADA) ---
+  const handleManualRotation = () => {
+    if(confirm('¿Confirmas la rotación? El Nivel 3 se cosecha, el 2 baja al 3 y el 1 al 2. El Nivel 1 quedará vacío.')) {
+      const remainingPlants = plants.filter(p => p.level !== 3);
+      const rotatedPlants = remainingPlants.map(p => ({
+        ...p,
+        level: p.level + 1
+      }));
+      setPlants(rotatedPlants);
+      setLastRotation(new Date().toISOString());
+      alert('¡Rotación lista! No olvides añadir tus 6 nuevas plántulas al Nivel 1.');
+    }
+  };
+
   if (!isSetupComplete) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-8 bg-white rounded-[3rem] shadow-2xl relative overflow-hidden">
-          <h2 className="text-3xl font-black italic text-green-600 text-center mb-6 uppercase tracking-tighter">Iniciar Sistema</h2>
-          
+          <h2 className="text-3xl font-black italic text-green-600 text-center mb-6 uppercase tracking-tighter">HydroCaru</h2>
           {setupStep === 1 && (
             <div className="space-y-6 animate-in slide-in-from-bottom">
-              <div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Paso 1: Capacidad</p><h3 className="text-xl font-black mb-4">¿Litros totales del depósito?</h3><input type="number" value={initialVol} onChange={e => {setInitialVol(e.target.value); setParams({...params, waterVol: e.target.value})}} className="w-full bg-slate-50 rounded-3xl p-6 text-5xl font-black text-center border-2 border-green-100 outline-none text-green-600" /></div>
+              <div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Capacidad</p><h3 className="text-xl font-black mb-4">¿Litros totales del depósito?</h3><input type="number" value={initialVol} onChange={e => {setInitialVol(e.target.value); setParams({...params, waterVol: e.target.value})}} className="w-full bg-slate-50 rounded-3xl p-6 text-5xl font-black text-center border-2 border-green-100 outline-none text-green-600" /></div>
               <button onClick={() => setSetupStep(2)} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase">Siguiente</button>
             </div>
           )}
-
           {setupStep === 2 && (
             <div className="space-y-6 animate-in slide-in-from-right">
-              <div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Paso 2: Plantas</p><h3 className="text-xl font-black mb-4">Añade al menos una planta</h3><LevelGrid lvl={1} /></div>
+              <div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Plantas</p><h3 className="text-xl font-black mb-4">Añade al menos una planta</h3><LevelGrid lvl={1} /></div>
               <button disabled={plants.length === 0} onClick={() => setSetupStep(3)} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase disabled:opacity-20">Siguiente</button>
             </div>
           )}
-
           {setupStep === 3 && (
             <div className="space-y-6 animate-in slide-in-from-right">
-              <div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Paso 3: Parámetros</p>
+              <div className="text-center"><p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Parámetros</p>
                 <div className="bg-blue-600 p-4 rounded-3xl text-white mb-3"><label className="text-[8px] font-black block">EC OBJETIVO</label><input type="number" step="0.1" value={params.manualTargetEC} onChange={e => setParams({...params, manualTargetEC: e.target.value})} className="w-full bg-transparent text-4xl font-black text-center outline-none" /></div>
               </div>
-              <button onClick={() => setIsSetupComplete(true)} className="w-full bg-green-600 text-white p-6 rounded-[2rem] font-black uppercase shadow-xl animate-pulse">Finalizar Inicio</button>
+              <button onClick={() => setIsSetupComplete(true)} className="w-full bg-green-600 text-white p-6 rounded-[2rem] font-black uppercase shadow-xl">Finalizar</button>
             </div>
           )}
         </Card>
@@ -153,7 +155,6 @@ export default function HydroponicTowerApp() {
     );
   }
 
-  // --- VISTA 2: PANEL DE CONTROL (DASHBOARD) ---
   return (
     <div className="min-h-screen bg-slate-50 pb-32 font-sans">
       <header className="bg-white border-b p-6 flex justify-between items-center sticky top-0 z-50">
@@ -185,17 +186,15 @@ export default function HydroponicTowerApp() {
           </TabsContent>
 
           <TabsContent value="measure">
-            <Card className="p-8 rounded-[3rem] space-y-4 shadow-2xl bg-white">
-              <div className="space-y-4">
-                <div className="bg-blue-600 p-5 rounded-3xl text-white text-center"><label className="text-[9px] font-black uppercase opacity-80">EC Objetivo Manual</label><input type="number" step="0.1" value={params.manualTargetEC} onChange={e => setParams({...params, manualTargetEC: e.target.value})} className="w-full bg-transparent text-4xl outline-none text-center font-black" /></div>
-                <div className="grid grid-cols-2 gap-3 font-black">
-                  <div className="bg-slate-50 p-4 rounded-3xl border-2 text-center"><label className="text-[8px] text-slate-400 block">pH</label><input type="number" step="0.1" value={params.pH} onChange={e => setParams({...params, pH: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none" /></div>
-                  <div className="bg-slate-50 p-4 rounded-3xl border-2 text-center"><label className="text-[8px] text-slate-400 block">EC</label><input type="number" step="0.1" value={params.ec} onChange={e => setParams({...params, ec: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none" /></div>
-                  <div className="bg-cyan-50 p-4 rounded-3xl border-2 border-cyan-100 text-center text-cyan-600"><label className="text-[8px] uppercase block">Agua Actual (L)</label><input type="number" value={params.waterVol} onChange={e => setParams({...params, waterVol: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none font-black" /></div>
-                  <div className="bg-orange-50 p-4 rounded-3xl border-2 border-orange-100 text-center text-orange-600"><label className="text-[8px] block">Temp °C</label><input type="number" value={params.temp} onChange={e => setParams({...params, temp: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none" /></div>
-                </div>
-                <button onClick={() => { setHistory([{...params, id: Date.now(), date: new Date().toLocaleString()}, ...history]); setActiveTab("overview"); }} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase">Guardar Mediciones</button>
+            <Card className="p-8 rounded-[3rem] space-y-4 bg-white border-none shadow-2xl">
+              <div className="bg-blue-600 p-5 rounded-3xl text-white text-center"><label className="text-[9px] font-black uppercase opacity-80">EC Objetivo Manual</label><input type="number" step="0.1" value={params.manualTargetEC} onChange={e => setParams({...params, manualTargetEC: e.target.value})} className="w-full bg-transparent text-4xl outline-none text-center font-black" /></div>
+              <div className="grid grid-cols-2 gap-3 font-black">
+                <div className="bg-slate-50 p-4 rounded-3xl border-2 text-center"><label className="text-[8px] text-slate-400 block">pH</label><input type="number" step="0.1" value={params.pH} onChange={e => setParams({...params, pH: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none" /></div>
+                <div className="bg-slate-50 p-4 rounded-3xl border-2 text-center"><label className="text-[8px] text-slate-400 block">EC</label><input type="number" step="0.1" value={params.ec} onChange={e => setParams({...params, ec: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none" /></div>
+                <div className="bg-cyan-50 p-4 rounded-3xl border-2 border-cyan-100 text-center text-cyan-600"><label className="text-[8px] uppercase block">Agua (L)</label><input type="number" value={params.waterVol} onChange={e => setParams({...params, waterVol: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none font-black" /></div>
+                <div className="bg-orange-50 p-4 rounded-3xl border-2 border-orange-100 text-center text-orange-600"><label className="text-[8px] block">Temp °C</label><input type="number" value={params.temp} onChange={e => setParams({...params, temp: e.target.value})} className="w-full bg-transparent text-2xl text-center outline-none" /></div>
               </div>
+              <button onClick={() => { setHistory([{...params, id: Date.now(), date: new Date().toLocaleString()}, ...history]); setActiveTab("overview"); }} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase">Guardar Registro</button>
             </Card>
           </TabsContent>
 
@@ -207,9 +206,9 @@ export default function HydroponicTowerApp() {
 
           <TabsContent value="calendar" className="space-y-4">
              <Card className="p-8 rounded-[2.5rem] bg-slate-900 text-white text-center shadow-2xl">
-                <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Próxima Rotación</p>
+                <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Próxima Limpieza y Rotación</p>
                 <p className="text-4xl font-black italic">{new Date(new Date(lastRotation).getTime() + 14 * 86400000).toLocaleDateString()}</p>
-                <button onClick={() => setLastRotation(new Date().toISOString())} className="mt-4 text-[8px] bg-red-600 px-6 py-2 rounded-full font-black uppercase shadow-lg animate-pulse">Confirmar Rotación Hoy</button>
+                <button onClick={handleManualRotation} className="mt-4 text-[8px] bg-red-600 px-6 py-2 rounded-full font-black uppercase shadow-lg animate-pulse">Confirmar Rotación Hoy</button>
              </Card>
              <Card className="p-6 rounded-[2.5rem] bg-white border-2 grid grid-cols-7 gap-2">
                 {['L','M','X','J','V','S','D'].map(d => <div key={d} className="text-center text-[10px] font-black text-slate-300">{d}</div>)}
@@ -230,7 +229,7 @@ export default function HydroponicTowerApp() {
           <TabsContent value="history" className="space-y-3">
              {history.map(h => (
                 <Card key={h.id} className="p-4 rounded-[2rem] bg-white border-2 font-black shadow-sm flex flex-col gap-2">
-                  <p className="text-[8px] text-slate-400 uppercase">{h.date}</p>
+                  <p className="text-[8px] text-slate-400">{h.date}</p>
                   <div className="flex justify-between items-center text-[10px]">
                     <span className="flex items-center gap-1"><Gauge className="w-3 h-3"/> pH {h.pH} | EC {h.ec}</span>
                     <span className="flex items-center gap-1 text-blue-600"><Droplets className="w-3 h-3"/> {h.waterVol}L</span>
@@ -240,7 +239,7 @@ export default function HydroponicTowerApp() {
           </TabsContent>
 
           <TabsContent value="settings" className="py-10">
-             <button onClick={() => {if(confirm('¿BORRAR TODO?')) {localStorage.removeItem("hydroCaru_ULTRA_V34"); window.location.reload();}}} className="w-full bg-red-100 text-red-600 p-8 rounded-[3rem] font-black uppercase text-[10px] tracking-widest border-2 border-red-200">Reset de Fábrica</button>
+             <button onClick={() => {if(confirm('¿BORRAR TODO?')) {localStorage.removeItem("hydroCaru_ULTRA_V35_FINAL"); window.location.reload();}}} className="w-full bg-red-100 text-red-600 p-8 rounded-[3rem] font-black uppercase text-[10px] tracking-widest border-2 border-red-200">Reset de Fábrica</button>
           </TabsContent>
         </Tabs>
       </main>
