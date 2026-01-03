@@ -1,66 +1,122 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sprout, Activity, Layers, Beaker, Calendar, Plus, Trash2, FlaskConical, ArrowDownCircle, Check, Lock, Lightbulb, Scissors } from "lucide-react"
+import { 
+  Sprout, Activity, Layers, Beaker, Calendar as CalendarIcon, 
+  Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
+  Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, Thermometer
+} from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 
-const VARIETIES: { [key: string]: string } = {
-  "Romana": "bg-emerald-500", "Iceberg": "bg-blue-400", "Hoja de Roble": "bg-red-500", "Lollo Rosso": "bg-purple-500", "Trocadero": "bg-lime-500"
+const VARIETIES: { [key: string]: {color: string, demand: number} } = {
+  "Romana": { color: "bg-emerald-600", demand: 1.0 },
+  "Iceberg": { color: "bg-cyan-500", demand: 0.9 },
+  "Hoja de Roble": { color: "bg-red-600", demand: 1.1 },
+  "Lollo Rosso": { color: "bg-purple-600", demand: 1.1 },
+  "Trocadero": { color: "bg-lime-600", demand: 1.0 }
 };
 
-export default function HydroAppV21() {
+export default function HydroAppV24() {
   const [isAuth, setIsAuth] = useState(false);
   const [isSetup, setIsSetup] = useState(false);
   const [tab, setTab] = useState("overview");
   const [plants, setPlants] = useState<any[]>([]);
-  const [config, setConfig] = useState({ vol: "20", targetEC: "1.4", ph: "6.0", ec: "1.2" });
+  const [history, setHistory] = useState<any[]>([]);
+  const [config, setConfig] = useState({ 
+    totalVol: "20", 
+    targetEC: "1.4", 
+    ph: "6.0", 
+    ec: "1.2", 
+    temp: "22",
+    currentVol: "18" 
+  });
   const [lastRot, setLastRot] = useState(new Date().toISOString());
+  const [lastClean, setLastClean] = useState(new Date().toISOString());
+  const [selPos, setSelPos] = useState<{l: number, p: number} | null>(null);
 
-  // Carga ultra-simple
+  // Persistencia de datos
   useEffect(() => {
-    const saved = localStorage.getItem("hydro_v21");
+    const saved = localStorage.getItem("hydro_v24_master");
     if (saved) {
       const d = JSON.parse(saved);
       setPlants(d.plants || []);
-      setConfig(d.config || { vol: "20", targetEC: "1.4", ph: "6.0", ec: "1.2" });
-      setLastRot(d.lastRot || new Date().toISOString());
-      setIsSetup(d.isSetup || false);
+      setConfig(d.config);
+      setHistory(d.history || []);
+      setLastRot(d.lastRot);
+      setLastClean(d.lastClean);
+      setIsSetup(d.isSetup);
     }
   }, []);
 
-  // Guardado automático
   useEffect(() => {
     if (isSetup) {
-      localStorage.setItem("hydro_v21", JSON.stringify({ isSetup, plants, config, lastRot }));
+      localStorage.setItem("hydro_v24_master", JSON.stringify({ isSetup, plants, config, history, lastRot, lastClean }));
     }
-  }, [isSetup, plants, config, lastRot]);
+  }, [isSetup, plants, config, history, lastRot, lastClean]);
 
-  const daysRot = Math.floor((Date.now() - new Date(lastRot).getTime()) / 86400000);
-
-  // Cálculos manuales directos para evitar errores de memoria
-  const getAlerts = () => {
-    const alerts = [];
-    const v = parseFloat(config.vol) || 0;
+  // MOTOR DE CÁLCULO GLOBAL
+  const alerts = useMemo(() => {
+    const vTotal = parseFloat(config.totalVol) || 20;
+    const vActual = parseFloat(config.currentVol) || 0;
     const ph = parseFloat(config.ph) || 0;
     const ec = parseFloat(config.ec) || 0;
-    const tEc = parseFloat(config.targetEC) || 1.4;
+    const targetEc = parseFloat(config.targetEC) || 1.4;
+    const res = [];
 
-    if (v > 0) {
-      if (ph > 6.2) alerts.push({ t: "pH ALTO", m: `${((ph - 6.0) * v * 1.5).toFixed(0)}ml pH Down`, c: "bg-purple-600" });
-      if (ph < 5.6 && ph > 0) alerts.push({ t: "pH BAJO", m: `${((6.0 - ph) * v * 1.5).toFixed(0)}ml pH Up`, c: "bg-pink-600" });
-      if (ec < tEc && ec > 0) alerts.push({ t: "NUTRIENTES", m: `${(((tEc - ec) / 0.1) * v * 0.25).toFixed(1)}ml A+B`, c: "bg-blue-600" });
-      if (daysRot >= 7) alerts.push({ t: "ROTACIÓN", m: "Toca cosechar Nivel 3", c: "bg-orange-600" });
+    // 1. Alerta de Volumen (Nivel Crítico)
+    if (vActual < vTotal * 0.4) {
+      const litrosAFaltar = vTotal - vActual;
+      res.push({ t: "VOLUMEN CRÍTICO", v: `Faltan ${litrosAFaltar}L`, d: "Rellenar depósito para evitar subida de temp.", c: "bg-red-600 animate-pulse", i: <Droplets /> });
     }
-    return alerts;
+
+    // 2. Alerta pH con factor de corrección por volumen
+    if (vActual > 0) {
+      if (ph > 6.2) {
+        const ml = ((ph - 6.0) * 10 * vActual * 0.15).toFixed(0);
+        res.push({ t: "pH ALTO", v: `${ml}ml`, d: "Añadir pH Down", c: "bg-purple-600", i: <ArrowDownCircle /> });
+      }
+      if (ph < 5.6 && ph > 0) {
+        const ml = ((6.0 - ph) * 10 * vActual * 0.15).toFixed(0);
+        res.push({ t: "pH BAJO", v: `${ml}ml`, d: "Añadir pH Up", c: "bg-pink-600", i: <ArrowDownCircle className="rotate-180" /> });
+      }
+    }
+
+    // 3. Alerta Nutrientes (Ajustada por carga de plantas y variedad)
+    const plantCharge = plants.reduce((acc, p) => acc + (VARIETIES[p.v]?.demand || 1), 0);
+    if (ec < targetEc && ec > 0 && vActual > 0) {
+      // Cálculo: ml = (Falta EC) * Volumen * Factor (0.25ml por 0.1 de EC por Litro)
+      const ml = (((targetEc - ec) / 0.1) * vActual * 0.25).toFixed(1);
+      res.push({ t: "NUTRIENTES", v: `${ml}ml A+B`, d: `Carga: ${plantCharge.toFixed(1)} unidades de demanda`, c: "bg-blue-700", i: <FlaskConical /> });
+    }
+
+    // 4. Alerta Temperatura/Oxígeno
+    if (parseFloat(config.temp) > 25) {
+      res.push({ t: "TEMP ALTA", v: `${config.temp}°C`, d: "Oxígeno bajo. Añadir hielo.", c: "bg-orange-500", i: <Wind /> });
+    }
+
+    return res;
+  }, [config, plants]);
+
+  const handleRotation = () => {
+    if (confirm("¿Cosechar Nivel 3 y bajar el resto?")) {
+      const sinN3 = plants.filter(p => p.l !== 3);
+      const rotadas = sinN3.map(p => ({ ...p, l: p.l + 1 }));
+      setPlants(rotadas);
+      setLastRot(new Date().toISOString());
+      setTab("tower");
+    }
   };
 
   if (!isAuth && !isSetup) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <div className="bg-white p-8 rounded-2xl text-center">
-          <h2 className="font-black mb-4">PIN: 1234</h2>
-          <input type="password" onChange={e => e.target.value === "1234" && setIsAuth(true)} className="border-2 p-2 text-center text-2xl w-32" />
-        </div>
+        <Card className="w-full max-w-xs p-10 bg-white rounded-[3rem] text-center shadow-2xl border-4 border-green-500">
+          <Lock className="mx-auto mb-6 text-green-600" size={40} />
+          <input type="password" placeholder="PIN" className="w-full text-center text-4xl font-black bg-slate-100 rounded-3xl p-5 border-4 focus:border-green-500" 
+            onChange={e => e.target.value === "1234" && setIsAuth(true)} />
+        </Card>
       </div>
     );
   }
@@ -68,62 +124,90 @@ export default function HydroAppV21() {
   if (!isSetup) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-sm">
-          <h2 className="font-black text-center mb-6 text-green-700">CONFIGURACIÓN</h2>
-          <label className="text-xs font-bold">LITROS DEPÓSITO</label>
-          <input type="number" value={config.vol} onChange={e => setConfig({...config, vol: e.target.value})} className="w-full p-4 bg-slate-100 rounded-xl mb-4 text-xl font-bold text-center" />
-          <button onClick={() => setIsSetup(true)} className="w-full bg-slate-900 text-white p-4 rounded-xl font-black">EMPEZAR</button>
-        </div>
+        <Card className="w-full max-w-md p-10 bg-white rounded-[3rem] shadow-2xl border-2">
+          <h2 className="text-2xl font-black text-center mb-8 uppercase italic underline decoration-green-500">Torre Config</h2>
+          <div className="space-y-6">
+            <div><label className="text-[10px] font-black uppercase text-slate-400 ml-4">Litros Totales</label><input type="number" value={config.totalVol} onChange={e => setConfig({...config, totalVol: e.target.value, currentVol: e.target.value})} className="w-full p-6 bg-slate-50 border-4 rounded-[2rem] text-3xl font-black text-center" /></div>
+            <div><label className="text-[10px] font-black uppercase text-slate-400 ml-4">EC Meta</label><input type="number" step="0.1" value={config.targetEC} onChange={e => setConfig({...config, targetEC: e.target.value})} className="w-full p-6 bg-slate-50 border-4 rounded-[2rem] text-3xl font-black text-center" /></div>
+            <button onClick={() => setIsSetup(true)} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase text-xl shadow-xl">Activar Sistema</button>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 font-sans">
-      <header className="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-50">
-        <b className="text-green-700 italic">HYDROCARU V21</b>
-        <span className="bg-slate-200 px-3 py-1 rounded-full text-xs font-bold">{config.vol}L</span>
+    <div className="min-h-screen bg-slate-50 pb-28 text-slate-900">
+      <header className="bg-white border-b-4 p-6 flex justify-between items-center sticky top-0 z-50">
+        <div className="flex flex-col">
+          <span className="text-2xl font-black italic text-green-700 leading-none tracking-tighter">HYDROCARU MASTER</span>
+          <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1">SISTEMA DE CONTROL AEROPÓNICO</span>
+        </div>
+        <Badge className="bg-slate-900 text-white px-5 py-2 rounded-2xl font-black text-lg">{config.currentVol}L</Badge>
       </header>
 
-      <main className="p-4 max-w-md mx-auto">
+      <main className="container mx-auto p-4 max-w-md">
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-5 mb-6 bg-white border rounded-xl overflow-hidden h-12">
-            <TabsTrigger value="overview"><Activity size={18}/></TabsTrigger>
-            <TabsTrigger value="measure"><Beaker size={18}/></TabsTrigger>
-            <TabsTrigger value="tower"><Layers size={18}/></TabsTrigger>
-            <TabsTrigger value="tips"><Lightbulb size={18}/></TabsTrigger>
-            <TabsTrigger value="settings"><Trash2 size={18}/></TabsTrigger>
+          <TabsList className="grid grid-cols-5 bg-white border-4 border-slate-100 shadow-xl rounded-[2rem] mb-8 h-16 p-1">
+            <TabsTrigger value="overview"><Activity size={22}/></TabsTrigger>
+            <TabsTrigger value="measure"><Beaker size={22}/></TabsTrigger>
+            <TabsTrigger value="tower"><Layers size={22}/></TabsTrigger>
+            <TabsTrigger value="tips"><Lightbulb size={22}/></TabsTrigger>
+            <TabsTrigger value="settings"><Trash2 size={22}/></TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-3">
-            {getAlerts().map((a, i) => (
-              <div key={i} className={`${a.c} text-white p-4 rounded-2xl shadow-md`}>
-                <p className="text-[10px] font-black opacity-80">{a.t}</p>
-                <p className="text-xl font-black">{a.m}</p>
-              </div>
+          <TabsContent value="overview" className="space-y-4">
+            {alerts.map((a, i) => (
+              <Card key={i} className={`${a.c} text-white p-6 rounded-[2rem] flex items-center gap-5 border-none shadow-xl`}>
+                <div className="bg-white/20 p-4 rounded-2xl">{a.i}</div>
+                <div>
+                  <p className="text-[10px] font-black uppercase opacity-70 mb-1">{a.t}</p>
+                  <p className="text-3xl font-black italic leading-none">{a.v}</p>
+                  <p className="text-[10px] font-bold mt-1 uppercase tracking-tight">{a.d}</p>
+                </div>
+              </Card>
             ))}
-            {getAlerts().length === 0 && <div className="p-10 text-center border-2 border-dashed rounded-3xl text-slate-400 font-bold">TODO EN ORDEN</div>}
+            {alerts.length === 0 && (
+              <Card className="p-12 text-center font-black text-green-700 border-4 border-green-100 bg-green-50 rounded-[3rem]">
+                <Check className="mx-auto mb-4 bg-white rounded-full p-2" size={50}/>
+                SISTEMA EN EQUILIBRIO PERFECTO
+              </Card>
+            )}
           </TabsContent>
 
-          <TabsContent value="measure" className="bg-white p-6 rounded-3xl border shadow-sm space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="text-[10px] font-bold">pH</label><input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} className="w-full p-3 bg-slate-50 border rounded-xl text-center font-bold" /></div>
-              <div><label className="text-[10px] font-bold">EC</label><input type="number" step="0.1" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-3 bg-slate-50 border rounded-xl text-center font-bold" /></div>
-            </div>
-            <button onClick={() => setTab("overview")} className="w-full bg-slate-900 text-white p-4 rounded-xl font-black">CALCULAR</button>
+          <TabsContent value="measure">
+            <Card className="p-8 rounded-[3rem] bg-white shadow-2xl space-y-6 border-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH</label><input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
+                <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC</label><input type="number" step="0.1" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
+                <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Agua actual en depósito (Litros)</label><input type="number" value={config.currentVol} onChange={e => setConfig({...config, currentVol: e.target.value})} className="w-full p-5 bg-cyan-50 border-4 border-cyan-100 rounded-3xl text-center text-4xl font-black text-cyan-700" /></div>
+                <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label><input type="number" value={config.temp} onChange={e => setConfig({...config, temp: e.target.value})} className="w-full p-4 bg-orange-50 border-4 border-orange-100 rounded-3xl text-center text-2xl font-black" /></div>
+              </div>
+              <button onClick={() => { setHistory([{...config, id: Date.now(), d: new Date().toLocaleString()}, ...history]); setTab("overview"); }} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase text-xl">Registrar Datos</button>
+            </Card>
           </TabsContent>
 
           <TabsContent value="tower" className="space-y-6">
-            <button onClick={() => { if(confirm('¿Rotar?')) { setPlants(plants.filter(p => p.l !== 3).map(p => ({...p, l: p.l + 1}))); setLastRot(new Date().toISOString()); } }} className="w-full bg-orange-600 text-white p-5 rounded-2xl font-black shadow-lg">COSECHAR N3 Y ROTAR</button>
+            <button onClick={handleRotation} className="w-full p-8 rounded-[2.5rem] bg-orange-600 text-white font-black flex items-center justify-center gap-4 shadow-2xl active:scale-95 transition-all">
+                <Scissors size={28}/> 
+                <div className="text-left">
+                  <p className="text-[10px] uppercase opacity-70">Ciclo Maestro</p>
+                  <p className="text-xl uppercase italic leading-none">Cosechar N3 y Rotar</p>
+                </div>
+            </button>
             {[1, 2, 3].map(l => (
               <div key={l}>
-                <p className="text-[10px] font-black text-slate-400 mb-2 uppercase">Nivel {l} {l===1?'(ARRIBA)':l===3?'(ABAJO)':'(CENTRO)'}</p>
-                <div className="grid grid-cols-3 gap-2 bg-slate-100 p-2 rounded-2xl">
-                  {[1,2,3,4,5,6].map(p => {
-                    const found = plants.find(x => x.l === l && x.p === p);
+                <p className="text-xs font-black text-slate-900 mb-3 px-4 flex justify-between uppercase italic">
+                    <span>{l === 1 ? 'Nivel 1 - ARRIBA' : l === 3 ? 'Nivel 3 - ABAJO (Cosecha)' : 'Nivel 2 - CENTRO'}</span>
+                    <span className="text-slate-400">{plants.filter(p => p.l === l).length}/6</span>
+                </p>
+                <div className="bg-slate-100 p-5 rounded-[2.5rem] grid grid-cols-3 gap-4 border-4">
+                  {[1, 2, 3, 4, 5, 6].map(p => {
+                    const pl = plants.find(x => x.l === l && x.p === p);
                     return (
-                      <button key={p} onClick={() => { if(found) { setPlants(plants.filter(x => x.id !== found.id)) } else { const v = prompt("Variedad: Romana, Iceberg, Roble, Lollo, Trocadero"); if(v) setPlants([...plants, {id: Date.now(), l, p, v}]) } }} className={`aspect-square rounded-xl border-2 flex items-center justify-center text-[8px] font-black ${found ? 'bg-green-500 text-white border-white' : 'bg-white text-slate-300'}`}>
-                        {found ? found.v : <Plus size={14}/>}
+                      <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l, p})} className={`aspect-square rounded-3xl flex flex-col items-center justify-center border-4 transition-all ${pl ? `${VARIETIES[pl.v]?.color} border-white shadow-xl scale-105` : 'bg-white border-slate-200 text-slate-200'}`}>
+                        {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
+                        {pl && <span className="text-[7px] font-black uppercase mt-1 text-white absolute bottom-2">{pl.v}</span>}
                       </button>
                     )
                   })}
@@ -132,28 +216,48 @@ export default function HydroAppV21() {
             ))}
           </TabsContent>
 
-          <TabsContent value="tips" className="space-y-4">
-            <div className="bg-orange-50 p-6 rounded-3xl border-2 border-orange-200">
-              <h3 className="font-black text-orange-700 mb-2">LANA DE ROCA</h3>
-              <p className="text-xs font-bold leading-relaxed">
-                1. Sumergir 24h en agua pH 5.5 (la lana virgen es pH 8.0).<br/>
-                2. NUNCA estrujar la lana, solo sacudir. Si la aprietas, matas el oxígeno.
-              </p>
-            </div>
+          <TabsContent value="tips" className="space-y-6">
+            <Card className="rounded-[2.5rem] border-4 border-orange-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-orange-500 p-6 text-white flex items-center gap-4"><Layers size={30}/><h3 className="font-black uppercase text-xs tracking-widest">Manual: Lana de Roca</h3></div>
+              <div className="p-8 space-y-4 text-xs font-bold text-slate-700 italic leading-relaxed">
+                <p>1. <span className="text-orange-600 uppercase font-black">pH Virgen:</span> La lana viene a pH 8.0. Sumergir 24h en agua pH 5.5 es obligatorio o las raíces morirán bloqueadas.</p>
+                <p>2. <span className="text-orange-600 uppercase font-black">Aireación:</span> Nunca estrujes la lana al sacarla. Si rompes su estructura, eliminas los micro-poros de oxígeno y las raíces se asfixian.</p>
+              </div>
+            </Card>
             
-            <div className="bg-blue-50 p-6 rounded-3xl border-2 border-blue-200">
-              <h3 className="font-black text-blue-700 mb-2">OXÍGENO</h3>
-              <p className="text-xs font-bold leading-relaxed">
-                Si el agua sube de 25°C, las raíces se pudren. Usa botellas de hielo en el depósito en verano.
-              </p>
-            </div>
+            <Card className="rounded-[2.5rem] border-4 border-blue-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-blue-600 p-6 text-white flex items-center gap-4"><Wind size={30}/><h3 className="font-black uppercase text-xs tracking-widest">Manual: Oxígeno</h3></div>
+              <div className="p-8 text-xs font-bold text-slate-700 italic leading-relaxed">
+                A partir de 25°C, el agua pierde su capacidad de retener oxígeno. Si no puedes bajar la temperatura, aumenta el chapoteo del agua de retorno o introduce botellas congeladas.
+              </div>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="settings">
-            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="w-full bg-red-600 text-white p-6 rounded-2xl font-black">RESETEAR TODO</button>
+          <TabsContent value="settings" className="space-y-4 py-10">
+            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="w-full bg-red-100 text-red-600 p-8 rounded-[2rem] font-black border-4 border-red-200 uppercase text-xs">Resetear Sistema Completo</button>
+            <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest">HydroCaru Master v24.0 - Industrial Control</p>
           </TabsContent>
         </Tabs>
       </main>
+
+      {selPos && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
+          <div className="bg-white w-full max-w-md mx-auto rounded-[3.5rem] p-10 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-black italic text-slate-400 uppercase text-sm tracking-widest">Variedad Nivel {selPos.l}</h3>
+                <button onClick={() => setSelPos(null)} className="p-2 bg-slate-100 rounded-full text-slate-400"><Plus size={24} className="rotate-45"/></button>
+            </div>
+            <div className="grid gap-3">
+              {Object.keys(VARIETIES).map(v => (
+                <button key={v} onClick={() => {setPlants([...plants, {id: Date.now(), v, l: selPos.l, p: selPos.p}]); setSelPos(null);}} className={`w-full p-6 rounded-3xl font-black text-white shadow-xl ${VARIETIES[v].color} text-left flex justify-between items-center`}>
+                    <span className="text-xl italic uppercase tracking-tighter">{v}</span>
+                    <Sprout size={24}/>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
