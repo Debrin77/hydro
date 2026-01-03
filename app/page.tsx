@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
-  Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, Thermometer, Zap, ShieldAlert, ChevronRight
+  Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, Thermometer, Zap, ShieldAlert, ChevronRight, Anchor
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -19,18 +19,13 @@ const VARIETIES = {
   "Trocadero": { color: "bg-lime-600", ecMin: 1.1, ecMax: 1.5, info: "EC ideal 1.3. Evitar puntas quemadas." }
 };
 
-export default function HydroAppFinal() {
-  // --- ESTADOS DE CONFIGURACIÓN Y FLUJO ---
-  const [step, setStep] = useState(0); // 0: PIN, 1: Volumen, 2: EC Meta, 3: App
+export default function HydroAppFinalV31() {
+  const [step, setStep] = useState(0); 
   const [isReady, setIsReady] = useState(false);
-  
-  // --- ESTADOS DE DATOS ---
   const [plants, setPlants] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [lastRot, setLastRot] = useState(new Date().toISOString());
   const [lastClean, setLastClean] = useState(new Date().toISOString());
-  
-  // --- MEDICIONES ---
   const [config, setConfig] = useState({ 
     totalVol: "20", 
     currentVol: "20",
@@ -39,13 +34,11 @@ export default function HydroAppFinal() {
     temp: "22",
     targetEC: "1.4"
   });
-
   const [tab, setTab] = useState("overview");
   const [selPos, setSelPos] = useState<{l: number, p: number} | null>(null);
 
-  // --- PERSISTENCIA DE DATOS ---
   useEffect(() => {
-    const saved = localStorage.getItem("hydro_master_v30");
+    const saved = localStorage.getItem("hydro_master_v31");
     if (saved) {
       const d = JSON.parse(saved);
       setPlants(d.plants || []);
@@ -60,11 +53,10 @@ export default function HydroAppFinal() {
 
   useEffect(() => {
     if (step === 3) {
-      localStorage.setItem("hydro_master_v30", JSON.stringify({ plants, config, history, lastRot, lastClean }));
+      localStorage.setItem("hydro_master_v31", JSON.stringify({ plants, config, history, lastRot, lastClean }));
     }
   }, [plants, config, history, lastRot, lastClean, step]);
 
-  // --- MOTOR DE CÁLCULO DE ALERTAS (VOLUMEN, EC, TEMP, pH) ---
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
     const vTot = parseFloat(config.totalVol) || 20;
@@ -74,17 +66,12 @@ export default function HydroAppFinal() {
     const temp = parseFloat(config.temp) || 20;
     const res = [];
 
-    // 1. ALERTA DE VOLUMEN (Basado en número de plantas y evaporación)
     if (vAct < vTot * 0.5) {
       res.push({ t: "AGUA CRÍTICA", v: `Faltan ${vTot - vAct}L`, d: "Rellenar para evitar picos de EC", c: "bg-red-600 animate-pulse", i: <Droplets size={30}/> });
     }
-
-    // 2. ALERTA DE TEMPERATURA (Oxígeno disuelto)
     if (temp > 25) {
       res.push({ t: "TEMP. ALTA", v: `${temp}°C`, d: "PELIGRO: Sin oxígeno. Añadir hielo al tanque.", c: "bg-orange-600 animate-bounce", i: <Thermometer size={30}/> });
     }
-
-    // 3. ALERTA DE pH (Cálculo según volumen real)
     if (ph > 6.2) {
       const ml = ((ph - 6.0) * 10 * vAct * 0.15).toFixed(1);
       res.push({ t: "BAJAR pH", v: `${ml}ml pH-`, d: "Bloqueo de Hierro y Magnesio", c: "bg-purple-600", i: <ArrowDownCircle /> });
@@ -92,19 +79,15 @@ export default function HydroAppFinal() {
       const ml = ((6.0 - ph) * 10 * vAct * 0.15).toFixed(1);
       res.push({ t: "SUBIR pH", v: `${ml}ml pH+`, d: "Riesgo de toxicidad por Aluminio", c: "bg-pink-600", i: <ArrowDownCircle className="rotate-180" /> });
     }
-
-    // 4. ALERTA DE EC (Nutrición Proporcional)
     if (ec < tEc && ec > 0) {
       const ml = (((tEc - ec) / 0.1) * vAct * 0.25).toFixed(1);
       res.push({ t: "FALTAN SALES", v: `${ml}ml A+B`, d: `Ajuste para llegar a ${tEc} mS/cm`, c: "bg-blue-700", i: <FlaskConical /> });
     } else if (ec > tEc + 0.3) {
       res.push({ t: "EC ALTA", v: "DILUIR", d: "Añadir agua sola para bajar concentración", c: "bg-amber-600", i: <AlertTriangle /> });
     }
-
     return res;
   }, [config]);
 
-  // --- LÓGICA DE ROTACIÓN ---
   const handleRotation = () => {
     if (confirm("¿Confirmas cosecha de N3 y bajada de niveles?")) {
       const filtered = plants.filter(p => p.l !== 3);
@@ -115,7 +98,6 @@ export default function HydroAppFinal() {
     }
   };
 
-  // --- INTERFAZ DE INICIO (PASO A PASO) ---
   if (step === 0) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
@@ -135,7 +117,7 @@ export default function HydroAppFinal() {
         <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl">
           <h2 className="text-3xl font-black text-center mb-8 uppercase italic text-blue-700">Paso 1: Depósito</h2>
           <div className="space-y-6">
-            <p className="text-center text-xs font-bold text-slate-400">Indica la capacidad TOTAL del depósito (Litros)</p>
+            <p className="text-center text-xs font-bold text-slate-400">Capacidad TOTAL del depósito (Litros)</p>
             <input type="number" value={config.totalVol} onChange={e => setConfig({...config, totalVol: e.target.value, currentVol: e.target.value})} className="w-full p-8 bg-slate-50 border-4 rounded-3xl text-5xl font-black text-center text-slate-900" />
             <button onClick={() => setStep(2)} className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase text-xl flex items-center justify-center gap-2">Siguiente <ChevronRight/></button>
           </div>
@@ -150,7 +132,7 @@ export default function HydroAppFinal() {
         <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl">
           <h2 className="text-3xl font-black text-center mb-8 uppercase italic text-purple-700">Paso 2: Nutrición</h2>
           <div className="space-y-6">
-            <p className="text-center text-xs font-bold text-slate-400">EC Objetivo para tus lechugas (Recomendado: 1.4)</p>
+            <p className="text-center text-xs font-bold text-slate-400">EC Objetivo deseada (Recomendado: 1.4)</p>
             <input type="number" step="0.1" value={config.targetEC} onChange={e => setConfig({...config, targetEC: e.target.value})} className="w-full p-8 bg-slate-50 border-4 rounded-3xl text-5xl font-black text-center text-slate-900" />
             <button onClick={() => { setStep(3); setIsReady(true); }} className="w-full bg-blue-600 text-white p-6 rounded-[2rem] font-black uppercase text-xl shadow-xl">Iniciar Sistema</button>
           </div>
@@ -159,13 +141,12 @@ export default function HydroAppFinal() {
     );
   }
 
-  // --- APP PRINCIPAL ---
   return (
     <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 font-sans">
       <header className="bg-white border-b-4 p-6 flex justify-between items-center sticky top-0 z-50">
         <div>
-          <h1 className="text-2xl font-black italic text-green-700 leading-none">HYDROCARU MASTER</h1>
-          <p className="text-[8px] font-black uppercase tracking-widest text-slate-300">Advanced Aeroponic Control</p>
+          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v3.1</h1>
+          <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 italic">Advanced Precision Tower</p>
         </div>
         <Badge className="bg-slate-900 text-white px-5 py-2 rounded-2xl font-black text-xl">{config.currentVol}L</Badge>
       </header>
@@ -243,29 +224,32 @@ export default function HydroAppFinal() {
 
           <TabsContent value="history" className="space-y-6">
             <Card className="p-8 rounded-[3.5rem] bg-indigo-950 text-white shadow-2xl relative overflow-hidden border-4 border-indigo-900">
-              <h3 className="text-xs font-black italic mb-6 text-indigo-300 uppercase underline decoration-green-500 decoration-4">Calendario Semanal</h3>
-              <div className="grid grid-cols-7 gap-2 text-center text-[10px]">
-                {Array.from({length: 28}).map((_, i) => {
+              <h3 className="text-xs font-black italic mb-6 text-indigo-300 uppercase underline decoration-green-500 decoration-4">Plan de Mantenimiento (15 Días)</h3>
+              <div className="grid grid-cols-5 gap-2 text-center text-[10px]">
+                {Array.from({length: 15}).map((_, i) => {
                   const day = i + 1;
-                  const isM = day % 3 === 0; const isR = day % 7 === 0; const isC = day === 28;
+                  const isMed = day % 3 === 0; 
+                  const isRot = day % 7 === 0; 
+                  const isLim = day === 15;
                   return (
-                    <div key={i} className={`h-10 flex items-center justify-center rounded-xl font-black border-2 ${isC ? 'bg-red-500 border-red-300' : isR ? 'bg-orange-500 border-orange-300' : isM ? 'bg-blue-600 border-blue-300 shadow-lg shadow-blue-900/50' : 'bg-white/5 border-transparent opacity-20'}`}>{day}</div>
+                    <div key={i} className={`h-12 flex items-center justify-center rounded-xl font-black border-2 ${isLim ? 'bg-red-500 border-red-300 animate-pulse' : isRot ? 'bg-orange-500 border-orange-300 shadow-lg shadow-orange-900/40' : isMed ? 'bg-blue-600 border-blue-300' : 'bg-white/5 border-transparent opacity-20'}`}>{day}</div>
                   )
                 })}
               </div>
               <div className="mt-8 flex justify-between text-[8px] font-black uppercase opacity-60">
                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-blue-600 rounded"></div> Medir</div>
                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-orange-500 rounded"></div> Rotar</div>
-                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-red-500 rounded"></div> Limpiar</div>
+                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-red-500 rounded text-red-500 animate-pulse shadow-sm shadow-red-500"></div> Limpiar</div>
               </div>
             </Card>
             <div className="space-y-2">
+              <h4 className="text-[9px] font-black uppercase text-slate-400 ml-4 tracking-widest">Últimos Registros</h4>
               {history.slice(0, 5).map(h => (
-                <div key={h.id} className="p-4 bg-white border-2 rounded-2xl flex justify-between items-center text-xs font-black italic shadow-sm">
+                <div key={h.id} className="p-4 bg-white border-2 rounded-2xl flex justify-between items-center text-xs font-black italic">
                   <span className="text-slate-400">{h.d.split(',')[0]}</span>
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 uppercase">
                     <span className="text-purple-600">pH {h.ph}</span>
-                    <span className="text-blue-600 font-bold underline">EC {h.ec}</span>
+                    <span className="text-blue-600">EC {h.ec}</span>
                     <span className="text-orange-500">{h.temp}°C</span>
                   </div>
                 </div>
@@ -274,31 +258,42 @@ export default function HydroAppFinal() {
           </TabsContent>
 
           <TabsContent value="tips" className="space-y-6">
-            <Card className="rounded-[3rem] border-4 border-orange-100 overflow-hidden shadow-xl bg-white">
-              <div className="bg-orange-500 p-6 text-white flex items-center gap-4"><Layers size={30}/><h3 className="font-black uppercase text-xs tracking-widest">Protocolo Lana de Roca</h3></div>
+            <h2 className="text-2xl font-black uppercase italic text-slate-800 ml-4">Consejos Maestros</h2>
+            
+            <Card className="rounded-[3rem] border-4 border-emerald-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-emerald-600 p-6 text-white flex items-center gap-4"><Sprout size={30}/><h3 className="font-black uppercase text-xs tracking-widest">Manejo de Plántulas</h3></div>
               <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
-                <p>1. <span className="text-orange-600 uppercase font-black">pH Virgen:</span> La lana viene a pH 8.0. Sumergir 24h en agua pH 5.5 es VITAL o el tallo se quemará por alcalinidad.</p>
-                <p>2. <span className="text-orange-600 uppercase font-black">Oxígeno:</span> NUNCA estrujes la lana. Al apretarla, rompes su estructura y quitas los poros de aire. La raíz se asfixiará.</p>
+                <p>• <span className="text-emerald-700 uppercase font-black">Luz Inicial:</span> Una vez germinen, necesitan 16-18h de luz. Si el tallo se estira mucho (ahilado), acerca la luz; la planta busca energía y gasta reservas vitales.</p>
+                <p>• <span className="text-emerald-700 uppercase font-black">Primeros Nutrientes:</span> No uses EC alta al nacer. Empieza con 0.6 - 0.8 mS/cm. La raíz joven es extremadamente sensible y una dosis alta de sales la deshidratará (plasmólisis).</p>
+                <p>• <span className="text-emerald-700 uppercase font-black">Humedad:</span> Mantén el entorno al 70-80% las primeras 2 semanas para que la hoja no transpire más de lo que la raíz puede absorber.</p>
               </div>
             </Card>
-            
+
+            <Card className="rounded-[3rem] border-4 border-orange-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-orange-500 p-6 text-white flex items-center gap-4"><Layers size={30}/><h3 className="font-black uppercase text-xs tracking-widest">Lana de Roca: Guía Técnica</h3></div>
+              <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
+                <p>• <span className="text-orange-600 uppercase font-black">Neutralizado Pro:</span> La lana es roca fundida y es alcalina (pH 8+). Sumerge en agua con pH 5.2-5.5 durante 24h. Esto estabiliza los silicatos y permite que el fósforo esté disponible desde el minuto 1.</p>
+                <p>• <span className="text-orange-600 uppercase font-black">Drenaje Maestro:</span> Tras el remojo, deja que escurra por gravedad. **PROHIBIDO ESTRUJAR**. Al apretarla, destruyes el 50% de los microporos de aire. La lana de roca debe tener un ratio 60% agua / 40% aire para evitar la pudrición radicular.</p>
+              </div>
+            </Card>
+
             <Card className="rounded-[3rem] border-4 border-blue-100 overflow-hidden shadow-xl bg-white">
-              <div className="bg-blue-600 p-6 text-white flex items-center gap-4"><Wind size={30}/><h3 className="font-black uppercase text-xs tracking-widest">Protocolo de Oxígeno</h3></div>
-              <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed">
-                El agua a más de <span className="text-blue-600 font-black underline">25°C</span> pierde el oxígeno. Si la app te marca alerta, mete botellas de agua congelada al depósito para bajar a 20°C.
+              <div className="bg-blue-600 p-6 text-white flex items-center gap-4"><Anchor size={30}/><h3 className="font-black uppercase text-xs tracking-widest">Estabilidad del Depósito</h3></div>
+              <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
+                <p>• <span className="text-blue-700 uppercase font-black">Orden de Mezcla:</span> Primero regula el pH del agua sola, luego añade Nutriente A, mezcla bien, y luego Nutriente B. Si mezclas A y B puros, los minerales precipitan y se vuelven piedras insolubles.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Bio-Film:</span> Si el agua huele a pantano, limpia el depósito con agua oxigenada al 3% para desinfectar las paredes antes de volver a llenar.</p>
               </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6 py-10">
-            <button onClick={() => { setLastClean(new Date().toISOString()); alert('Limpieza registrada.'); }} className="w-full bg-slate-100 text-slate-800 p-8 rounded-[2.5rem] font-black border-4 border-slate-200 uppercase text-xs">Registrar Limpieza de Depósito</button>
-            <button onClick={() => { if(confirm('¿BORRAR TODO?')) { localStorage.clear(); window.location.reload(); }}} className="w-full bg-red-100 text-red-600 p-10 rounded-[2.5rem] font-black border-4 border-red-200 uppercase text-sm shadow-xl">BORRADO DE FÁBRICA</button>
-            <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest pt-10">HydroCaru Master v.30.0 - Full Logic Mode</p>
+            <button onClick={() => { setLastClean(new Date().toISOString()); alert('Limpieza registrada.'); }} className="w-full bg-slate-100 text-slate-800 p-8 rounded-[2.5rem] font-black border-4 border-slate-200 uppercase text-xs flex items-center justify-center gap-2"><ShieldAlert className="text-red-500"/> Registrar Limpieza de sales hoy</button>
+            <button onClick={() => { if(confirm('¿BORRAR TODO?')) { localStorage.clear(); window.location.reload(); }}} className="w-full bg-red-100 text-red-600 p-10 rounded-[2.5rem] font-black border-4 border-red-200 uppercase text-sm shadow-xl hover:bg-red-600 hover:text-white transition-all">RESETEO MAESTRO</button>
+            <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest pt-10 leading-relaxed">HydroCaru Master v.3.1<br/>Clean Cycle Optimized: 15 Days</p>
           </TabsContent>
         </Tabs>
       </main>
 
-      {/* MODAL DE VARIEDAD (CON DATOS DE EC) */}
       {selPos && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
           <div className="bg-white w-full max-w-md mx-auto rounded-[4rem] p-12 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300">
