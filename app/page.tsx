@@ -445,9 +445,42 @@ export default function HydroApp() {
     const level1Plants = plants.filter(p => p.l === 1)
     const initialValues = calculateOptimalValues(
       level1Plants,
-      parseFloat(config.currentVol),
-      parseFloat(config.totalVol)
+      parseFloat(config.currentVol) || 0,
+      parseFloat(config.totalVol) || 20
     )
+    
+    const handleActivateSystem = () => {
+      // Crear nueva configuración con los valores actualizados
+      const updatedConfig = {
+        ...config,
+        targetEC: initialValues.targetEC,
+        targetPH: initialValues.targetPH,
+        ec: initialValues.targetEC
+      }
+      
+      // Actualizar el estado de configuración
+      setConfig(updatedConfig)
+      
+      // Crear registro histórico
+      const initialRecord = {
+        ...updatedConfig,
+        id: Date.now(),
+        d: new Date().toLocaleString(),
+        note: "Inicio del sistema - 6 plántulas"
+      }
+      
+      // Actualizar historial
+      setHistory([initialRecord])
+      
+      // Ir al panel principal
+      setStep(3)
+      setTab("overview")
+      
+      // Mostrar mensaje de éxito
+      setTimeout(() => {
+        alert("✅ Sistema iniciado!\n\nLa app ajustará automáticamente los valores según:\n• Crecimiento de plantas\n• Cambios en volumen\n• Rotaciones semanales")
+      }, 300)
+    }
     
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 flex items-center justify-center p-4">
@@ -514,38 +547,7 @@ export default function HydroApp() {
           </div>
           
           <button
-            onClick={() => {
-              // Crear nueva configuración con los valores actualizados
-              const newConfig = {
-                ...config,
-                targetEC: initialValues.targetEC,
-                targetPH: initialValues.targetPH,
-                ec: initialValues.targetEC
-              }
-              
-              // Actualizar el estado de configuración
-              setConfig(newConfig)
-              
-              // Crear registro histórico
-              const initialRecord = {
-                ...newConfig,
-                id: Date.now(),
-                d: new Date().toLocaleString(),
-                note: "Inicio del sistema - 6 plántulas"
-              }
-              
-              // Actualizar historial
-              setHistory([initialRecord, ...history])
-              
-              // Ir al panel principal
-              setStep(3)
-              setTab("overview")
-              
-              // Mostrar mensaje de éxito
-              setTimeout(() => {
-                alert("✅ Sistema iniciado!\n\nLa app ajustará automáticamente los valores según:\n• Crecimiento de plantas\n• Cambios en volumen\n• Rotaciones semanales")
-              }, 300)
-            }}
+            onClick={handleActivateSystem}
             className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white p-9 rounded-[2.5rem] font-black uppercase text-2xl shadow-2xl hover:shadow-3xl transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Activar Sistema Inteligente
