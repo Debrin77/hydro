@@ -440,7 +440,7 @@ export default function HydroApp() {
     )
   }
 
-  // ==================== PANTALLA 3: RESUMEN FINAL ====================
+  // ==================== PANTALLA 3: RESUMEN FINAL (CORREGIDA) ====================
   if (step === 2) {
     const level1Plants = plants.filter(p => p.l === 1)
     const initialValues = calculateOptimalValues(
@@ -468,56 +468,85 @@ export default function HydroApp() {
           
           <div className="p-8 rounded-[3rem] bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-100 mb-6">
             <div className="mb-6">
-              <p className="text-[12px] font-black uppercase text-slate-400 mb-1">
+              <p className="text-[12px] font-black uppercase text-slate-400 mb-1 text-center">
                 VALORES CALCULADOS
               </p>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-5xl font-black italic text-emerald-700 leading-none">
+              
+              {/* EC - CON MÁS SEPARACIÓN */}
+              <div className="mb-8 text-center">
+                <div className="flex flex-col items-center justify-center mb-2">
+                  <p className="text-5xl font-black italic text-emerald-700 leading-none mb-1">
                     {initialValues.targetEC}
                   </p>
-                  <p className="text-[11px] font-bold text-slate-500">EC (mS/cm)</p>
+                  <div className="w-32 h-1 bg-gradient-to-r from-emerald-200 to-green-200 rounded-full mb-2"></div>
+                  <p className="text-[13px] font-bold text-slate-500">EC (mS/cm)</p>
                 </div>
-                <div>
-                  <p className="text-5xl font-black italic text-emerald-700 leading-none">
+                <p className="text-[10px] text-slate-400 font-medium">
+                  Conductividad Eléctrica objetivo
+                </p>
+              </div>
+              
+              {/* Separador visual */}
+              <div className="flex items-center justify-center my-4">
+                <div className="w-3/4 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent"></div>
+              </div>
+              
+              {/* pH - CON MÁS SEPARACIÓN */}
+              <div className="mt-8 text-center">
+                <div className="flex flex-col items-center justify-center mb-2">
+                  <p className="text-5xl font-black italic text-emerald-700 leading-none mb-1">
                     {initialValues.targetPH}
                   </p>
-                  <p className="text-[11px] font-bold text-slate-500">pH</p>
+                  <div className="w-24 h-1 bg-gradient-to-r from-green-200 to-emerald-200 rounded-full mb-2"></div>
+                  <p className="text-[13px] font-bold text-slate-500">pH</p>
                 </div>
+                <p className="text-[10px] text-slate-400 font-medium">
+                  Nivel de acidez ideal
+                </p>
               </div>
-              <p className="text-[11px] font-bold text-slate-500 mt-4">
-                Para 6 plántulas con {config.currentVol}L de {config.totalVol}L total
-              </p>
+              
+              <div className="mt-8 p-4 bg-white/50 rounded-2xl">
+                <p className="text-[11px] font-bold text-slate-500 text-center">
+                  Para 6 plántulas con {config.currentVol}L de {config.totalVol}L total
+                </p>
+              </div>
             </div>
           </div>
           
           <button
             onClick={() => {
-              setConfig(prev => ({
-                ...prev,
-                targetEC: initialValues.targetEC,
-                targetPH: initialValues.targetPH,
-                ec: initialValues.targetEC
-              }))
-              
-              const initialRecord = {
+              // Crear nueva configuración con los valores actualizados
+              const newConfig = {
                 ...config,
                 targetEC: initialValues.targetEC,
                 targetPH: initialValues.targetPH,
+                ec: initialValues.targetEC
+              }
+              
+              // Actualizar el estado de configuración
+              setConfig(newConfig)
+              
+              // Crear registro histórico
+              const initialRecord = {
+                ...newConfig,
                 id: Date.now(),
                 d: new Date().toLocaleString(),
                 note: "Inicio del sistema - 6 plántulas"
               }
               
+              // Actualizar historial
               setHistory([initialRecord, ...history])
+              
+              // Ir al panel principal
               setStep(3)
               setTab("overview")
               
+              // Mostrar mensaje de éxito
               setTimeout(() => {
                 alert("✅ Sistema iniciado!\n\nLa app ajustará automáticamente los valores según:\n• Crecimiento de plantas\n• Cambios en volumen\n• Rotaciones semanales")
               }, 300)
             }}
-            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white p-9 rounded-[2.5rem] font-black uppercase text-2xl shadow-2xl hover:shadow-3xl transition-all"
+            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white p-9 rounded-[2.5rem] font-black uppercase text-2xl shadow-2xl hover:shadow-3xl transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Activar Sistema Inteligente
           </button>
@@ -741,7 +770,13 @@ export default function HydroApp() {
             </div>
             
             <button onClick={() => { 
-              setHistory([{...config, id: Date.now(), d: new Date().toLocaleString()}, ...history])
+              const newRecord = {
+                ...config,
+                id: Date.now(),
+                d: new Date().toLocaleString(),
+                note: "Medición registrada"
+              }
+              setHistory([newRecord, ...history])
               setTab("overview")
               alert("✅ Medición registrada")
             }} className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white p-7 rounded-[2.5rem] font-black uppercase text-xl shadow-2xl">
@@ -852,7 +887,7 @@ export default function HydroApp() {
             </button>
             
             <button onClick={() => { 
-              if(confirm('¿RESETEO COMPLETO?')) { 
+              if(confirm('¿RESETEO COMPLETO?\n\nSe borrarán todos los datos.')) { 
                 localStorage.clear()
                 window.location.reload()
               }
