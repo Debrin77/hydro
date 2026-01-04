@@ -192,6 +192,11 @@ export default function HydroAppFinalV31() {
     }
   }, [plants, config.totalVol, step]);
 
+  // Función para generar ID único
+  const generatePlantId = () => {
+    return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   // ==================== ALERTAS VISUALES MEJORADAS ====================
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
@@ -423,11 +428,6 @@ export default function HydroAppFinalV31() {
     }
   };
 
-  // Función para generar ID único
-  const generatePlantId = () => {
-    return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  };
-
   // ==================== PANTALLAS DE INICIO ====================
   if (step === 0) {
     return (
@@ -455,7 +455,7 @@ export default function HydroAppFinalV31() {
   if (step === 1) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-lime-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl">
+        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl relative">
           <div className="flex items-center justify-between mb-8">
             <button onClick={() => setStep(0)} className="p-3 bg-slate-100 rounded-full">
               <ArrowLeft className="text-slate-500" />
@@ -488,6 +488,53 @@ export default function HydroAppFinalV31() {
             {plants.length > 0 ? `Ver Recomendaciones (${plants.length} plantas)` : "Selecciona Plantas"}
             <ArrowRight/>
           </button>
+
+          {/* Modal para seleccionar variedad - SOLO EN PASO 1 */}
+          {selPos && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+              <div className="bg-white w-full max-w-md mx-auto rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-black text-xl text-slate-800">Seleccionar Variedad</h3>
+                  <button onClick={() => setSelPos(null)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:bg-slate-200">
+                    <Plus size={24} className="rotate-45"/>
+                  </button>
+                </div>
+                <div className="grid gap-3">
+                  {Object.keys(VARIETIES).map(v => (
+                    <button 
+                      key={v}
+                      onClick={() => {
+                        // Crear nueva planta con ID único
+                        const newPlant = {
+                          id: generatePlantId(),
+                          v: v,
+                          l: selPos.l,
+                          p: selPos.p
+                        };
+                        setPlants([...plants, newPlant]);
+                        setSelPos(null); // Cerrar modal
+                      }} 
+                      className={`w-full p-5 rounded-[1.5rem] font-black text-white shadow-md flex justify-between items-center hover:scale-[1.02] active:scale-95 transition-all ${VARIETIES[v].color}`}
+                    >
+                      <div className="text-left">
+                        <span className="text-xl uppercase italic tracking-tighter leading-none block">{v}</span>
+                        <span className="text-[10px] opacity-80 lowercase font-medium">
+                          EC máx: {VARIETIES[v].ecMax} | pH: {VARIETIES[v].phIdeal}
+                        </span>
+                      </div>
+                      <Zap size={20}/>
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setSelPos(null)}
+                  className="w-full mt-4 p-4 bg-slate-100 rounded-[1.5rem] font-black text-slate-600 hover:bg-slate-200"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     );
@@ -905,8 +952,8 @@ export default function HydroAppFinalV31() {
         </Tabs>
       </main>
 
-      {/* Modal para seleccionar variedad */}
-      {selPos && (
+      {/* Modal para seleccionar variedad - SOLO PARA PANEL PRINCIPAL */}
+      {selPos && step === 4 && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
           <div className="bg-white w-full max-w-md mx-auto rounded-[4rem] p-12 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div className="flex justify-between items-center mb-4">
