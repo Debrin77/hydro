@@ -466,7 +466,15 @@ export default function HydroAppFinalV31() {
               {[1, 2, 3, 4, 5, 6].map(p => {
                 const pl = plants.find(x => x.l === 1 && x.p === p);
                 return (
-                  <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l: 1, p})} 
+                  <button key={p} onClick={() => {
+                    if (pl) {
+                      // Eliminar la planta por su id
+                      setPlants(plants.filter(x => x.id !== pl.id));
+                    } else {
+                      // Abrir modal para seleccionar variedad en esta posición
+                      setSelPos({l: 1, p});
+                    }
+                  }} 
                     className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-emerald-100 text-emerald-100'}`}>
                     {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
                     {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
@@ -740,7 +748,13 @@ export default function HydroAppFinalV31() {
                   {[1, 2, 3, 4, 5, 6].map(p => {
                     const pl = plants.find(x => x.l === l && x.p === p);
                     return (
-                      <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l, p})} className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'}`}>
+                      <button key={p} onClick={() => {
+                        if (pl) {
+                          setPlants(plants.filter(x => x.id !== pl.id));
+                        } else {
+                          setSelPos({l, p});
+                        }
+                      }} className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'}`}>
                         {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
                         {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
                       </button>
@@ -910,7 +924,17 @@ export default function HydroAppFinalV31() {
             </div>
             <div className="grid gap-3">
               {Object.keys(VARIETIES).map(v => (
-                <button key={v} onClick={() => {setPlants([...plants, {id: Date.now(), v, l: selPos.l, p: selPos.p}]); setSelPos(null);}} className={`w-full p-7 rounded-[2.2rem] font-black text-white shadow-xl flex justify-between items-center hover:scale-105 active:scale-95 transition-all ${VARIETIES[v].color}`}>
+                <button key={v} onClick={() => {
+                  // Generar un ID único para la nueva planta
+                  const newPlant = {
+                    id: `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    v, 
+                    l: selPos.l, 
+                    p: selPos.p
+                  };
+                  setPlants([...plants, newPlant]);
+                  setSelPos(null);
+                }} className={`w-full p-7 rounded-[2.2rem] font-black text-white shadow-xl flex justify-between items-center hover:scale-105 active:scale-95 transition-all ${VARIETIES[v].color}`}>
                     <div className="text-left">
                         <span className="text-2xl uppercase italic tracking-tighter leading-none block">{v}</span>
                         <span className="text-[10px] opacity-80 lowercase font-medium">EC máx: {VARIETIES[v].ecMax}</span>
