@@ -16,7 +16,7 @@ headers: {
 }
 
 const encoded = authHeader.split(' ')[1];
-const decoded = atob(encoded);
+const decoded = Buffer.from(encoded, 'base64').toString();;
 const [user, pass] = decoded.split(':');
 
 if (user === USER && pass === PASS) {
@@ -29,4 +29,5 @@ headers: {
 'WWW-Authenticate': 'Basic realm="Private App"',
 },
 });
+
 }
