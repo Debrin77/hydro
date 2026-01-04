@@ -1,4 +1,4 @@
-"use client";
+export const dynamic = 'force-dynamic';"use client";
 import React, { useState, useEffect, useMemo } from "react"
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
