@@ -387,6 +387,54 @@ export default function HydroApp() {
               `Selecciona ${6 - level1Plants.length} más`
             )}
           </button>
+
+          {/* MODAL PARA SELECCIONAR VARIEDAD - VERSIÓN PASO 1 */}
+          {selPos && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+              <div className="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-black text-emerald-700">Seleccionar Variedad</h3>
+                  <button onClick={() => setSelPos(null)} className="p-2 bg-slate-100 rounded-full">
+                    <Plus className="text-slate-400 rotate-45" size={24} />
+                  </button>
+                </div>
+                
+                <div className="grid gap-3">
+                  {Object.keys(VARIETIES).map(variety => (
+                    <button
+                      key={variety}
+                      onClick={() => {
+                        const newPlant = {
+                          id: Date.now(),
+                          v: variety,
+                          l: selPos.l,
+                          p: selPos.p
+                        }
+                        setPlants([...plants, newPlant])
+                        setSelPos(null)
+                      }}
+                      className={`w-full p-5 rounded-[2rem] ${VARIETIES[variety].color} text-white flex justify-between items-center shadow-lg hover:scale-[1.02] transition-transform`}
+                    >
+                      <div className="text-left">
+                        <div className="text-2xl font-black uppercase italic">{variety}</div>
+                        <div className="text-xs opacity-90">EC plántula: {VARIETIES[variety].hyproDosage.seedling.ec}</div>
+                      </div>
+                      <Zap size={24} className="text-white/80" />
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                  <button
+                    onClick={() => setSelPos(null)}
+                    className="w-full p-4 bg-slate-100 rounded-2xl text-slate-600 font-bold"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -815,8 +863,8 @@ export default function HydroApp() {
         )}
       </main>
 
-      {/* Modal para seleccionar variedad */}
-      {selPos && (
+      {/* Modal para seleccionar variedad - VERSIÓN PANEL PRINCIPAL */}
+      {selPos && step === 3 && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
           <div className="bg-white w-full max-w-md mx-auto rounded-[4rem] p-12 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
