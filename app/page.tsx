@@ -70,7 +70,7 @@ const VARIETIES = {
 }
 
 // ==================== FUNCIONES DE CÁLCULO ====================
-const calculateOptimalValues = (plants: any[], currentVolume: number, totalVolume: number) => {
+const calculateOptimalValues = (plants, currentVolume, totalVolume) => {
   if (!plants || plants.length === 0) {
     return { 
       targetEC: "0.8", 
@@ -84,7 +84,7 @@ const calculateOptimalValues = (plants: any[], currentVolume: number, totalVolum
   let seedlingCount = 0, growthCount = 0, matureCount = 0
   
   plants.forEach(plant => {
-    const variety = VARIETIES[plant.v as keyof typeof VARIETIES]
+    const variety = VARIETIES[plant.v]
     if (!variety) return
     
     let weight
@@ -127,8 +127,8 @@ const calculateOptimalValues = (plants: any[], currentVolume: number, totalVolum
 // ==================== COMPONENTE PRINCIPAL ====================
 export default function HydroApp() {
   const [step, setStep] = useState(0)
-  const [plants, setPlants] = useState<any[]>([])
-  const [history, setHistory] = useState<any[]>([])
+  const [plants, setPlants] = useState([])
+  const [history, setHistory] = useState([])
   const [lastRot, setLastRot] = useState(new Date().toISOString())
   const [lastClean, setLastClean] = useState(new Date().toISOString())
   const [config, setConfig] = useState({ 
@@ -141,7 +141,7 @@ export default function HydroApp() {
     targetPH: "6.0"
   })
   const [tab, setTab] = useState("overview")
-  const [selPos, setSelPos] = useState<{l: number, p: number} | null>(null)
+  const [selPos, setSelPos] = useState(null)
 
   // Cálculo en tiempo real
   const currentOptimalValues = useMemo(() => {
@@ -152,27 +152,31 @@ export default function HydroApp() {
     )
   }, [plants, config.currentVol, config.totalVol])
 
-  // Cargar datos guardados
+  // Cargar datos guardados - VERSIÓN CORREGIDA
   useEffect(() => {
-    const saved = localStorage.getItem("hydro_master")
-    if (saved) {
-      try {
-        const d = JSON.parse(saved)
-        setPlants(d.plants || [])
-        setConfig(d.config || config)
-        setHistory(d.history || [])
-        setLastRot(d.lastRot || new Date().toISOString())
-        setLastClean(d.lastClean || new Date().toISOString())
-        setStep(3)
-      } catch (e) {
-        console.log("Primer inicio sin datos guardados")
+    // Esta verificación asegura que el código solo se ejecute en el navegador
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem("hydro_master")
+      if (saved) {
+        try {
+          const d = JSON.parse(saved)
+          setPlants(d.plants || [])
+          setConfig(d.config || config)
+          setHistory(d.history || [])
+          setLastRot(d.lastRot || new Date().toISOString())
+          setLastClean(d.lastClean || new Date().toISOString())
+          setStep(3)
+        } catch (e) {
+          console.log("Primer inicio sin datos guardados")
+        }
       }
     }
   }, [])
 
-  // Guardar automáticamente
+  // Guardar automáticamente - VERSIÓN CORREGIDA
   useEffect(() => {
-    if (step >= 2) {
+    // Esta verificación asegura que el código solo se ejecute en el navegador
+    if (typeof window !== 'undefined' && step >= 2) {
       localStorage.setItem("hydro_master", 
         JSON.stringify({ 
           plants, 
@@ -311,7 +315,7 @@ export default function HydroApp() {
                       }}
                       className={`aspect-square rounded-[2rem] flex flex-col items-center justify-center border-4 relative transition-all ${
                         plant 
-                          ? `${VARIETIES[plant.v as keyof typeof VARIETIES].color} border-white shadow-xl scale-105` 
+                          ? `${VARIETIES[plant.v].color} border-white shadow-xl scale-105` 
                           : 'bg-gradient-to-b from-white to-slate-50 border-emerald-100'
                       }`}
                     >
@@ -413,11 +417,11 @@ export default function HydroApp() {
                         setPlants([...plants, newPlant])
                         setSelPos(null)
                       }}
-                      className={`w-full p-5 rounded-[2rem] ${VARIETIES[variety as keyof typeof VARIETIES].color} text-white flex justify-between items-center shadow-lg hover:scale-[1.02] transition-transform`}
+                      className={`w-full p-5 rounded-[2rem] ${VARIETIES[variety].color} text-white flex justify-between items-center shadow-lg hover:scale-[1.02] transition-transform`}
                     >
                       <div className="text-left">
                         <div className="text-2xl font-black uppercase italic">{variety}</div>
-                        <div className="text-xs opacity-90">EC plántula: {VARIETIES[variety as keyof typeof VARIETIES].hyproDosage.seedling.ec}</div>
+                        <div className="text-xs opacity-90">EC plántula: {VARIETIES[variety].hyproDosage.seedling.ec}</div>
                       </div>
                       <Zap size={24} className="text-white/80" />
                     </button>
@@ -568,13 +572,7 @@ export default function HydroApp() {
     const tEc = parseFloat(config.targetEC) || 1.4
     const tPh = parseFloat(config.targetPH) || 6.0
     const temp = parseFloat(config.temp) || 20
-    const res: Array<{
-      t: string
-      v: string
-      d: string
-      c: string
-      icon: React.ReactNode
-    }> = []
+    const res = []
 
     if (vAct < vTot * 0.3) {
       res.push({ 
@@ -816,7 +814,7 @@ export default function HydroApp() {
                     return (
                       <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l, p})} 
                         className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${
-                          pl ? `${VARIETIES[pl.v as keyof typeof VARIETIES].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'
+                          pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'
                         }`}>
                         {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
                         {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
@@ -924,12 +922,12 @@ export default function HydroApp() {
                     setPlants([...plants, {id: Date.now(), v, l: selPos.l, p: selPos.p}])
                     setSelPos(null)
                   }}
-                  className={`w-full p-7 rounded-[2.2rem] font-black text-white shadow-xl flex justify-between items-center ${VARIETIES[v as keyof typeof VARIETIES].color}`}
+                  className={`w-full p-7 rounded-[2.2rem] font-black text-white shadow-xl flex justify-between items-center ${VARIETIES[v].color}`}
                 >
                   <div className="text-left">
                     <span className="text-2xl uppercase italic tracking-tighter leading-none block">{v}</span>
                     <span className="text-[10px] opacity-80 lowercase font-medium">
-                      EC plántula: {VARIETIES[v as keyof typeof VARIETIES].hyproDosage.seedling.ec}
+                      EC plántula: {VARIETIES[v].hyproDosage.seedling.ec}
                     </span>
                   </div>
                   <Zap size={24}/>
