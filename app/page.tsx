@@ -71,7 +71,7 @@ const VARIETIES = {
 
 // ==================== FUNCIONES DE CÁLCULO INTELIGENTE ====================
 const calculateSystemEC = (plants, totalVolume) => {
-  if (plants.length === 0) return { targetEC: "1.2", targetPH: "6.0" };
+  if (plants.length === 0) return { targetEC: "1.2", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
   
   let totalECWeighted = 0;
   let totalPH = 0;
@@ -423,6 +423,11 @@ export default function HydroAppFinalV31() {
     }
   };
 
+  // Función para generar ID único
+  const generatePlantId = () => {
+    return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   // ==================== PANTALLAS DE INICIO ====================
   if (step === 0) {
     return (
@@ -466,17 +471,9 @@ export default function HydroAppFinalV31() {
               {[1, 2, 3, 4, 5, 6].map(p => {
                 const pl = plants.find(x => x.l === 1 && x.p === p);
                 return (
-                  <button key={p} onClick={() => {
-                    if (pl) {
-                      // Eliminar la planta por su id
-                      setPlants(plants.filter(x => x.id !== pl.id));
-                    } else {
-                      // Abrir modal para seleccionar variedad en esta posición
-                      setSelPos({l: 1, p});
-                    }
-                  }} 
-                    className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-emerald-100 text-emerald-100'}`}>
-                    {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
+                  <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l: 1, p})} 
+                    className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-emerald-100 hover:bg-emerald-50'}`}>
+                    {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} className="text-emerald-300" />}
                     {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
                   </button>
                 )
@@ -748,14 +745,8 @@ export default function HydroAppFinalV31() {
                   {[1, 2, 3, 4, 5, 6].map(p => {
                     const pl = plants.find(x => x.l === l && x.p === p);
                     return (
-                      <button key={p} onClick={() => {
-                        if (pl) {
-                          setPlants(plants.filter(x => x.id !== pl.id));
-                        } else {
-                          setSelPos({l, p});
-                        }
-                      }} className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'}`}>
-                        {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
+                      <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l, p})} className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 hover:bg-slate-50'}`}>
+                        {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} className="text-slate-300" />}
                         {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
                       </button>
                     )
@@ -925,14 +916,13 @@ export default function HydroAppFinalV31() {
             <div className="grid gap-3">
               {Object.keys(VARIETIES).map(v => (
                 <button key={v} onClick={() => {
-                  // Generar un ID único para la nueva planta
                   const newPlant = {
-                    id: `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    id: generatePlantId(),
                     v, 
                     l: selPos.l, 
                     p: selPos.p
                   };
-                  setPlants([...plants, newPlant]);
+                  setPlants([...plants, newPlant]); 
                   setSelPos(null);
                 }} className={`w-full p-7 rounded-[2.2rem] font-black text-white shadow-xl flex justify-between items-center hover:scale-105 active:scale-95 transition-all ${VARIETIES[v].color}`}>
                     <div className="text-left">
