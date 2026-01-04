@@ -7,8 +7,63 @@ import {
   Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, 
   Droplets, Thermometer, Zap, ShieldAlert, ChevronRight, 
   Anchor, ArrowLeft, ArrowRight, Bell, CloudRain, 
-  ThermometerSun, RefreshCw, Skull, Info, Leaf
+  ThermometerSun, RefreshCw, Skull, Info, Leaf,
+  AlertCircle
 } from "lucide-react"
+
+// ==================== COMPONENTE DE SEGURIDAD ====================
+// Este componente captura errores y muestra una pantalla de recuperación
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-red-50 to-orange-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-md p-8 bg-white rounded-3xl shadow-2xl text-center">
+        <div className="mx-auto mb-6 w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
+          <AlertCircle className="text-white" size={32} />
+        </div>
+        
+        <h1 className="text-2xl font-black text-red-700 mb-4">¡Ups! Algo salió mal</h1>
+        <p className="text-gray-600 mb-6">
+          La aplicación encontró un error, pero puedes recuperarla.
+        </p>
+        
+        <div className="space-y-4">
+          <button
+            onClick={resetErrorBoundary}
+            className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white p-4 rounded-2xl font-bold shadow-lg"
+          >
+            Reintentar la aplicación
+          </button>
+          
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem("hydro_master")
+                window.location.reload()
+              }
+            }}
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white p-4 rounded-2xl font-bold shadow-lg"
+          >
+            Reiniciar datos y recargar
+          </button>
+          
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-gray-200 text-gray-700 p-4 rounded-2xl font-bold"
+          >
+            Solo recargar página
+          </button>
+        </div>
+        
+        <div className="mt-8 p-4 bg-gray-100 rounded-xl text-left">
+          <p className="text-sm font-bold text-gray-500 mb-2">Detalles técnicos (para ayuda):</p>
+          <p className="text-xs text-gray-600 font-mono overflow-auto">
+            {error?.message || "Error desconocido"}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ==================== BASE DE DATOS DE VARIEDADES ====================
 const VARIETIES = {
@@ -125,7 +180,7 @@ const calculateOptimalValues = (plants, currentVolume, totalVolume) => {
 }
 
 // ==================== COMPONENTE PRINCIPAL ====================
-export default function HydroApp() {
+function HydroAppContent() {
   const [step, setStep] = useState(0)
   const [plants, setPlants] = useState([])
   const [history, setHistory] = useState([])
@@ -142,23 +197,28 @@ export default function HydroApp() {
   })
   const [tab, setTab] = useState("overview")
   const [selPos, setSelPos] = useState(null)
+  const [hasError, setHasError] = useState(false)
 
-  // Cálculo en tiempo real
+  // Cálculo en tiempo real con protección
   const currentOptimalValues = useMemo(() => {
-    return calculateOptimalValues(
-      plants,
-      parseFloat(config.currentVol) || 0,
-      parseFloat(config.totalVol) || 20
-    )
+    try {
+      return calculateOptimalValues(
+        plants,
+        parseFloat(config.currentVol) || 0,
+        parseFloat(config.totalVol) || 20
+      )
+    } catch (error) {
+      console.error("Error calculando valores:", error)
+      return { targetEC: "1.2", targetPH: "6.0" }
+    }
   }, [plants, config.currentVol, config.totalVol])
 
-  // Cargar datos guardados - VERSIÓN CORREGIDA
+  // Cargar datos guardados - CON MÁS PROTECCIÓN
   useEffect(() => {
-    // Esta verificación asegura que el código solo se ejecute en el navegador
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem("hydro_master")
-      if (saved) {
-        try {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem("hydro_master")
+        if (saved) {
           const d = JSON.parse(saved)
           setPlants(d.plants || [])
           setConfig(d.config || config)
@@ -166,30 +226,33 @@ export default function HydroApp() {
           setLastRot(d.lastRot || new Date().toISOString())
           setLastClean(d.lastClean || new Date().toISOString())
           setStep(3)
-        } catch (e) {
-          console.log("Primer inicio sin datos guardados")
         }
       }
+    } catch (error) {
+      console.log("Error cargando datos guardados:", error)
     }
   }, [])
 
-  // Guardar automáticamente - VERSIÓN CORREGIDA
+  // Guardar automáticamente - CON MÁS PROTECCIÓN
   useEffect(() => {
-    // Esta verificación asegura que el código solo se ejecute en el navegador
-    if (typeof window !== 'undefined' && step >= 2) {
-      localStorage.setItem("hydro_master", 
-        JSON.stringify({ 
-          plants, 
-          config: {
-            ...config,
-            targetEC: currentOptimalValues.targetEC,
-            targetPH: currentOptimalValues.targetPH
-          }, 
-          history, 
-          lastRot, 
-          lastClean 
-        })
-      )
+    try {
+      if (typeof window !== 'undefined' && step >= 2) {
+        localStorage.setItem("hydro_master", 
+          JSON.stringify({ 
+            plants, 
+            config: {
+              ...config,
+              targetEC: currentOptimalValues.targetEC,
+              targetPH: currentOptimalValues.targetPH
+            }, 
+            history, 
+            lastRot, 
+            lastClean 
+          })
+        )
+      }
+    } catch (error) {
+      console.log("Error guardando datos:", error)
     }
   }, [plants, config, history, lastRot, lastClean, step, currentOptimalValues])
 
@@ -315,7 +378,7 @@ export default function HydroApp() {
                       }}
                       className={`aspect-square rounded-[2rem] flex flex-col items-center justify-center border-4 relative transition-all ${
                         plant 
-                          ? `${VARIETIES[plant.v].color} border-white shadow-xl scale-105` 
+                          ? `${VARIETIES[plant.v]?.color || 'bg-gray-500'} border-white shadow-xl scale-105` 
                           : 'bg-gradient-to-b from-white to-slate-50 border-emerald-100'
                       }`}
                     >
@@ -444,7 +507,7 @@ export default function HydroApp() {
     )
   }
 
-  // ==================== PANTALLA 3: RESUMEN FINAL (CORREGIDA) ====================
+  // ==================== PANTALLA 3: RESUMEN FINAL ====================
   if (step === 2) {
     const level1Plants = plants.filter(p => p.l === 1)
     const initialValues = calculateOptimalValues(
@@ -814,7 +877,7 @@ export default function HydroApp() {
                     return (
                       <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l, p})} 
                         className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${
-                          pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'
+                          pl ? `${VARIETIES[pl.v]?.color || 'bg-gray-500'} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'
                         }`}>
                         {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
                         {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
@@ -939,4 +1002,31 @@ export default function HydroApp() {
       )}
     </div>
   )
+}
+
+// ==================== COMPONENTE PRINCIPAL CON MANEJO DE ERRORES ====================
+export default function HydroApp() {
+  const [error, setError] = useState(null)
+  const [key, setKey] = useState(0)
+
+  // Si hay un error, mostramos la pantalla de error
+  if (error) {
+    return <ErrorFallback error={error} resetErrorBoundary={() => {
+      setError(null)
+      setKey(prev => prev + 1)
+    }} />
+  }
+
+  // Intentamos renderizar la app principal, atrapando cualquier error
+  try {
+    return <HydroAppContent key={key} />
+  } catch (err) {
+    // Si ocurre un error durante el renderizado, lo capturamos
+    console.error("Error capturado en HydroApp:", err)
+    setError(err)
+    return <ErrorFallback error={err} resetErrorBoundary={() => {
+      setError(null)
+      setKey(prev => prev + 1)
+    }} />
+  }
 }
