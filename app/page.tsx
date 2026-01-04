@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState, useEffect, useMemo } from "react"
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
@@ -7,63 +5,8 @@ import {
   Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, 
   Droplets, Thermometer, Zap, ShieldAlert, ChevronRight, 
   Anchor, ArrowLeft, ArrowRight, Bell, CloudRain, 
-  ThermometerSun, RefreshCw, Skull, Info, Leaf,
-  AlertCircle
+  ThermometerSun, RefreshCw, Skull, Info, Leaf
 } from "lucide-react"
-
-// ==================== COMPONENTE DE SEGURIDAD ====================
-// Este componente captura errores y muestra una pantalla de recuperación
-function ErrorFallback({ error, resetErrorBoundary }) {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-red-50 to-orange-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-md p-8 bg-white rounded-3xl shadow-2xl text-center">
-        <div className="mx-auto mb-6 w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
-          <AlertCircle className="text-white" size={32} />
-        </div>
-        
-        <h1 className="text-2xl font-black text-red-700 mb-4">¡Ups! Algo salió mal</h1>
-        <p className="text-gray-600 mb-6">
-          La aplicación encontró un error, pero puedes recuperarla.
-        </p>
-        
-        <div className="space-y-4">
-          <button
-            onClick={resetErrorBoundary}
-            className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white p-4 rounded-2xl font-bold shadow-lg"
-          >
-            Reintentar la aplicación
-          </button>
-          
-          <button
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem("hydro_master")
-                window.location.reload()
-              }
-            }}
-            className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white p-4 rounded-2xl font-bold shadow-lg"
-          >
-            Reiniciar datos y recargar
-          </button>
-          
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-gray-200 text-gray-700 p-4 rounded-2xl font-bold"
-          >
-            Solo recargar página
-          </button>
-        </div>
-        
-        <div className="mt-8 p-4 bg-gray-100 rounded-xl text-left">
-          <p className="text-sm font-bold text-gray-500 mb-2">Detalles técnicos (para ayuda):</p>
-          <p className="text-xs text-gray-600 font-mono overflow-auto">
-            {error?.message || "Error desconocido"}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ==================== BASE DE DATOS DE VARIEDADES ====================
 const VARIETIES = {
@@ -180,7 +123,7 @@ const calculateOptimalValues = (plants, currentVolume, totalVolume) => {
 }
 
 // ==================== COMPONENTE PRINCIPAL ====================
-function HydroAppContent() {
+export default function HydroApp() {
   const [step, setStep] = useState(0)
   const [plants, setPlants] = useState([])
   const [history, setHistory] = useState([])
@@ -197,68 +140,56 @@ function HydroAppContent() {
   })
   const [tab, setTab] = useState("overview")
   const [selPos, setSelPos] = useState(null)
-  const [hasError, setHasError] = useState(false)
 
-  // Cálculo en tiempo real con protección
+  // Cálculo en tiempo real
   const currentOptimalValues = useMemo(() => {
-    try {
-      return calculateOptimalValues(
-        plants,
-        parseFloat(config.currentVol) || 0,
-        parseFloat(config.totalVol) || 20
-      )
-    } catch (error) {
-      console.error("Error calculando valores:", error)
-      return { targetEC: "1.2", targetPH: "6.0" }
-    }
+    return calculateOptimalValues(
+      plants,
+      parseFloat(config.currentVol) || 0,
+      parseFloat(config.totalVol) || 20
+    )
   }, [plants, config.currentVol, config.totalVol])
 
-  // Cargar datos guardados - CON MÁS PROTECCIÓN
+  // Cargar datos guardados
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem("hydro_master")
-        if (saved) {
-          const d = JSON.parse(saved)
-          setPlants(d.plants || [])
-          setConfig(d.config || config)
-          setHistory(d.history || [])
-          setLastRot(d.lastRot || new Date().toISOString())
-          setLastClean(d.lastClean || new Date().toISOString())
-          setStep(3)
-        }
+    const saved = localStorage.getItem("hydro_master")
+    if (saved) {
+      try {
+        const d = JSON.parse(saved)
+        setPlants(d.plants || [])
+        setConfig(d.config || config)
+        setHistory(d.history || [])
+        setLastRot(d.lastRot || new Date().toISOString())
+        setLastClean(d.lastClean || new Date().toISOString())
+        setStep(3)
+      } catch (e) {
+        console.log("Primer inicio sin datos guardados")
       }
-    } catch (error) {
-      console.log("Error cargando datos guardados:", error)
     }
   }, [])
 
-  // Guardar automáticamente - CON MÁS PROTECCIÓN
+  // Guardar automáticamente
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && step >= 2) {
-        localStorage.setItem("hydro_master", 
-          JSON.stringify({ 
-            plants, 
-            config: {
-              ...config,
-              targetEC: currentOptimalValues.targetEC,
-              targetPH: currentOptimalValues.targetPH
-            }, 
-            history, 
-            lastRot, 
-            lastClean 
-          })
-        )
-      }
-    } catch (error) {
-      console.log("Error guardando datos:", error)
+    if (step >= 2) {
+      localStorage.setItem("hydro_master", 
+        JSON.stringify({ 
+          plants, 
+          config: {
+            ...config,
+            targetEC: currentOptimalValues.targetEC,
+            targetPH: currentOptimalValues.targetPH
+          }, 
+          history, 
+          lastRot, 
+          lastClean 
+        })
+      )
     }
   }, [plants, config, history, lastRot, lastClean, step, currentOptimalValues])
 
-  // Actualizar EC objetivo
+  // Actualizar EC objetivo (solo en modo operativo)
   useEffect(() => {
-    if (step >= 2 && plants.length > 0) {
+    if (step >= 3 && plants.length > 0) {  // Cambiado de 2 a 3
       setConfig(prev => ({
         ...prev,
         targetEC: currentOptimalValues.targetEC,
@@ -378,7 +309,7 @@ function HydroAppContent() {
                       }}
                       className={`aspect-square rounded-[2rem] flex flex-col items-center justify-center border-4 relative transition-all ${
                         plant 
-                          ? `${VARIETIES[plant.v]?.color || 'bg-gray-500'} border-white shadow-xl scale-105` 
+                          ? `${VARIETIES[plant.v].color} border-white shadow-xl scale-105` 
                           : 'bg-gradient-to-b from-white to-slate-50 border-emerald-100'
                       }`}
                     >
@@ -454,54 +385,6 @@ function HydroAppContent() {
               `Selecciona ${6 - level1Plants.length} más`
             )}
           </button>
-
-          {/* MODAL PARA SELECCIONAR VARIEDAD - VERSIÓN PASO 1 */}
-          {selPos && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
-              <div className="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-black text-emerald-700">Seleccionar Variedad</h3>
-                  <button onClick={() => setSelPos(null)} className="p-2 bg-slate-100 rounded-full">
-                    <Plus className="text-slate-400 rotate-45" size={24} />
-                  </button>
-                </div>
-                
-                <div className="grid gap-3">
-                  {Object.keys(VARIETIES).map(variety => (
-                    <button
-                      key={variety}
-                      onClick={() => {
-                        const newPlant = {
-                          id: Date.now(),
-                          v: variety,
-                          l: selPos.l,
-                          p: selPos.p
-                        }
-                        setPlants([...plants, newPlant])
-                        setSelPos(null)
-                      }}
-                      className={`w-full p-5 rounded-[2rem] ${VARIETIES[variety].color} text-white flex justify-between items-center shadow-lg hover:scale-[1.02] transition-transform`}
-                    >
-                      <div className="text-left">
-                        <div className="text-2xl font-black uppercase italic">{variety}</div>
-                        <div className="text-xs opacity-90">EC plántula: {VARIETIES[variety].hyproDosage.seedling.ec}</div>
-                      </div>
-                      <Zap size={24} className="text-white/80" />
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="mt-6 pt-6 border-t border-slate-100">
-                  <button
-                    onClick={() => setSelPos(null)}
-                    className="w-full p-4 bg-slate-100 rounded-2xl text-slate-600 font-bold"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     )
@@ -517,7 +400,7 @@ function HydroAppContent() {
     )
     
     const handleActivateSystem = () => {
-      // Crear nueva configuración con los valores actualizados
+      // Crear la configuración actualizada primero
       const updatedConfig = {
         ...config,
         targetEC: initialValues.targetEC,
@@ -528,7 +411,7 @@ function HydroAppContent() {
       // Actualizar el estado de configuración
       setConfig(updatedConfig)
       
-      // Crear registro histórico
+      // Crear el registro histórico con los valores correctos
       const initialRecord = {
         ...updatedConfig,
         id: Date.now(),
@@ -536,14 +419,13 @@ function HydroAppContent() {
         note: "Inicio del sistema - 6 plántulas"
       }
       
-      // Actualizar historial
-      setHistory([initialRecord])
+      // Actualizar el historial
+      setHistory([initialRecord, ...history])
       
-      // Ir al panel principal
+      // Cambiar a la pantalla principal
       setStep(3)
       setTab("overview")
       
-      // Mostrar mensaje de éxito
       setTimeout(() => {
         alert("✅ Sistema iniciado!\n\nLa app ajustará automáticamente los valores según:\n• Crecimiento de plantas\n• Cambios en volumen\n• Rotaciones semanales")
       }, 300)
@@ -568,54 +450,32 @@ function HydroAppContent() {
           
           <div className="p-8 rounded-[3rem] bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-100 mb-6">
             <div className="mb-6">
-              <p className="text-[12px] font-black uppercase text-slate-400 mb-1 text-center">
+              <p className="text-[12px] font-black uppercase text-slate-400 mb-1">
                 VALORES CALCULADOS
               </p>
-              
-              {/* EC - CON MÁS SEPARACIÓN */}
-              <div className="mb-8 text-center">
-                <div className="flex flex-col items-center justify-center mb-2">
-                  <p className="text-5xl font-black italic text-emerald-700 leading-none mb-1">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-5xl font-black italic text-emerald-700 leading-none">
                     {initialValues.targetEC}
                   </p>
-                  <div className="w-32 h-1 bg-gradient-to-r from-emerald-200 to-green-200 rounded-full mb-2"></div>
-                  <p className="text-[13px] font-bold text-slate-500">EC (mS/cm)</p>
+                  <p className="text-[11px] font-bold text-slate-500">EC (mS/cm)</p>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium">
-                  Conductividad Eléctrica objetivo
-                </p>
-              </div>
-              
-              {/* Separador visual */}
-              <div className="flex items-center justify-center my-4">
-                <div className="w-3/4 h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent"></div>
-              </div>
-              
-              {/* pH - CON MÁS SEPARACIÓN */}
-              <div className="mt-8 text-center">
-                <div className="flex flex-col items-center justify-center mb-2">
-                  <p className="text-5xl font-black italic text-emerald-700 leading-none mb-1">
+                <div>
+                  <p className="text-5xl font-black italic text-emerald-700 leading-none">
                     {initialValues.targetPH}
                   </p>
-                  <div className="w-24 h-1 bg-gradient-to-r from-green-200 to-emerald-200 rounded-full mb-2"></div>
-                  <p className="text-[13px] font-bold text-slate-500">pH</p>
+                  <p className="text-[11px] font-bold text-slate-500">pH</p>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium">
-                  Nivel de acidez ideal
-                </p>
               </div>
-              
-              <div className="mt-8 p-4 bg-white/50 rounded-2xl">
-                <p className="text-[11px] font-bold text-slate-500 text-center">
-                  Para 6 plántulas con {config.currentVol}L de {config.totalVol}L total
-                </p>
-              </div>
+              <p className="text-[11px] font-bold text-slate-500 mt-4">
+                Para 6 plántulas con {config.currentVol}L de {config.totalVol}L total
+              </p>
             </div>
           </div>
           
           <button
             onClick={handleActivateSystem}
-            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white p-9 rounded-[2.5rem] font-black uppercase text-2xl shadow-2xl hover:shadow-3xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white p-9 rounded-[2.5rem] font-black uppercase text-2xl shadow-2xl hover:shadow-3xl transition-all active:scale-95"
           >
             Activar Sistema Inteligente
           </button>
@@ -839,13 +699,7 @@ function HydroAppContent() {
             </div>
             
             <button onClick={() => { 
-              const newRecord = {
-                ...config,
-                id: Date.now(),
-                d: new Date().toLocaleString(),
-                note: "Medición registrada"
-              }
-              setHistory([newRecord, ...history])
+              setHistory([{...config, id: Date.now(), d: new Date().toLocaleString()}, ...history])
               setTab("overview")
               alert("✅ Medición registrada")
             }} className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white p-7 rounded-[2.5rem] font-black uppercase text-xl shadow-2xl">
@@ -877,7 +731,7 @@ function HydroAppContent() {
                     return (
                       <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l, p})} 
                         className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${
-                          pl ? `${VARIETIES[pl.v]?.color || 'bg-gray-500'} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'
+                          pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 text-slate-100'
                         }`}>
                         {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} />}
                         {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
@@ -956,7 +810,7 @@ function HydroAppContent() {
             </button>
             
             <button onClick={() => { 
-              if(confirm('¿RESETEO COMPLETO?\n\nSe borrarán todos los datos.')) { 
+              if(confirm('¿RESETEO COMPLETO?')) { 
                 localStorage.clear()
                 window.location.reload()
               }
@@ -967,8 +821,8 @@ function HydroAppContent() {
         )}
       </main>
 
-      {/* Modal para seleccionar variedad - VERSIÓN PANEL PRINCIPAL */}
-      {selPos && step === 3 && (
+      {/* Modal para seleccionar variedad */}
+      {selPos && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
           <div className="bg-white w-full max-w-md mx-auto rounded-[4rem] p-12 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
@@ -1002,31 +856,4 @@ function HydroAppContent() {
       )}
     </div>
   )
-}
-
-// ==================== COMPONENTE PRINCIPAL CON MANEJO DE ERRORES ====================
-export default function HydroApp() {
-  const [error, setError] = useState(null)
-  const [key, setKey] = useState(0)
-
-  // Si hay un error, mostramos la pantalla de error
-  if (error) {
-    return <ErrorFallback error={error} resetErrorBoundary={() => {
-      setError(null)
-      setKey(prev => prev + 1)
-    }} />
-  }
-
-  // Intentamos renderizar la app principal, atrapando cualquier error
-  try {
-    return <HydroAppContent key={key} />
-  } catch (err) {
-    // Si ocurre un error durante el renderizado, lo capturamos
-    console.error("Error capturado en HydroApp:", err)
-    setError(err)
-    return <ErrorFallback error={err} resetErrorBoundary={() => {
-      setError(null)
-      setKey(prev => prev + 1)
-    }} />
-  }
 }
