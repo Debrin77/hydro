@@ -142,7 +142,6 @@ const calculateHyproDosage = (plants, totalVolume, targetEC) => {
 const generatePlantId = () => {
   return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
-
 export default function HydroAppFinalV31() {
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
@@ -191,6 +190,10 @@ export default function HydroAppFinalV31() {
       }
     }
   }, [plants, config.totalVol, step]);
+
+  const generatePlantId = () => {
+    return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
 
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
