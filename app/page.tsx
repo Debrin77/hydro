@@ -5,12 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
-  Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, Thermometer, Zap, ShieldAlert, ChevronRight, Anchor, ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, RefreshCw, Skull, Info
+  Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, Thermometer, Zap, ShieldAlert, ChevronRight, Anchor, ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, RefreshCw, Skull, Info, Calculator
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import HydroCalc from './components/HydroCalc'
 
-// ==================== BASE DE DATOS DE 5 VARIEDADES ====================
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-cyan-500",
@@ -69,7 +69,6 @@ const VARIETIES = {
   }
 };
 
-// ==================== FUNCIONES DE CÁLCULO INTELIGENTE ====================
 const calculateSystemEC = (plants, totalVolume) => {
   if (plants.length === 0) return { targetEC: "1.2", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
   
@@ -140,7 +139,10 @@ const calculateHyproDosage = (plants, totalVolume, targetEC) => {
   };
 };
 
-// ==================== COMPONENTE PRINCIPAL ====================
+const generatePlantId = () => {
+  return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
 export default function HydroAppFinalV31() {
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
@@ -154,7 +156,6 @@ export default function HydroAppFinalV31() {
   const [tab, setTab] = useState("overview");
   const [selPos, setSelPos] = useState(null);
 
-  // Cargar y guardar datos
   useEffect(() => {
     const saved = localStorage.getItem("hydro_master_v31");
     if (saved) {
@@ -175,7 +176,6 @@ export default function HydroAppFinalV31() {
     }
   }, [plants, config, history, lastRot, lastClean, step]);
 
-  // Recalcular automáticamente
   useEffect(() => {
     if (plants.length > 0 && step >= 3) {
       const optimal = calculateSystemEC(plants, parseFloat(config.totalVol));
@@ -192,12 +192,6 @@ export default function HydroAppFinalV31() {
     }
   }, [plants, config.totalVol, step]);
 
-  // Función para generar ID único
-  const generatePlantId = () => {
-    return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  };
-
-  // ==================== ALERTAS VISUALES MEJORADAS ====================
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
     const vTot = parseFloat(config.totalVol) || 20;
@@ -208,7 +202,6 @@ export default function HydroAppFinalV31() {
     const temp = parseFloat(config.temp) || 20;
     const res = [];
 
-    // 1. AGUA BAJA (URGENTE - ROJO)
     if (vAct < vTot * 0.3) {
       res.push({ 
         t: "¡AGUA MUY BAJA!", 
@@ -230,7 +223,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 2. TEMPERATURA (NARANJA/ROJO)
     if (temp > 28) {
       res.push({ 
         t: "¡PELIGRO TEMPERATURA!", 
@@ -262,7 +254,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 3. pH (MORADO/ROSA)
     if (ph > tPh + 0.5 || ph < tPh - 0.5) {
       const diff = Math.abs(ph - tPh);
       const ml = (diff * 10 * vAct * 0.15).toFixed(1);
@@ -290,7 +281,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 4. EC (AZUL/ÁMBAR)
     if (ec < tEc - 0.4 && ec > 0) {
       const ml = (((tEc - ec) / 0.1) * vAct * 0.25).toFixed(1);
       res.push({ 
@@ -336,7 +326,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 5. RECORDATORIO DE LIMPIEZA (SI PASAN 14 DÍAS)
     const lastCleanDate = new Date(lastClean);
     const now = new Date();
     const daysSinceClean = Math.floor((now - lastCleanDate) / (1000 * 3600 * 24));
@@ -352,11 +341,9 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Ordenar por prioridad (1 = más urgente)
     return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean]);
 
-  // ==================== CALENDARIO INTELIGENTE ====================
   const generateCalendar = () => {
     const now = new Date();
     const lastCleanDate = new Date(lastClean);
@@ -364,7 +351,6 @@ export default function HydroAppFinalV31() {
     const daysUntilClean = Math.max(0, 14 - daysSinceClean);
     
     const totalPlants = plants.length;
-    // Más plantas = más mediciones recomendadas
     const measureFrequency = totalPlants > 12 ? 2 : totalPlants > 6 ? 3 : 4;
     
     const calendarDays = [];
@@ -377,28 +363,24 @@ export default function HydroAppFinalV31() {
       let label = "";
       let description = "";
       
-      // Día de medición basado en frecuencia
       if (dayNumber % measureFrequency === 0) {
         type = "measure";
         label = "Medir";
         description = `pH, EC, Temp - ${totalPlants} plantas`;
       }
       
-      // Día de rotación (cada 7 días)
       if (dayNumber % 7 === 0) {
         type = "rotation";
         label = "Rotar";
         description = "Cosecha N3 → mover N2 → N1 → nuevas";
       }
       
-      // Día de limpieza (cada 14 días desde última)
       if (dayNumber === daysUntilClean) {
         type = "clean";
         label = "Limpiar";
         description = "Limpieza profunda del depósito";
       }
       
-      // Si coinciden dos tipos, priorizar
       if (dayNumber === daysUntilClean && dayNumber % 7 === 0) {
         type = "critical";
         label = "Doble";
@@ -428,7 +410,6 @@ export default function HydroAppFinalV31() {
     }
   };
 
-  // ==================== PANTALLAS DE INICIO ====================
   if (step === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 flex items-center justify-center p-6">
@@ -488,8 +469,6 @@ export default function HydroAppFinalV31() {
             {plants.length > 0 ? `Ver Recomendaciones (${plants.length} plantas)` : "Selecciona Plantas"}
             <ArrowRight/>
           </button>
-
-          {/* Modal para seleccionar variedad - SOLO EN PASO 1 */}
           {selPos && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
               <div className="bg-white w-full max-w-md mx-auto rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
@@ -504,7 +483,6 @@ export default function HydroAppFinalV31() {
                     <button 
                       key={v}
                       onClick={() => {
-                        // Crear nueva planta con ID único
                         const newPlant = {
                           id: generatePlantId(),
                           v: v,
@@ -512,7 +490,7 @@ export default function HydroAppFinalV31() {
                           p: selPos.p
                         };
                         setPlants([...plants, newPlant]);
-                        setSelPos(null); // Cerrar modal
+                        setSelPos(null);
                       }} 
                       className={`w-full p-5 rounded-[1.5rem] font-black text-white shadow-md flex justify-between items-center hover:scale-[1.02] active:scale-95 transition-all ${VARIETIES[v].color}`}
                     >
@@ -652,7 +630,6 @@ export default function HydroAppFinalV31() {
     );
   }
 
-  // ==================== PANEL PRINCIPAL ====================
   const calendarDays = generateCalendar();
   
   return (
@@ -691,7 +668,6 @@ export default function HydroAppFinalV31() {
             <TabsTrigger value="settings"><Trash2 /></TabsTrigger>
           </TabsList>
 
-          {/* PESTAÑA: OVERVIEW - ALERTAS VISUALES */}
           <TabsContent value="overview" className="space-y-4">
             <Card className="p-5 rounded-[2rem] bg-gradient-to-r from-slate-50 to-blue-50 border-2">
               <p className="text-[10px] font-black uppercase text-slate-400 mb-3">COMPOSICIÓN DEL CULTIVO</p>
@@ -720,7 +696,6 @@ export default function HydroAppFinalV31() {
               </div>
             </Card>
             
-            {/* ALERTAS VISUALES MEJORADAS */}
             {alerts.length > 0 ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-2">
@@ -754,7 +729,6 @@ export default function HydroAppFinalV31() {
             )}
           </TabsContent>
 
-          {/* PESTAÑA: MEDICIÓN */}
           <TabsContent value="measure">
             <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -773,7 +747,6 @@ export default function HydroAppFinalV31() {
             </Card>
           </TabsContent>
 
-          {/* PESTAÑA: TORRE */}
           <TabsContent value="tower" className="space-y-6">
             <button onClick={handleRotation} className="w-full p-8 rounded-[2.5rem] bg-gradient-to-r from-orange-500 to-red-500 text-white font-black flex items-center justify-center gap-4 shadow-2xl border-b-8 border-orange-800 active:border-b-0 active:translate-y-1 transition-all">
                 <Scissors size={28}/> 
@@ -803,7 +776,6 @@ export default function HydroAppFinalV31() {
             ))}
           </TabsContent>
 
-          {/* PESTAÑA: CALENDARIO INTELIGENTE */}
           <TabsContent value="calendar" className="space-y-6">
             <Card className="p-8 rounded-[3.5rem] bg-gradient-to-br from-indigo-950 to-purple-950 text-white shadow-2xl relative overflow-hidden border-4 border-indigo-900">
               <div className="flex items-center justify-between mb-6">
@@ -883,11 +855,11 @@ export default function HydroAppFinalV31() {
             </div>
           </TabsContent>
 
-          {/* PESTAÑA: CONSEJOS MAESTROS (ACTUALIZADA) */}
           <TabsContent value="tips" className="space-y-6">
             <h2 className="text-2xl font-black uppercase italic text-slate-800 ml-4">Consejos Maestros</h2>
             
-            {/* NUEVO: TRASPLANTE DE PLÁNTULA DE VIVERO */}
+            <HydroCalc />
+            
             <Card className="rounded-[3rem] border-4 border-cyan-100 overflow-hidden shadow-xl bg-white">
               <div className="bg-gradient-to-r from-cyan-600 to-teal-600 p-6 text-white flex items-center gap-4">
                 <RefreshCw size={30}/>
@@ -952,7 +924,6 @@ export default function HydroAppFinalV31() {
         </Tabs>
       </main>
 
-      {/* Modal para seleccionar variedad - SOLO PARA PANEL PRINCIPAL */}
       {selPos && step === 4 && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
           <div className="bg-white w-full max-w-md mx-auto rounded-[4rem] p-12 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300">
