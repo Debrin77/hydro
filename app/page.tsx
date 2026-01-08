@@ -145,20 +145,15 @@ const calculateSystemEC = (plants, totalVolume, waterType = "osmosis") => {
     
     // Ajustar pH objetivo según dureza del agua
     if (waterConfig.hardness > 200) {
-      // Agua dura - pH más bajo para mejorar disponibilidad
-      finalEC *= 0.9; // Reducir EC porque ya tiene minerales
+      finalEC *= 0.9;
     }
   }
   
   finalEC = Math.max(0.6, Math.min(2.0, finalEC));
   
-  // Calcular pH objetivo considerando tipo de agua
   let targetPH = (totalPH / plants.length).toFixed(1);
-  if (waterConfig) {
-    // Ajustar pH según dureza del agua
-    if (waterConfig.hardness > 200) {
-      targetPH = (parseFloat(targetPH) - 0.2).toFixed(1); // Bajar ligeramente pH
-    }
+  if (waterConfig && waterConfig.hardness > 200) {
+    targetPH = (parseFloat(targetPH) - 0.2).toFixed(1);
   }
   
   return {
@@ -190,13 +185,11 @@ const calculateHyproDosage = (plants, totalVolume, targetEC, waterType = "osmosi
   const waterConfig = WATER_TYPES[waterType];
   let ecRatio = parseFloat(targetEC) / 1.4;
   
-  // Ajustar según tipo de agua
   if (waterConfig) {
-    // Agua con minerales necesita menos nutrientes
     if (waterConfig.hardness > 150) {
-      ecRatio *= 0.8; // Reducir 20% para agua dura
+      ecRatio *= 0.8;
     } else if (waterConfig.hardness > 50) {
-      ecRatio *= 0.9; // Reducir 10% para agua media
+      ecRatio *= 0.9;
     }
   }
   
@@ -243,19 +236,19 @@ export default function HydroAppFinalV31() {
       setHistory(d.history || []);
       setLastRot(d.lastRot);
       setLastClean(d.lastClean);
-      setStep(4);
+      setStep(3);
     }
   }, []);
 
   useEffect(() => {
-    if (step >= 3) {
+    if (step >= 2) {
       localStorage.setItem("hydro_master_v31", 
         JSON.stringify({ plants, config, history, lastRot, lastClean }));
     }
   }, [plants, config, history, lastRot, lastClean, step]);
 
   useEffect(() => {
-    if (plants.length > 0 && step >= 3) {
+    if (plants.length > 0 && step >= 2) {
       const optimal = calculateSystemEC(plants, parseFloat(config.totalVol), config.waterType);
       const currentEC = parseFloat(config.targetEC);
       const newEC = parseFloat(optimal.targetEC);
@@ -274,7 +267,6 @@ export default function HydroAppFinalV31() {
     return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  // Función para calcular ajuste de pH según tipo de agua
   const calculatePHAdjustment = (currentPH, targetPH, waterType, volume) => {
     const waterConfig = WATER_TYPES[waterType];
     if (!waterConfig) return { phMinus: 0, phPlus: 0 };
@@ -282,9 +274,8 @@ export default function HydroAppFinalV31() {
     const phDiff = currentPH - targetPH;
     let adjustmentFactor = 1.0;
     
-    // Factor de ajuste según dureza del agua
     if (waterConfig.hardness > 200) {
-      adjustmentFactor = 1.5; // Agua dura necesita más ajustador
+      adjustmentFactor = 1.5;
     } else if (waterConfig.hardness > 100) {
       adjustmentFactor = 1.2;
     }
@@ -309,7 +300,6 @@ export default function HydroAppFinalV31() {
     const waterType = config.waterType || "osmosis";
     const res = [];
 
-    // Alerta de tipo de agua
     if (waterType === "alta_mineral") {
       res.push({ 
         t: "AGUA DURA DETECTADA", 
@@ -463,396 +453,6 @@ export default function HydroAppFinalV31() {
     return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean]);
 
-  // Paso 0: Selección de tipo de agua
-  if (step === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-cyan-50 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-10 bg-white rounded-[3rem] text-center border-b-8 border-blue-600 shadow-2xl">
-          <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center">
-            <Droplets className="text-white" size={40} />
-          </div>
-          <h2 className="text-2xl font-black mb-4 uppercase text-slate-800">PASO 1: TIPO DE AGUA</h2>
-          <p className="text-sm font-bold mb-6 text-slate-400">Selecciona el tipo de agua que usarás</p>
-          
-          <div className="space-y-3 mb-8">
-            {Object.entries(WATER_TYPES).map(([key, water]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  setConfig(prev => ({ ...prev, waterType: key }));
-                  setStep(1);
-                }}
-                className={`w-full p-5 rounded-[2rem] border-4 ${config.waterType === key ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-white'} flex items-center gap-4 hover:bg-slate-50 transition-all`}
-              >
-                <div className="flex-shrink-0">
-                  {water.icon}
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-black text-slate-800">{water.name}</p>
-                  <p className="text-xs text-slate-500">{water.description}</p>
-                  <div className="flex gap-4 mt-2 text-xs">
-                    <span className="text-blue-600 font-bold">EC base: {water.ecBase}</span>
-                    <span className="text-amber-600 font-bold">Dureza: {water.hardness} ppm</span>
-                  </div>
-                </div>
-                {config.waterType === key && (
-                  <Check className="text-blue-500" size={24} />
-                )}
-              </button>
-            ))}
-          </div>
-          
-          <div className="mt-6 p-4 bg-blue-50 rounded-2xl border-2 border-blue-100">
-            <p className="text-xs font-bold text-blue-700 text-left">
-              ℹ️ El tipo de agua afecta la dosificación de nutrientes y ajuste de pH. 
-              Los cálculos se ajustarán automáticamente.
-            </p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Paso 1: Configuración del depósito
-  if (step === 1) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-emerald-50 flex items-center justify-center p-6">
-        <Card className="w-full max-w-xs p-10 bg-white rounded-[3rem] text-center border-b-8 border-green-600 shadow-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <button onClick={() => setStep(0)} className="p-3 bg-slate-100 rounded-full">
-              <ArrowLeft className="text-slate-500" />
-            </button>
-            <h2 className="text-xl font-black uppercase text-slate-800">PASO 2: DEPÓSITO</h2>
-            <div className="w-10"></div>
-          </div>
-          
-          <div className="mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-100">
-            <p className="text-xs font-bold text-blue-700">
-              Agua seleccionada: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
-            </p>
-          </div>
-          
-          <p className="text-sm font-bold mb-6 text-slate-400">Capacidad TOTAL del sistema (Litros)</p>
-          <input 
-            type="number" 
-            value={config.totalVol} 
-            onChange={e => setConfig({...config, totalVol: e.target.value, currentVol: e.target.value})} 
-            className="w-full p-6 bg-slate-50 border-4 rounded-3xl text-5xl font-black text-center text-slate-900 mb-6"
-            placeholder="20"
-          />
-          <button onClick={() => setStep(2)} 
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6 rounded-[2rem] font-black uppercase text-xl flex items-center justify-center gap-2 shadow-xl">
-            Continuar <ArrowRight/>
-          </button>
-        </Card>
-      </div>
-    );
-  }
-
-  // Paso 2: Selección de plantas
-  if (step === 2) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-lime-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl relative">
-          <div className="flex items-center justify-between mb-8">
-            <button onClick={() => setStep(1)} className="p-3 bg-slate-100 rounded-full">
-              <ArrowLeft className="text-slate-500" />
-            </button>
-            <h2 className="text-2xl font-black text-center uppercase italic text-green-700">PASO 3: PLANTACIÓN</h2>
-            <div className="w-10"></div>
-          </div>
-          
-          <div className="mb-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-blue-700">
-                  Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
-                </p>
-                <p className="text-xs text-blue-600">Depósito: {config.totalVol}L</p>
-              </div>
-              <button 
-                onClick={() => {
-                  // Cambiar tipo de agua sin volver al paso 0
-                  setShowWaterSelector(true);
-                }}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700"
-              >
-                Cambiar
-              </button>
-            </div>
-          </div>
-          
-          <p className="text-center text-xs font-bold text-slate-400 mb-4">
-            Selecciona las variedades en el NIVEL DE SIEMBRA (Nivel 1)
-          </p>
-          <div className="mb-8">
-            <div className="bg-emerald-100 p-5 rounded-[2.5rem] grid grid-cols-3 gap-4 border-4 border-emerald-200 shadow-inner">
-              {[1, 2, 3, 4, 5, 6].map(p => {
-                const pl = plants.find(x => x.l === 1 && x.p === p);
-                return (
-                  <button 
-                    key={p} 
-                    onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l: 1, p})} 
-                    className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-emerald-100 hover:bg-emerald-50'}`}
-                  >
-                    {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} className="text-emerald-300" />}
-                    {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-center text-[10px] font-bold text-slate-400 mt-4">
-              {plants.filter(p => p.l === 1).length} / 6 plantas seleccionadas
-            </p>
-          </div>
-          <button onClick={() => plants.length > 0 ? setStep(3) : alert("Selecciona al menos una planta")} 
-            className="w-full bg-gradient-to-r from-emerald-500 to-lime-500 text-white p-6 rounded-[2rem] font-black uppercase text-xl shadow-xl flex items-center justify-center gap-2">
-            {plants.length > 0 ? `Ver Recomendaciones (${plants.length} plantas)` : "Selecciona Plantas"}
-            <ArrowRight/>
-          </button>
-          
-          {selPos && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
-              <div className="bg-white w-full max-w-md mx-auto rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-black text-xl text-slate-800">Seleccionar Variedad</h3>
-                  <button onClick={() => setSelPos(null)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:bg-slate-200">
-                    <Plus size={24} className="rotate-45"/>
-                  </button>
-                </div>
-                <div className="grid gap-3">
-                  {Object.keys(VARIETIES).map(v => (
-                    <button 
-                      key={v}
-                      onClick={() => {
-                        const newPlant = {
-                          id: generatePlantId(),
-                          v: v,
-                          l: selPos.l,
-                          p: selPos.p
-                        };
-                        setPlants([...plants, newPlant]);
-                        setSelPos(null);
-                      }} 
-                      className={`w-full p-5 rounded-[1.5rem] font-black text-white shadow-md flex justify-between items-center hover:scale-[1.02] active:scale-95 transition-all ${VARIETIES[v].color}`}
-                    >
-                      <div className="text-left">
-                        <span className="text-xl uppercase italic tracking-tighter leading-none block">{v}</span>
-                        <span className="text-[10px] opacity-80 lowercase font-medium">
-                          EC máx: {VARIETIES[v].ecMax} | pH: {VARIETIES[v].phIdeal}
-                        </span>
-                      </div>
-                      <Zap size={20}/>
-                    </button>
-                  ))}
-                </div>
-                <button 
-                  onClick={() => setSelPos(null)}
-                  className="w-full mt-4 p-4 bg-slate-100 rounded-[1.5rem] font-black text-slate-600 hover:bg-slate-200"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-        </Card>
-      </div>
-    );
-  }
-
-  // Paso 3: Dosificación con ajuste para tipo de agua
-  if (step === 3) {
-    const optimalEC = calculateSystemEC(plants, parseFloat(config.totalVol), config.waterType);
-    const dosage = calculateHyproDosage(plants, parseFloat(config.totalVol), optimalEC.targetEC, config.waterType);
-    
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl">
-          <div className="flex items-center justify-between mb-8">
-            <button onClick={() => setStep(2)} className="p-3 bg-slate-100 rounded-full">
-              <ArrowLeft className="text-slate-500" />
-            </button>
-            <h2 className="text-2xl font-black text-center uppercase italic text-teal-700">DOSIS PRECISAS</h2>
-            <div className="w-10"></div>
-          </div>
-          
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-blue-700">
-                  Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
-                </p>
-                <p className="text-xs text-blue-600">Cálculos ajustados para este tipo de agua</p>
-              </div>
-              {WATER_TYPES[config.waterType].icon}
-            </div>
-          </div>
-          
-          <div className="space-y-6 mb-10">
-            <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-slate-50 to-blue-50 border-2">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-3 bg-blue-100 rounded-2xl">
-                  <p className="text-[10px] font-black text-blue-700 uppercase">Plántulas</p>
-                  <p className="text-2xl font-black">{optimalEC.statistics.seedlingCount}</p>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-2xl">
-                  <p className="text-[10px] font-black text-purple-700 uppercase">Crecimiento</p>
-                  <p className="text-2xl font-black">{optimalEC.statistics.growthCount}</p>
-                </div>
-                <div className="p-3 bg-green-100 rounded-2xl">
-                  <p className="text-[10px] font-black text-green-700 uppercase">Maduras</p>
-                  <p className="text-2xl font-black">{optimalEC.statistics.matureCount}</p>
-                </div>
-              </div>
-            </Card>
-            
-            <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-100">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-[10px] font-black uppercase text-slate-400 mb-1">EC ÓPTIMA CALCULADA</p>
-                  <p className="text-4xl font-black italic text-blue-700 leading-none">{optimalEC.targetEC} mS/cm</p>
-                  <p className="text-[9px] font-bold mt-1 text-slate-500">
-                    Ajustada para agua {WATER_TYPES[config.waterType].name.toLowerCase()}
-                  </p>
-                </div>
-                <Activity className="text-blue-500" size={40} />
-              </div>
-            </Card>
-            
-            <Card className="p-8 rounded-[2.5rem] bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-100 shadow-lg">
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-2 bg-emerald-100 px-4 py-2 rounded-full">
-                  <FlaskConical className="text-emerald-600" size={16} />
-                  <p className="text-xs font-black text-emerald-700 uppercase">HY-PRO A/B</p>
-                </div>
-                <p className="text-[10px] font-black text-slate-400 mt-2">
-                  Dosificación para {config.totalVol}L 
-                  {dosage.adjustedForWater && " (ajustada para tipo de agua)"}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="text-center p-4 bg-white rounded-[1.5rem] border-2 border-emerald-200">
-                  <p className="text-[10px] font-black uppercase text-emerald-600 mb-1">Nutriente A</p>
-                  <p className="text-3xl font-black text-emerald-700">{dosage.a} ml</p>
-                  <p className="text-[8px] text-slate-500 mt-1">({dosage.per10L.a} ml/10L)</p>
-                </div>
-                <div className="text-center p-4 bg-white rounded-[1.5rem] border-2 border-blue-200">
-                  <p className="text-[10px] font-black uppercase text-blue-600 mb-1">Nutriente B</p>
-                  <p className="text-3xl font-black text-blue-700">{dosage.b} ml</p>
-                  <p className="text-[8px] text-slate-500 mt-1">({dosage.per10L.b} ml/10L)</p>
-                </div>
-              </div>
-              
-              {config.waterType === "alta_mineral" && (
-                <div className="mt-4 p-3 bg-amber-50 rounded-2xl border border-amber-200">
-                  <p className="text-[10px] font-bold text-amber-700 text-center">
-                    ⚠️ Dosis reducida 20% por agua dura (alta en calcio/magnesio)
-                  </p>
-                </div>
-              )}
-            </Card>
-          </div>
-          
-          <button onClick={() => {
-            setConfig(prev => ({ ...prev, targetEC: optimalEC.targetEC, targetPH: optimalEC.targetPH }));
-            setStep(4);
-          }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white p-6 rounded-[2rem] font-black uppercase text-xl shadow-xl">
-            CONFIRMAR DOSIS E INICIAR
-          </button>
-        </Card>
-      </div>
-    );
-  }
-
-  // Paso 4: Primera medición
-  if (step === 4) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl">
-          <div className="flex items-center justify-between mb-8">
-            <button onClick={() => setStep(3)} className="p-3 bg-slate-100 rounded-full">
-              <ArrowLeft className="text-slate-500" />
-            </button>
-            <h2 className="text-2xl font-black text-center uppercase italic text-orange-700">PASO 4: PRIMERA MEDICIÓN</h2>
-            <div className="w-10"></div>
-          </div>
-          
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-blue-700">
-                  Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
-                </p>
-                <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} | pH objetivo: {config.targetPH}</p>
-              </div>
-            </div>
-          </div>
-          
-          <p className="text-center text-sm font-bold text-slate-400 mb-8">Introduce los valores actuales de tu sistema</p>
-          
-          <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6 mb-8">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  value={config.ph} 
-                  onChange={e => setConfig({...config, ph: e.target.value})} 
-                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" 
-                  placeholder="6.0"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  value={config.ec} 
-                  onChange={e => setConfig({...config, ec: e.target.value})} 
-                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" 
-                  placeholder="1.2"
-                />
-              </div>
-              <div className="space-y-1 col-span-2">
-                <label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label>
-                <input 
-                  type="number" 
-                  value={config.currentVol} 
-                  onChange={e => setConfig({...config, currentVol: e.target.value})} 
-                  className="w-full p-5 bg-cyan-50 border-4 border-cyan-100 rounded-3xl text-center text-4xl font-black text-cyan-800" 
-                  placeholder={config.totalVol}
-                />
-              </div>
-              <div className="space-y-1 col-span-2">
-                <label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label>
-                <input 
-                  type="number" 
-                  value={config.temp} 
-                  onChange={e => setConfig({...config, temp: e.target.value})} 
-                  className="w-full p-5 bg-orange-50 border-4 border-orange-100 rounded-3xl text-center text-3xl font-black text-orange-800" 
-                  placeholder="22"
-                />
-              </div>
-            </div>
-          </Card>
-          
-          <button onClick={() => {
-            setHistory([{...config, id: Date.now(), d: new Date().toLocaleString(), note: "Medición inicial"}, ...history]);
-            setStep(5);
-            setTab("overview");
-          }} className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white p-7 rounded-[2.5rem] font-black uppercase text-xl shadow-2xl">
-            Registrar e Iniciar Sistema
-          </button>
-        </Card>
-      </div>
-    );
-  }
-
-  // Paso 5: Aplicación principal
-  const calendarDays = generateCalendar();
-  
-  // Función para generar calendario
   const generateCalendar = () => {
     const now = new Date();
     const lastCleanDate = new Date(lastClean);
@@ -919,6 +519,272 @@ export default function HydroAppFinalV31() {
     }
   };
 
+  if (step === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 flex items-center justify-center p-6">
+        <Card className="w-full max-w-xs p-10 bg-white rounded-[3rem] text-center border-b-8 border-green-600 shadow-2xl">
+          <div className="mx-auto mb-6 w-20 h-20 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center">
+            <Droplets className="text-white" size={40} />
+          </div>
+          <h2 className="text-2xl font-black mb-2 uppercase text-slate-800">PASO 1: DEPÓSITO</h2>
+          <p className="text-sm font-bold mb-6 text-slate-400">Capacidad TOTAL del sistema (Litros)</p>
+          <input type="number" value={config.totalVol} 
+            onChange={e => setConfig({...config, totalVol: e.target.value, currentVol: e.target.value})} 
+            className="w-full p-6 bg-slate-50 border-4 rounded-3xl text-5xl font-black text-center text-slate-900 mb-6"
+            placeholder="20"
+          />
+          <button onClick={() => setStep(1)} 
+            className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white p-6 rounded-[2rem] font-black uppercase text-xl flex items-center justify-center gap-2 shadow-xl">
+            Continuar <ArrowRight/>
+          </button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-lime-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl relative">
+          <div className="flex items-center justify-between mb-8">
+            <button onClick={() => setStep(0)} className="p-3 bg-slate-100 rounded-full">
+              <ArrowLeft className="text-slate-500" />
+            </button>
+            <h2 className="text-2xl font-black text-center uppercase italic text-green-700">PASO 2: PLANTACIÓN</h2>
+            <div className="w-10"></div>
+          </div>
+          <p className="text-center text-xs font-bold text-slate-400 mb-4">
+            Selecciona las variedades en el NIVEL DE SIEMBRA (Nivel 1)
+          </p>
+          <div className="mb-8">
+            <div className="bg-emerald-100 p-5 rounded-[2.5rem] grid grid-cols-3 gap-4 border-4 border-emerald-200 shadow-inner">
+              {[1, 2, 3, 4, 5, 6].map(p => {
+                const pl = plants.find(x => x.l === 1 && x.p === p);
+                return (
+                  <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l: 1, p})} 
+                    className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-emerald-100 hover:bg-emerald-50'}`}>
+                    {pl ? <Sprout size={28} className="text-white" /> : <Plus size={24} className="text-emerald-300" />}
+                    {pl && <span className="text-[7px] font-black text-white absolute bottom-1 uppercase px-1 truncate w-full text-center leading-none">{pl.v}</span>}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-center text-[10px] font-bold text-slate-400 mt-4">
+              {plants.filter(p => p.l === 1).length} / 6 plantas seleccionadas
+            </p>
+          </div>
+          <button onClick={() => plants.length > 0 ? setStep(2) : alert("Selecciona al menos una planta")} 
+            className="w-full bg-gradient-to-r from-emerald-500 to-lime-500 text-white p-6 rounded-[2rem] font-black uppercase text-xl shadow-xl flex items-center justify-center gap-2">
+            {plants.length > 0 ? `Ver Recomendaciones (${plants.length} plantas)` : "Selecciona Plantas"}
+            <ArrowRight/>
+          </button>
+          {selPos && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+              <div className="bg-white w-full max-w-md mx-auto rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-black text-xl text-slate-800">Seleccionar Variedad</h3>
+                  <button onClick={() => setSelPos(null)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:bg-slate-200">
+                    <Plus size={24} className="rotate-45"/>
+                  </button>
+                </div>
+                <div className="grid gap-3">
+                  {Object.keys(VARIETIES).map(v => (
+                    <button 
+                      key={v}
+                      onClick={() => {
+                        const newPlant = {
+                          id: generatePlantId(),
+                          v: v,
+                          l: selPos.l,
+                          p: selPos.p
+                        };
+                        setPlants([...plants, newPlant]);
+                        setSelPos(null);
+                      }} 
+                      className={`w-full p-5 rounded-[1.5rem] font-black text-white shadow-md flex justify-between items-center hover:scale-[1.02] active:scale-95 transition-all ${VARIETIES[v].color}`}
+                    >
+                      <div className="text-left">
+                        <span className="text-xl uppercase italic tracking-tighter leading-none block">{v}</span>
+                        <span className="text-[10px] opacity-80 lowercase font-medium">
+                          EC máx: {VARIETIES[v].ecMax} | pH: {VARIETIES[v].phIdeal}
+                        </span>
+                      </div>
+                      <Zap size={20}/>
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setSelPos(null)}
+                  className="w-full mt-4 p-4 bg-slate-100 rounded-[1.5rem] font-black text-slate-600 hover:bg-slate-200"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 2) {
+    const optimalEC = calculateSystemEC(plants, parseFloat(config.totalVol), config.waterType);
+    const dosage = calculateHyproDosage(plants, parseFloat(config.totalVol), optimalEC.targetEC, config.waterType);
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl">
+          <div className="flex items-center justify-between mb-8">
+            <button onClick={() => setStep(1)} className="p-3 bg-slate-100 rounded-full">
+              <ArrowLeft className="text-slate-500" />
+            </button>
+            <h2 className="text-2xl font-black text-center uppercase italic text-teal-700">DOSIS PRECISAS</h2>
+            <div className="w-10"></div>
+          </div>
+          
+          {/* Mostrar información del tipo de agua */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-blue-700">
+                  Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
+                </p>
+                <p className="text-xs text-blue-600">EC base: {WATER_TYPES[config.waterType].ecBase} | Dureza: {WATER_TYPES[config.waterType].hardness} ppm</p>
+              </div>
+              <button 
+                onClick={() => setShowWaterSelector(true)}
+                className="p-2 bg-blue-100 rounded-full hover:bg-blue-200"
+              >
+                <Filter className="text-blue-600" size={20} />
+              </button>
+            </div>
+          </div>
+          
+          <div className="space-y-6 mb-10">
+            <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-slate-50 to-blue-50 border-2">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-3 bg-blue-100 rounded-2xl"><p className="text-[10px] font-black text-blue-700 uppercase">Plántulas</p><p className="text-2xl font-black">{optimalEC.statistics.seedlingCount}</p></div>
+                <div className="p-3 bg-purple-100 rounded-2xl"><p className="text-[10px] font-black text-purple-700 uppercase">Crecimiento</p><p className="text-2xl font-black">{optimalEC.statistics.growthCount}</p></div>
+                <div className="p-3 bg-green-100 rounded-2xl"><p className="text-[10px] font-black text-green-700 uppercase">Maduras</p><p className="text-2xl font-black">{optimalEC.statistics.matureCount}</p></div>
+              </div>
+            </Card>
+            
+            <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-100">
+              <div className="flex justify-between items-center">
+                <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">EC ÓPTIMA CALCULADA</p>
+                <p className="text-4xl font-black italic text-blue-700 leading-none">{optimalEC.targetEC} mS/cm</p>
+                <p className="text-[9px] font-bold mt-1 text-slate-500">Ajustada para {WATER_TYPES[config.waterType].name.toLowerCase()}</p></div>
+                <Activity className="text-blue-500" size={40} />
+              </div>
+            </Card>
+            
+            <Card className="p-8 rounded-[2.5rem] bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-100 shadow-lg">
+              <div className="text-center mb-6"><div className="inline-flex items-center gap-2 bg-emerald-100 px-4 py-2 rounded-full">
+                <FlaskConical className="text-emerald-600" size={16} />
+                <p className="text-xs font-black text-emerald-700 uppercase">HY-PRO A/B</p></div>
+                <p className="text-[10px] font-black text-slate-400 mt-2">Dosificación para {config.totalVol}L</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-4 bg-white rounded-[1.5rem] border-2 border-emerald-200">
+                  <p className="text-[10px] font-black uppercase text-emerald-600 mb-1">Nutriente A</p>
+                  <p className="text-3xl font-black text-emerald-700">{dosage.a} ml</p>
+                  <p className="text-[8px] text-slate-500 mt-1">({dosage.per10L.a} ml/10L)</p>
+                </div>
+                <div className="text-center p-4 bg-white rounded-[1.5rem] border-2 border-blue-200">
+                  <p className="text-[10px] font-black uppercase text-blue-600 mb-1">Nutriente B</p>
+                  <p className="text-3xl font-black text-blue-700">{dosage.b} ml</p>
+                  <p className="text-[8px] text-slate-500 mt-1">({dosage.per10L.b} ml/10L)</p>
+                </div>
+              </div>
+              
+              {config.waterType === "alta_mineral" && (
+                <div className="mt-4 p-3 bg-amber-50 rounded-2xl border border-amber-200">
+                  <p className="text-[10px] font-bold text-amber-700 text-center">
+                    ⚠️ Dosis reducida 20% por agua dura (alta en calcio/magnesio)
+                  </p>
+                </div>
+              )}
+            </Card>
+          </div>
+          
+          <button onClick={() => {
+            setConfig(prev => ({ ...prev, targetEC: optimalEC.targetEC, targetPH: optimalEC.targetPH }));
+            setStep(3);
+          }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white p-6 rounded-[2rem] font-black uppercase text-xl shadow-xl">
+            CONFIRMAR DOSIS E INICIAR
+          </button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-10 bg-white rounded-[3.5rem] shadow-2xl">
+          <div className="flex items-center justify-between mb-8">
+            <button onClick={() => setStep(2)} className="p-3 bg-slate-100 rounded-full">
+              <ArrowLeft className="text-slate-500" />
+            </button>
+            <h2 className="text-2xl font-black text-center uppercase italic text-orange-700">PASO 4: PRIMERA MEDICIÓN</h2>
+            <div className="w-10"></div>
+          </div>
+          
+          {/* Mostrar información del tipo de agua */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-blue-700">
+                  Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
+                </p>
+                <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} | pH objetivo: {config.targetPH}</p>
+              </div>
+              <button 
+                onClick={() => setShowWaterSelector(true)}
+                className="p-2 bg-blue-100 rounded-full hover:bg-blue-200"
+              >
+                <Filter className="text-blue-600" size={20} />
+              </button>
+            </div>
+          </div>
+          
+          <p className="text-center text-sm font-bold text-slate-400 mb-8">Introduce los valores actuales de tu sistema</p>
+          
+          <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6 mb-8">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label>
+                <input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} 
+                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" placeholder="6.0"/>
+              </div>
+              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label>
+                <input type="number" step="0.1" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} 
+                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" placeholder="1.2"/>
+              </div>
+              <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label>
+                <input type="number" value={config.currentVol} onChange={e => setConfig({...config, currentVol: e.target.value})} 
+                  className="w-full p-5 bg-cyan-50 border-4 border-cyan-100 rounded-3xl text-center text-4xl font-black text-cyan-800" placeholder={config.totalVol}/>
+              </div>
+              <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label>
+                <input type="number" value={config.temp} onChange={e => setConfig({...config, temp: e.target.value})} 
+                  className="w-full p-5 bg-orange-50 border-4 border-orange-100 rounded-3xl text-center text-3xl font-black text-orange-800" placeholder="22"/>
+              </div>
+            </div>
+          </Card>
+          
+          <button onClick={() => {
+            setHistory([{...config, id: Date.now(), d: new Date().toLocaleString(), note: "Medición inicial"}, ...history]);
+            setStep(4);
+            setTab("overview");
+          }} className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white p-7 rounded-[2.5rem] font-black uppercase text-xl shadow-2xl">
+            Registrar e Iniciar Sistema
+          </button>
+        </Card>
+      </div>
+    );
+  }
+
+  const calendarDays = generateCalendar();
+  
   return (
     <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 font-sans">
       <header className="bg-white border-b-4 p-6 flex justify-between items-center sticky top-0 z-50">
@@ -935,7 +801,7 @@ export default function HydroAppFinalV31() {
             className="p-2 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors"
             title="Cambiar tipo de agua"
           >
-            {WATER_TYPES[config.waterType].icon}
+            <Filter className="text-blue-600" size={20} />
           </button>
           {alerts.length > 0 && (
             <div className="relative">
@@ -953,7 +819,7 @@ export default function HydroAppFinalV31() {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
           <Card className="w-full max-w-md p-8 bg-white rounded-[3rem] shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-slate-800">Cambiar Tipo de Agua</h2>
+              <h2 className="text-xl font-black text-slate-800">Seleccionar Tipo de Agua</h2>
               <button onClick={() => setShowWaterSelector(false)} className="p-2 bg-slate-100 rounded-full">
                 <Plus size={24} className="rotate-45 text-slate-400" />
               </button>
@@ -966,7 +832,7 @@ export default function HydroAppFinalV31() {
                   onClick={() => {
                     setConfig(prev => ({ ...prev, waterType: key }));
                     setShowWaterSelector(false);
-                    // Recalcular dosis con nuevo tipo de agua
+                    // Recalcular con nuevo tipo de agua
                     const optimal = calculateSystemEC(plants, parseFloat(config.totalVol), key);
                     setConfig(prev => ({
                       ...prev,
@@ -996,7 +862,8 @@ export default function HydroAppFinalV31() {
             
             <div className="p-4 bg-blue-50 rounded-2xl border-2 border-blue-100">
               <p className="text-xs font-bold text-blue-700">
-                ℹ️ Al cambiar el tipo de agua, los cálculos de nutrientes y pH se actualizarán automáticamente.
+                ℹ️ El tipo de agua afecta la dosificación de nutrientes y ajuste de pH. 
+                Los cálculos se ajustarán automáticamente.
               </p>
             </div>
           </Card>
@@ -1022,7 +889,7 @@ export default function HydroAppFinalV31() {
               <div className="flex justify-between items-center mb-3">
                 <p className="text-[10px] font-black uppercase text-slate-400">COMPOSICIÓN DEL CULTIVO</p>
                 <div className="flex items-center gap-2 text-xs text-blue-600 font-bold">
-                  {WATER_TYPES[config.waterType].icon}
+                  <Filter className="text-blue-500" size={16} />
                   <span>{WATER_TYPES[config.waterType].name}</span>
                 </div>
               </div>
@@ -1086,6 +953,17 @@ export default function HydroAppFinalV31() {
 
           <TabsContent value="measure">
             <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6">
+              <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-blue-700">
+                      Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
+                    </p>
+                    <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} | pH objetivo: {config.targetPH}</p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label><input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
                 <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label><input type="number" step="0.1" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
@@ -1285,7 +1163,7 @@ export default function HydroAppFinalV31() {
         </Tabs>
       </main>
 
-      {selPos && step === 5 && (
+      {selPos && step === 4 && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
           <div className="bg-white w-full max-w-md mx-auto rounded-[4rem] p-12 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div className="flex justify-between items-center mb-4">
