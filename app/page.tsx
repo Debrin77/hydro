@@ -5,12 +5,52 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
-  Lock, Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, Thermometer, Zap, ShieldAlert, ChevronRight, Anchor, ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, RefreshCw, Skull, Info
+  Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, Thermometer, Zap, ShieldAlert, ChevronRight, Anchor, ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, RefreshCw, Skull, Info, Calculator, Filter
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import HydroCalc from './components/HydroCalc'
 
-// ==================== BASE DE DATOS DE 5 VARIEDADES ====================
+// Configuración de tipos de agua
+const WATER_TYPES = {
+  "osmosis": {
+    name: "Ósmosis Inversa",
+    icon: <Filter className="text-blue-500" />,
+    ecBase: 0.0,
+    hardness: 0,
+    phBase: 7.0,
+    description: "Agua pura, EC casi 0. Perfecta para hidroponía.",
+    recommendation: "Usar nutrientes completos desde el inicio."
+  },
+  "bajo_mineral": {
+    name: "Baja Mineralización",
+    icon: <Droplets className="text-cyan-500" />,
+    ecBase: 0.2,
+    hardness: 50,
+    phBase: 7.2,
+    description: "Agua blanda, ideal para cultivo.",
+    recommendation: "Ajuste mínimo de pH necesario."
+  },
+  "medio_mineral": {
+    name: "Media Mineralización",
+    icon: <Droplets className="text-teal-500" />,
+    ecBase: 0.4,
+    hardness: 150,
+    phBase: 7.5,
+    description: "Agua de grifo típica.",
+    recommendation: "Considerar dureza al mezclar."
+  },
+  "alta_mineral": {
+    name: "Alta Mineralización",
+    icon: <Droplets className="text-amber-500" />,
+    ecBase: 0.8,
+    hardness: 300,
+    phBase: 8.0,
+    description: "Agua dura, alta en calcio/magnesio.",
+    recommendation: "Ajustar pH y reducir nutrientes con calcio."
+  }
+};
+
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-cyan-500",
@@ -69,8 +109,7 @@ const VARIETIES = {
   }
 };
 
-// ==================== FUNCIONES DE CÁLCULO INTELIGENTE ====================
-const calculateSystemEC = (plants, totalVolume) => {
+const calculateSystemEC = (plants, totalVolume, waterType = "osmosis") => {
   if (plants.length === 0) return { targetEC: "1.2", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
   
   let totalECWeighted = 0;
@@ -98,17 +137,34 @@ const calculateSystemEC = (plants, totalVolume) => {
   const volumeFactor = Math.min(1.0, 30 / totalVolume);
   finalEC *= volumeFactor;
   
+  // Ajustar según tipo de agua
+  const waterConfig = WATER_TYPES[waterType];
+  if (waterConfig) {
+    // Restar EC base del agua
+    finalEC = Math.max(0, finalEC - waterConfig.ecBase);
+    
+    // Ajustar pH objetivo según dureza del agua
+    if (waterConfig.hardness > 200) {
+      finalEC *= 0.9;
+    }
+  }
+  
   finalEC = Math.max(0.6, Math.min(2.0, finalEC));
+  
+  let targetPH = (totalPH / plants.length).toFixed(1);
+  if (waterConfig && waterConfig.hardness > 200) {
+    targetPH = (parseFloat(targetPH) - 0.2).toFixed(1);
+  }
   
   return {
     targetEC: finalEC.toFixed(2),
-    targetPH: (totalPH / plants.length).toFixed(1),
+    targetPH: targetPH,
     statistics: { seedlingCount, growthCount, matureCount }
   };
 };
 
-const calculateHyproDosage = (plants, totalVolume, targetEC) => {
-  if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 } };
+const calculateHyproDosage = (plants, totalVolume, targetEC, waterType = "osmosis") => {
+  if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 }, adjustedForWater: true };
   
   let totalA = 0, totalB = 0;
   plants.forEach(plant => {
@@ -126,7 +182,17 @@ const calculateHyproDosage = (plants, totalVolume, targetEC) => {
     totalB += plantContribution;
   });
   
-  const ecRatio = parseFloat(targetEC) / 1.4;
+  const waterConfig = WATER_TYPES[waterType];
+  let ecRatio = parseFloat(targetEC) / 1.4;
+  
+  if (waterConfig) {
+    if (waterConfig.hardness > 150) {
+      ecRatio *= 0.8;
+    } else if (waterConfig.hardness > 50) {
+      ecRatio *= 0.9;
+    }
+  }
+  
   totalA *= ecRatio;
   totalB *= ecRatio;
   
@@ -136,11 +202,11 @@ const calculateHyproDosage = (plants, totalVolume, targetEC) => {
     per10L: {
       a: Math.round((totalA * 10) / totalVolume),
       b: Math.round((totalB * 10) / totalVolume)
-    }
+    },
+    adjustedForWater: waterConfig ? true : false
   };
 };
 
-// ==================== COMPONENTE PRINCIPAL ====================
 export default function HydroAppFinalV31() {
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
@@ -148,13 +214,19 @@ export default function HydroAppFinalV31() {
   const [lastRot, setLastRot] = useState(new Date().toISOString());
   const [lastClean, setLastClean] = useState(new Date().toISOString());
   const [config, setConfig] = useState({ 
-    totalVol: "20", currentVol: "20", ph: "6.0", ec: "1.2", 
-    temp: "22", targetEC: "1.4", targetPH: "6.0"
+    totalVol: "20", 
+    currentVol: "20", 
+    ph: "6.0", 
+    ec: "1.2", 
+    temp: "22", 
+    targetEC: "1.4", 
+    targetPH: "6.0",
+    waterType: "osmosis"
   });
   const [tab, setTab] = useState("overview");
   const [selPos, setSelPos] = useState(null);
+  const [showWaterSelector, setShowWaterSelector] = useState(false);
 
-  // Cargar y guardar datos
   useEffect(() => {
     const saved = localStorage.getItem("hydro_master_v31");
     if (saved) {
@@ -164,21 +236,20 @@ export default function HydroAppFinalV31() {
       setHistory(d.history || []);
       setLastRot(d.lastRot);
       setLastClean(d.lastClean);
-      setStep(4);
+      setStep(3);
     }
   }, []);
 
   useEffect(() => {
-    if (step >= 3) {
+    if (step >= 2) {
       localStorage.setItem("hydro_master_v31", 
         JSON.stringify({ plants, config, history, lastRot, lastClean }));
     }
   }, [plants, config, history, lastRot, lastClean, step]);
 
-  // Recalcular automáticamente
   useEffect(() => {
-    if (plants.length > 0 && step >= 3) {
-      const optimal = calculateSystemEC(plants, parseFloat(config.totalVol));
+    if (plants.length > 0 && step >= 2) {
+      const optimal = calculateSystemEC(plants, parseFloat(config.totalVol), config.waterType);
       const currentEC = parseFloat(config.targetEC);
       const newEC = parseFloat(optimal.targetEC);
       
@@ -190,14 +261,34 @@ export default function HydroAppFinalV31() {
         }));
       }
     }
-  }, [plants, config.totalVol, step]);
+  }, [plants, config.totalVol, config.waterType, step]);
 
-  // Función para generar ID único
   const generatePlantId = () => {
     return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  // ==================== ALERTAS VISUALES MEJORADAS ====================
+  const calculatePHAdjustment = (currentPH, targetPH, waterType, volume) => {
+    const waterConfig = WATER_TYPES[waterType];
+    if (!waterConfig) return { phMinus: 0, phPlus: 0 };
+    
+    const phDiff = currentPH - targetPH;
+    let adjustmentFactor = 1.0;
+    
+    if (waterConfig.hardness > 200) {
+      adjustmentFactor = 1.5;
+    } else if (waterConfig.hardness > 100) {
+      adjustmentFactor = 1.2;
+    }
+    
+    const adjustment = Math.abs(phDiff) * volume * 0.15 * adjustmentFactor;
+    
+    if (phDiff > 0) {
+      return { phMinus: adjustment.toFixed(1), phPlus: 0 };
+    } else {
+      return { phMinus: 0, phPlus: adjustment.toFixed(1) };
+    }
+  };
+
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
     const vTot = parseFloat(config.totalVol) || 20;
@@ -206,9 +297,20 @@ export default function HydroAppFinalV31() {
     const tEc = parseFloat(config.targetEC) || 1.4;
     const tPh = parseFloat(config.targetPH) || 6.0;
     const temp = parseFloat(config.temp) || 20;
+    const waterType = config.waterType || "osmosis";
     const res = [];
 
-    // 1. AGUA BAJA (URGENTE - ROJO)
+    if (waterType === "alta_mineral") {
+      res.push({ 
+        t: "AGUA DURA DETECTADA", 
+        v: "Ajuste especial", 
+        d: "Reducción automática de nutrientes aplicada", 
+        c: "bg-gradient-to-r from-amber-600 to-orange-600",
+        icon: <Filter className="text-white" size={28} />,
+        priority: 3
+      });
+    }
+
     if (vAct < vTot * 0.3) {
       res.push({ 
         t: "¡AGUA MUY BAJA!", 
@@ -230,7 +332,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 2. TEMPERATURA (NARANJA/ROJO)
     if (temp > 28) {
       res.push({ 
         t: "¡PELIGRO TEMPERATURA!", 
@@ -262,11 +363,10 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 3. pH (MORADO/ROSA)
     if (ph > tPh + 0.5 || ph < tPh - 0.5) {
-      const diff = Math.abs(ph - tPh);
-      const ml = (diff * 10 * vAct * 0.15).toFixed(1);
+      const phAdjustment = calculatePHAdjustment(ph, tPh, waterType, vAct);
       const action = ph > tPh ? "pH-" : "pH+";
+      const ml = ph > tPh ? phAdjustment.phMinus : phAdjustment.phPlus;
       res.push({ 
         t: `AJUSTE ${action} URGENTE`, 
         v: `${ml}ml`, 
@@ -277,9 +377,9 @@ export default function HydroAppFinalV31() {
       });
     } 
     else if (ph > tPh + 0.2 || ph < tPh - 0.2) {
-      const diff = Math.abs(ph - tPh);
-      const ml = (diff * 10 * vAct * 0.15).toFixed(1);
+      const phAdjustment = calculatePHAdjustment(ph, tPh, waterType, vAct);
       const action = ph > tPh ? "pH-" : "pH+";
+      const ml = ph > tPh ? phAdjustment.phMinus : phAdjustment.phPlus;
       res.push({ 
         t: `AJUSTAR ${action}`, 
         v: `${ml}ml`, 
@@ -290,7 +390,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 4. EC (AZUL/ÁMBAR)
     if (ec < tEc - 0.4 && ec > 0) {
       const ml = (((tEc - ec) / 0.1) * vAct * 0.25).toFixed(1);
       res.push({ 
@@ -336,7 +435,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // 5. RECORDATORIO DE LIMPIEZA (SI PASAN 14 DÍAS)
     const lastCleanDate = new Date(lastClean);
     const now = new Date();
     const daysSinceClean = Math.floor((now - lastCleanDate) / (1000 * 3600 * 24));
@@ -352,11 +450,9 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Ordenar por prioridad (1 = más urgente)
     return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean]);
 
-  // ==================== CALENDARIO INTELIGENTE ====================
   const generateCalendar = () => {
     const now = new Date();
     const lastCleanDate = new Date(lastClean);
@@ -364,7 +460,6 @@ export default function HydroAppFinalV31() {
     const daysUntilClean = Math.max(0, 14 - daysSinceClean);
     
     const totalPlants = plants.length;
-    // Más plantas = más mediciones recomendadas
     const measureFrequency = totalPlants > 12 ? 2 : totalPlants > 6 ? 3 : 4;
     
     const calendarDays = [];
@@ -377,28 +472,24 @@ export default function HydroAppFinalV31() {
       let label = "";
       let description = "";
       
-      // Día de medición basado en frecuencia
       if (dayNumber % measureFrequency === 0) {
         type = "measure";
         label = "Medir";
         description = `pH, EC, Temp - ${totalPlants} plantas`;
       }
       
-      // Día de rotación (cada 7 días)
       if (dayNumber % 7 === 0) {
         type = "rotation";
         label = "Rotar";
         description = "Cosecha N3 → mover N2 → N1 → nuevas";
       }
       
-      // Día de limpieza (cada 14 días desde última)
       if (dayNumber === daysUntilClean) {
         type = "clean";
         label = "Limpiar";
         description = "Limpieza profunda del depósito";
       }
       
-      // Si coinciden dos tipos, priorizar
       if (dayNumber === daysUntilClean && dayNumber % 7 === 0) {
         type = "critical";
         label = "Doble";
@@ -428,7 +519,6 @@ export default function HydroAppFinalV31() {
     }
   };
 
-  // ==================== PANTALLAS DE INICIO ====================
   if (step === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 flex items-center justify-center p-6">
@@ -488,8 +578,6 @@ export default function HydroAppFinalV31() {
             {plants.length > 0 ? `Ver Recomendaciones (${plants.length} plantas)` : "Selecciona Plantas"}
             <ArrowRight/>
           </button>
-
-          {/* Modal para seleccionar variedad - SOLO EN PASO 1 */}
           {selPos && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
               <div className="bg-white w-full max-w-md mx-auto rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
@@ -504,7 +592,6 @@ export default function HydroAppFinalV31() {
                     <button 
                       key={v}
                       onClick={() => {
-                        // Crear nueva planta con ID único
                         const newPlant = {
                           id: generatePlantId(),
                           v: v,
@@ -512,7 +599,7 @@ export default function HydroAppFinalV31() {
                           p: selPos.p
                         };
                         setPlants([...plants, newPlant]);
-                        setSelPos(null); // Cerrar modal
+                        setSelPos(null);
                       }} 
                       className={`w-full p-5 rounded-[1.5rem] font-black text-white shadow-md flex justify-between items-center hover:scale-[1.02] active:scale-95 transition-all ${VARIETIES[v].color}`}
                     >
@@ -541,8 +628,8 @@ export default function HydroAppFinalV31() {
   }
 
   if (step === 2) {
-    const optimalEC = calculateSystemEC(plants, parseFloat(config.totalVol));
-    const dosage = calculateHyproDosage(plants, parseFloat(config.totalVol), optimalEC.targetEC);
+    const optimalEC = calculateSystemEC(plants, parseFloat(config.totalVol), config.waterType);
+    const dosage = calculateHyproDosage(plants, parseFloat(config.totalVol), optimalEC.targetEC, config.waterType);
     
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-teal-50 flex items-center justify-center p-4">
@@ -553,6 +640,24 @@ export default function HydroAppFinalV31() {
             </button>
             <h2 className="text-2xl font-black text-center uppercase italic text-teal-700">DOSIS PRECISAS</h2>
             <div className="w-10"></div>
+          </div>
+          
+          {/* Mostrar información del tipo de agua */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-blue-700">
+                  Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
+                </p>
+                <p className="text-xs text-blue-600">EC base: {WATER_TYPES[config.waterType].ecBase} | Dureza: {WATER_TYPES[config.waterType].hardness} ppm</p>
+              </div>
+              <button 
+                onClick={() => setShowWaterSelector(true)}
+                className="p-2 bg-blue-100 rounded-full hover:bg-blue-200"
+              >
+                <Filter className="text-blue-600" size={20} />
+              </button>
+            </div>
           </div>
           
           <div className="space-y-6 mb-10">
@@ -568,7 +673,7 @@ export default function HydroAppFinalV31() {
               <div className="flex justify-between items-center">
                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">EC ÓPTIMA CALCULADA</p>
                 <p className="text-4xl font-black italic text-blue-700 leading-none">{optimalEC.targetEC} mS/cm</p>
-                <p className="text-[9px] font-bold mt-1 text-slate-500">Para {optimalEC.statistics.seedlingCount+optimalEC.statistics.growthCount+optimalEC.statistics.matureCount} plantas en {config.totalVol}L</p></div>
+                <p className="text-[9px] font-bold mt-1 text-slate-500">Ajustada para {WATER_TYPES[config.waterType].name.toLowerCase()}</p></div>
                 <Activity className="text-blue-500" size={40} />
               </div>
             </Card>
@@ -591,6 +696,14 @@ export default function HydroAppFinalV31() {
                   <p className="text-[8px] text-slate-500 mt-1">({dosage.per10L.b} ml/10L)</p>
                 </div>
               </div>
+              
+              {config.waterType === "alta_mineral" && (
+                <div className="mt-4 p-3 bg-amber-50 rounded-2xl border border-amber-200">
+                  <p className="text-[10px] font-bold text-amber-700 text-center">
+                    ⚠️ Dosis reducida 20% por agua dura (alta en calcio/magnesio)
+                  </p>
+                </div>
+              )}
             </Card>
           </div>
           
@@ -615,6 +728,24 @@ export default function HydroAppFinalV31() {
             </button>
             <h2 className="text-2xl font-black text-center uppercase italic text-orange-700">PASO 4: PRIMERA MEDICIÓN</h2>
             <div className="w-10"></div>
+          </div>
+          
+          {/* Mostrar información del tipo de agua */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-blue-700">
+                  Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
+                </p>
+                <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} | pH objetivo: {config.targetPH}</p>
+              </div>
+              <button 
+                onClick={() => setShowWaterSelector(true)}
+                className="p-2 bg-blue-100 rounded-full hover:bg-blue-200"
+              >
+                <Filter className="text-blue-600" size={20} />
+              </button>
+            </div>
           </div>
           
           <p className="text-center text-sm font-bold text-slate-400 mb-8">Introduce los valores actuales de tu sistema</p>
@@ -652,7 +783,6 @@ export default function HydroAppFinalV31() {
     );
   }
 
-  // ==================== PANEL PRINCIPAL ====================
   const calendarDays = generateCalendar();
   
   return (
@@ -666,6 +796,13 @@ export default function HydroAppFinalV31() {
           <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-2xl font-black text-lg">
             {config.currentVol}L
           </Badge>
+          <button 
+            onClick={() => setShowWaterSelector(true)}
+            className="p-2 bg-blue-50 rounded-full hover:bg-blue-100 transition-colors"
+            title="Cambiar tipo de agua"
+          >
+            <Filter className="text-blue-600" size={20} />
+          </button>
           {alerts.length > 0 && (
             <div className="relative">
               <Bell className="text-amber-600" size={22} />
@@ -676,6 +813,62 @@ export default function HydroAppFinalV31() {
           )}
         </div>
       </header>
+
+      {/* Selector de tipo de agua modal */}
+      {showWaterSelector && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+          <Card className="w-full max-w-md p-8 bg-white rounded-[3rem] shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black text-slate-800">Seleccionar Tipo de Agua</h2>
+              <button onClick={() => setShowWaterSelector(false)} className="p-2 bg-slate-100 rounded-full">
+                <Plus size={24} className="rotate-45 text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              {Object.entries(WATER_TYPES).map(([key, water]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setConfig(prev => ({ ...prev, waterType: key }));
+                    setShowWaterSelector(false);
+                    // Recalcular con nuevo tipo de agua
+                    const optimal = calculateSystemEC(plants, parseFloat(config.totalVol), key);
+                    setConfig(prev => ({
+                      ...prev,
+                      targetEC: optimal.targetEC,
+                      targetPH: optimal.targetPH
+                    }));
+                  }}
+                  className={`w-full p-5 rounded-[2rem] border-4 ${config.waterType === key ? 'border-blue-500 bg-blue-50' : 'border-slate-100 bg-white'} flex items-center gap-4 hover:bg-slate-50 transition-all`}
+                >
+                  <div className="flex-shrink-0">
+                    {water.icon}
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-black text-slate-800">{water.name}</p>
+                    <p className="text-xs text-slate-500">{water.description}</p>
+                    <div className="flex gap-4 mt-2 text-xs">
+                      <span className="text-blue-600 font-bold">EC base: {water.ecBase}</span>
+                      <span className="text-amber-600 font-bold">Dureza: {water.hardness} ppm</span>
+                    </div>
+                  </div>
+                  {config.waterType === key && (
+                    <Check className="text-blue-500" size={24} />
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <div className="p-4 bg-blue-50 rounded-2xl border-2 border-blue-100">
+              <p className="text-xs font-bold text-blue-700">
+                ℹ️ El tipo de agua afecta la dosificación de nutrientes y ajuste de pH. 
+                Los cálculos se ajustarán automáticamente.
+              </p>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <main className="container mx-auto p-4 max-w-md">
         <Tabs value={tab} onValueChange={setTab}>
@@ -691,10 +884,15 @@ export default function HydroAppFinalV31() {
             <TabsTrigger value="settings"><Trash2 /></TabsTrigger>
           </TabsList>
 
-          {/* PESTAÑA: OVERVIEW - ALERTAS VISUALES */}
           <TabsContent value="overview" className="space-y-4">
             <Card className="p-5 rounded-[2rem] bg-gradient-to-r from-slate-50 to-blue-50 border-2">
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-3">COMPOSICIÓN DEL CULTIVO</p>
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-[10px] font-black uppercase text-slate-400">COMPOSICIÓN DEL CULTIVO</p>
+                <div className="flex items-center gap-2 text-xs text-blue-600 font-bold">
+                  <Filter className="text-blue-500" size={16} />
+                  <span>{WATER_TYPES[config.waterType].name}</span>
+                </div>
+              </div>
               <div className="flex justify-around">
                 <div className="text-center">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-b from-blue-200 to-blue-300 flex items-center justify-center mx-auto mb-1 shadow-inner">
@@ -720,7 +918,6 @@ export default function HydroAppFinalV31() {
               </div>
             </Card>
             
-            {/* ALERTAS VISUALES MEJORADAS */}
             {alerts.length > 0 ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-2">
@@ -754,9 +951,19 @@ export default function HydroAppFinalV31() {
             )}
           </TabsContent>
 
-          {/* PESTAÑA: MEDICIÓN */}
           <TabsContent value="measure">
             <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6">
+              <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-blue-700">
+                      Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
+                    </p>
+                    <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} | pH objetivo: {config.targetPH}</p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label><input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
                 <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label><input type="number" step="0.1" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
@@ -773,7 +980,6 @@ export default function HydroAppFinalV31() {
             </Card>
           </TabsContent>
 
-          {/* PESTAÑA: TORRE */}
           <TabsContent value="tower" className="space-y-6">
             <button onClick={handleRotation} className="w-full p-8 rounded-[2.5rem] bg-gradient-to-r from-orange-500 to-red-500 text-white font-black flex items-center justify-center gap-4 shadow-2xl border-b-8 border-orange-800 active:border-b-0 active:translate-y-1 transition-all">
                 <Scissors size={28}/> 
@@ -803,7 +1009,6 @@ export default function HydroAppFinalV31() {
             ))}
           </TabsContent>
 
-          {/* PESTAÑA: CALENDARIO INTELIGENTE */}
           <TabsContent value="calendar" className="space-y-6">
             <Card className="p-8 rounded-[3.5rem] bg-gradient-to-br from-indigo-950 to-purple-950 text-white shadow-2xl relative overflow-hidden border-4 border-indigo-900">
               <div className="flex items-center justify-between mb-6">
@@ -883,11 +1088,25 @@ export default function HydroAppFinalV31() {
             </div>
           </TabsContent>
 
-          {/* PESTAÑA: CONSEJOS MAESTROS (ACTUALIZADA) */}
           <TabsContent value="tips" className="space-y-6">
             <h2 className="text-2xl font-black uppercase italic text-slate-800 ml-4">Consejos Maestros</h2>
             
-            {/* NUEVO: TRASPLANTE DE PLÁNTULA DE VIVERO */}
+            <HydroCalc />
+            
+            <Card className="rounded-[3rem] border-4 border-blue-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white flex items-center gap-4">
+                <Droplets size={30}/>
+                <h3 className="font-black uppercase text-xs tracking-widest">💧 GESTIÓN DEL AGUA POR TIPO</h3>
+              </div>
+              <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
+                <p>• <span className="text-blue-700 uppercase font-black">Ósmosis Inversa:</span> Agua pura. Comienza con EC 0 y pH 7.0. Añade nutrientes completos según dosificación. Ajusta pH a 5.8-6.2 después de añadir nutrientes.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Baja Mineralización:</span> EC base ~0.2. Resta este valor al medir. Ajusta pH suavemente, suele bajar fácilmente con ácido.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Media Mineralización:</span> EC base ~0.4. Contiene calcio y magnesio. Reduce nutrientes base con calcio en 10%. El agua dura tiene efecto tampón en pH.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Alta Mineralización:</span> EC base ~0.8. Reduce nutrientes con calcio en 20%. El pH puede ser difícil de bajar, usa ácido fosfórico (pH-) en lugar de cítrico. Deja reposar 24h tras ajuste.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Prueba de Dureza:</span> Si tu agua forma sarro en hervidor, es dura. Si hace espuma fácil con jabón, es blanda. Ajusta cálculos en consecuencia.</p>
+              </div>
+            </Card>
+            
             <Card className="rounded-[3rem] border-4 border-cyan-100 overflow-hidden shadow-xl bg-white">
               <div className="bg-gradient-to-r from-cyan-600 to-teal-600 p-6 text-white flex items-center gap-4">
                 <RefreshCw size={30}/>
@@ -917,14 +1136,6 @@ export default function HydroAppFinalV31() {
                 <p>• <span className="text-orange-600 uppercase font-black">Drenaje Maestro:</span> Tras el remojo, deja que escurra por gravedad. **PROHIBIDO ESTRUJAR**. Al apretarla, destruyes el 50% de los microporos de aire. La lana de roca debe tener un ratio 60% agua / 40% aire para evitar la pudrición radicular.</p>
               </div>
             </Card>
-
-            <Card className="rounded-[3rem] border-4 border-blue-100 overflow-hidden shadow-xl bg-white">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white flex items-center gap-4"><Anchor size={30}/><h3 className="font-black uppercase text-xs tracking-widest">💧 GESTIÓN DEL AGUA</h3></div>
-              <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
-                <p>• <span className="text-blue-700 uppercase font-black">Orden de Mezcla:</span> Primero regula el pH del agua sola, luego añade Nutriente A, mezcla bien, y luego Nutriente B. Si mezclas A y B puros, los minerales precipitan y se vuelven piedras insolubles.</p>
-                <p>• <span className="text-blue-700 uppercase font-black">Bio-Film:</span> Si el agua huele a pantano, limpia el depósito con agua oxigenada al 3% para desinfectar las paredes antes de volver a llenar.</p>
-              </div>
-            </Card>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6 py-10">
@@ -952,7 +1163,6 @@ export default function HydroAppFinalV31() {
         </Tabs>
       </main>
 
-      {/* Modal para seleccionar variedad - SOLO PARA PANEL PRINCIPAL */}
       {selPos && step === 4 && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end p-4 z-[9999]">
           <div className="bg-white w-full max-w-md mx-auto rounded-[4rem] p-12 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-300">
