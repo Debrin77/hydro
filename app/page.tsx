@@ -10,7 +10,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 
-// Configuración de tipos de agua
+// ============================================================================
+// CONFIGURACIÓN BASE - TIPOS DE AGUA Y VARIEDADES CON CANNA AQUA VEGA
+// ============================================================================
+
 const WATER_TYPES = {
   "osmosis": {
     name: "Ósmosis Inversa",
@@ -50,9 +53,6 @@ const WATER_TYPES = {
   }
 };
 
-// VARIETIES ACTUALIZADA CON DOSIS DE CANNA AQUA VEGA PARA AGUA BLANDA
-// Valores por 10 litros, basados en tu tabla para 20L (divididos entre 2).
-// El valor 'ec' es el objetivo DIRECTO para cada fase.
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-cyan-500",
@@ -111,7 +111,10 @@ const VARIETIES = {
   }
 };
 
-// FUNCIÓN 1: Cálculo del EC Objetivo del Sistema (PROMEDIO para escalonado)
+// ============================================================================
+// FUNCIONES DE CÁLCULO PARA CANNA AQUA VEGA
+// ============================================================================
+
 const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
   if (plants.length === 0) return { targetEC: "1.2", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
   
@@ -157,7 +160,6 @@ const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
   };
 };
 
-// FUNCIÓN 2: Cálculo de la Dosis de CANNA (REEMPLAZA a Hy-Pro)
 const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_mineral") => {
   if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 }, note: "" };
 
@@ -200,7 +202,10 @@ const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_m
   };
 };
 
+// ============================================================================
 // COMPONENTE PRINCIPAL
+// ============================================================================
+
 export default function HydroAppFinalV31() {
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
@@ -215,13 +220,14 @@ export default function HydroAppFinalV31() {
     temp: "22", 
     targetEC: "1.4", 
     targetPH: "6.0",
-    waterType: "bajo_mineral" // Cambiado a agua blanda por defecto
+    waterType: "bajo_mineral"
   });
   const [tab, setTab] = useState("overview");
   const [selPos, setSelPos] = useState(null);
   const [showWaterSelector, setShowWaterSelector] = useState(false);
 
-  // Cargar datos guardados (CON PROTECCIÓN CONTRA ERRORES)
+  // =================== EFECTOS Y FUNCIONES BÁSICAS ===================
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem("hydro_master_canna");
@@ -240,7 +246,6 @@ export default function HydroAppFinalV31() {
     }
   }, []);
 
-  // Guardar datos
   useEffect(() => {
     if (step >= 2) {
       try {
@@ -252,7 +257,6 @@ export default function HydroAppFinalV31() {
     }
   }, [plants, config, history, lastRot, lastClean, step]);
 
-  // Recalcular EC objetivo
   useEffect(() => {
     if (plants.length > 0 && step >= 2) {
       const optimal = calculateSystemEC(plants, parseFloat(config.totalVol), config.waterType);
@@ -293,6 +297,96 @@ export default function HydroAppFinalV31() {
     } else {
       return { phMinus: 0, phPlus: adjustment.toFixed(1) };
     }
+  };
+
+  // =================== FUNCIÓN DEL NUEVO CALENDARIO ===================
+
+  const generateCalendar = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    
+    const firstDayOfWeek = firstDayOfMonth.getDay();
+    const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    
+    const daysInMonth = lastDayOfMonth.getDate();
+    const totalCells = 42;
+    const calendarDays = [];
+
+    // Días del mes anterior
+    const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+    for (let i = 0; i < startOffset; i++) {
+      const day = prevMonthLastDay - startOffset + i + 1;
+      const date = new Date(currentYear, currentMonth - 1, day);
+      calendarDays.push({
+        date,
+        dayOfMonth: day,
+        isCurrentMonth: false,
+        events: []
+      });
+    }
+
+    // Días del mes actual
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(currentYear, currentMonth, i);
+      calendarDays.push({
+        date,
+        dayOfMonth: i,
+        isCurrentMonth: true,
+        events: []
+      });
+    }
+
+    // Días del mes siguiente
+    const remainingCells = totalCells - calendarDays.length;
+    for (let i = 1; i <= remainingCells; i++) {
+      const date = new Date(currentYear, currentMonth + 1, i);
+      calendarDays.push({
+        date,
+        dayOfMonth: i,
+        isCurrentMonth: false,
+        events: []
+      });
+    }
+
+    // Calcular eventos
+    const totalPlants = plants.length;
+    const measureFrequency = totalPlants > 12 ? 2 : totalPlants > 6 ? 3 : 4;
+    
+    const lastRotDate = new Date(lastRot);
+    const lastCleanDate = new Date(lastClean);
+
+    calendarDays.forEach(day => {
+      if (!day.isCurrentMonth) return;
+      
+      const dayDate = day.date;
+      const diffTime = dayDate - now;
+      const diffDays = Math.floor(diffTime / (1000 * 3600 * 24));
+      
+      if (diffDays < 0) return;
+
+      // Evento de medición
+      if (diffDays % measureFrequency === 0) {
+        day.events.push('measure');
+      }
+
+      // Evento de rotación
+      const daysFromLastRot = Math.floor((dayDate - lastRotDate) / (1000 * 3600 * 24));
+      if (daysFromLastRot > 0 && daysFromLastRot % 7 === 0) {
+        day.events.push('rotation');
+      }
+
+      // Evento de limpieza
+      const daysFromLastClean = Math.floor((dayDate - lastCleanDate) / (1000 * 3600 * 24));
+      if (daysFromLastClean > 0 && daysFromLastClean % 14 === 0) {
+        day.events.push('clean');
+      }
+    });
+
+    return calendarDays;
   };
 
   const alerts = useMemo(() => {
@@ -397,7 +491,6 @@ export default function HydroAppFinalV31() {
     }
 
     if (ec < tEc - 0.4 && ec > 0) {
-      // CÁLCULO ACTUALIZADO para CANNA
       const dosageNeeded = calculateCannaDosage(plants, vAct, tEc, waterType);
       const mlPerLiter = dosageNeeded.per10L.a / 10;
       const mlToAdd = ((tEc - ec) / 0.1) * vAct * mlPerLiter * 0.5;
@@ -464,61 +557,6 @@ export default function HydroAppFinalV31() {
     return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean, plants]);
 
-  const generateCalendar = () => {
-    const now = new Date();
-    const lastCleanDate = new Date(lastClean);
-    const daysSinceClean = Math.floor((now - lastCleanDate) / (1000 * 3600 * 24));
-    const daysUntilClean = Math.max(0, 14 - daysSinceClean);
-    
-    const totalPlants = plants.length;
-    const measureFrequency = totalPlants > 12 ? 2 : totalPlants > 6 ? 3 : 4;
-    
-    const calendarDays = [];
-    for (let i = 0; i < 15; i++) {
-      const dayDate = new Date();
-      dayDate.setDate(now.getDate() + i);
-      const dayNumber = i + 1;
-      
-      let type = "normal";
-      let label = "";
-      let description = "";
-      
-      if (dayNumber % measureFrequency === 0) {
-        type = "measure";
-        label = "Medir";
-        description = `pH, EC, Temp - ${totalPlants} plantas`;
-      }
-      
-      if (dayNumber % 7 === 0) {
-        type = "rotation";
-        label = "Rotar";
-        description = "Cosecha N3 → mover N2 → N1 → nuevas";
-      }
-      
-      if (dayNumber === daysUntilClean) {
-        type = "clean";
-        label = "Limpiar";
-        description = "Limpieza profunda del depósito";
-      }
-      
-      if (dayNumber === daysUntilClean && dayNumber % 7 === 0) {
-        type = "critical";
-        label = "Doble";
-        description = "Rotación + Limpieza";
-      }
-      
-      calendarDays.push({
-        day: dayNumber,
-        date: dayDate,
-        type,
-        label,
-        description
-      });
-    }
-    
-    return calendarDays;
-  };
-
   const handleRotation = () => {
     if (confirm("¿ROTAR NIVELES?\n• Nivel 3 → Cosecha\n• Nivel 2 → Nivel 3 (maduración)\n• Nivel 1 → Nivel 2 (crecimiento)\n• Nivel 1 vacío para nuevas plántulas")) {
       const withoutMature = plants.filter(p => p.l !== 3);
@@ -529,6 +567,10 @@ export default function HydroAppFinalV31() {
       setTab("tower");
     }
   };
+
+  // ============================================================================
+  // INTERFAZ DE USUARIO - LOS 5 PASOS
+  // ============================================================================
 
   if (step === 0) {
     return (
@@ -653,7 +695,6 @@ export default function HydroAppFinalV31() {
             <div className="w-10"></div>
           </div>
           
-          {/* Información del tipo de agua */}
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
             <div className="flex items-center justify-between">
               <div>
@@ -743,7 +784,6 @@ export default function HydroAppFinalV31() {
             <div className="w-10"></div>
           </div>
           
-          {/* Información del tipo de agua */}
           <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
             <div className="flex items-center justify-between">
               <div>
@@ -796,13 +836,17 @@ export default function HydroAppFinalV31() {
     );
   }
 
+  // ============================================================================
+  // INTERFAZ PRINCIPAL (PASO 4)
+  // ============================================================================
+
   const calendarDays = generateCalendar();
   
   return (
     <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 font-sans">
       <header className="bg-white border-b-4 p-6 flex justify-between items-center sticky top-0 z-50">
         <div>
-          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v4.1</h1>
+          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v4.2</h1>
           <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 italic">CANNA Aqua Vega | Sistema Escalonado</p>
         </div>
         <div className="flex items-center gap-3">
@@ -827,7 +871,6 @@ export default function HydroAppFinalV31() {
         </div>
       </header>
 
-      {/* Selector de tipo de agua modal */}
       {showWaterSelector && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
           <Card className="w-full max-w-md p-8 bg-white rounded-[3rem] shadow-2xl">
@@ -1024,10 +1067,12 @@ export default function HydroAppFinalV31() {
           <TabsContent value="calendar" className="space-y-6">
             <Card className="p-8 rounded-[3.5rem] bg-gradient-to-br from-indigo-950 to-purple-950 text-white shadow-2xl relative overflow-hidden border-4 border-indigo-900">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-black italic text-indigo-200 uppercase">Calendario Inteligente</h3>
+                <h3 className="text-lg font-black italic text-indigo-200 uppercase">Calendario Mensual</h3>
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
                   <Calendar size={16} />
-                  <span className="text-[10px] font-black">15 días</span>
+                  <span className="text-[10px] font-black">
+                    {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                  </span>
                 </div>
               </div>
               
@@ -1046,20 +1091,71 @@ export default function HydroAppFinalV31() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-5 gap-3">
-                {calendarDays.map((day, i) => (
-                  <div key={i} className={`relative rounded-xl p-3 text-center border-2 ${day.type === 'critical' ? 'bg-gradient-to-b from-red-600 to-rose-800 border-red-400 shadow-lg shadow-red-900/50 animate-pulse' : day.type === 'clean' ? 'bg-gradient-to-b from-red-700 to-red-900 border-red-500' : day.type === 'rotation' ? 'bg-gradient-to-b from-orange-600 to-amber-800 border-orange-400' : day.type === 'measure' ? 'bg-gradient-to-b from-blue-600 to-blue-800 border-blue-400' : 'bg-white/5 border-transparent'}`}>
-                    <p className={`text-lg font-black ${day.type === 'normal' ? 'text-white/30' : 'text-white'}`}>{day.day}</p>
-                    {day.label && (
-                      <>
-                        <p className="text-[8px] font-black uppercase mt-1">{day.label}</p>
-                        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ${day.type === 'critical' ? 'bg-red-400' : day.type === 'clean' ? 'bg-red-500' : day.type === 'rotation' ? 'bg-orange-400' : 'bg-blue-500'}`}>
-                          <Info size={10} className="text-white" />
-                        </div>
-                      </>
-                    )}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((dia, i) => (
+                  <div key={i} className="text-center text-[10px] font-black text-indigo-300 uppercase">
+                    {dia}
                   </div>
                 ))}
+              </div>
+              
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day, i) => {
+                  let type = "normal";
+                  if (day.events.includes('rotation') && day.events.includes('clean')) {
+                    type = 'critical';
+                  } else if (day.events.includes('clean')) {
+                    type = 'clean';
+                  } else if (day.events.includes('rotation')) {
+                    type = 'rotation';
+                  } else if (day.events.includes('measure')) {
+                    type = 'measure';
+                  }
+                  
+                  const isToday = day.date.toDateString() === new Date().toDateString();
+
+                  return (
+                    <div
+                      key={i}
+                      className={`
+                        relative rounded-xl p-2 text-center border-2 min-h-[3rem] flex flex-col items-center justify-center
+                        ${type === 'critical'
+                          ? 'bg-gradient-to-b from-red-600 to-rose-800 border-red-400 shadow-lg shadow-red-900/50 animate-pulse'
+                          : type === 'clean'
+                          ? 'bg-gradient-to-b from-red-700 to-red-900 border-red-500'
+                          : type === 'rotation'
+                          ? 'bg-gradient-to-b from-orange-600 to-amber-800 border-orange-400'
+                          : type === 'measure'
+                          ? 'bg-gradient-to-b from-blue-600 to-blue-800 border-blue-400'
+                          : 'bg-white/5 border-transparent'
+                        }
+                        ${!day.isCurrentMonth ? 'opacity-30' : ''}
+                      `}
+                    >
+                      <p className={`text-sm font-black ${
+                        type === 'normal' && !day.isCurrentMonth
+                          ? 'text-white/20'
+                          : type === 'normal' && day.isCurrentMonth
+                          ? 'text-white/60'
+                          : 'text-white'
+                      }`}>
+                        {day.dayOfMonth}
+                      </p>
+                      
+                      {isToday && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-indigo-950"></div>
+                      )}
+                      
+                      {day.events.length > 0 && (
+                        <div className="flex justify-center gap-1 mt-1">
+                          {day.events.includes('measure') && <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>}
+                          {day.events.includes('rotation') && <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>}
+                          {day.events.includes('clean') && <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               
               <div className="mt-8 pt-6 border-t border-white/10">
@@ -1080,6 +1176,10 @@ export default function HydroAppFinalV31() {
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-gradient-to-b from-red-600 to-rose-800 rounded animate-pulse"></div>
                     <span className="text-[9px] text-white/80">Doble tarea</span>
+                  </div>
+                  <div className="flex items-center gap-2 col-span-2">
+                    <div className="w-4 h-4 bg-green-400 rounded-full border-2 border-indigo-950"></div>
+                    <span className="text-[9px] text-white/80">Hoy</span>
                   </div>
                 </div>
               </div>
@@ -1103,7 +1203,6 @@ export default function HydroAppFinalV31() {
           <TabsContent value="tips" className="space-y-6">
             <h2 className="text-2xl font-black uppercase italic text-slate-800 ml-4">Consejos Maestros</h2>
             
-            {/* Calculadora Simple */}
             <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-100 mb-6">
               <div className="flex items-center gap-3 mb-4">
                 <Calculator className="text-blue-600" />
@@ -1157,7 +1256,7 @@ export default function HydroAppFinalV31() {
             </button>
             
             <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest pt-10 leading-relaxed">
-              HydroCaru Master v4.1 - CANNA Aqua Vega<br/>
+              HydroCaru Master v4.2 - CANNA Aqua Vega<br/>
               Sistema Inteligente de Cultivo Escalonado 6-6-6
             </p>
           </TabsContent>
