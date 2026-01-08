@@ -31,7 +31,7 @@ const GROWTH_STAGES = {
 
 const HYPRO_STRENGTH = 1.9
 
-export default function HydroCalc() {
+export default function hydroCalc() {
   const [waterType, setWaterType] = useState('bezoya')
   const [stage, setStage] = useState('seedling')
   const [volume, setVolume] = useState(20)
