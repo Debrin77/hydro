@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import HydroCalc from './components/HydroCalc'
+import hydrocalc from './components/hydrocalc'
 
 // Configuración de tipos de agua
 const WATER_TYPES = {
@@ -1091,7 +1091,7 @@ export default function HydroAppFinalV31() {
           <TabsContent value="tips" className="space-y-6">
             <h2 className="text-2xl font-black uppercase italic text-slate-800 ml-4">Consejos Maestros</h2>
             
-            <HydroCalc />
+            <hydrocalc />
             
             <Card className="rounded-[3rem] border-4 border-blue-100 overflow-hidden shadow-xl bg-white">
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white flex items-center gap-4">
