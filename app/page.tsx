@@ -9,7 +9,6 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import hydrocalc from './components/hydrocalc'
 
 // Configuración de tipos de agua
 const WATER_TYPES = {
@@ -207,6 +206,94 @@ const calculateHyproDosage = (plants, totalVolume, targetEC, waterType = "osmosi
   };
 };
 
+// Componente de calculadora hidropónica simple
+function HydroCalc() {
+  const [volume, setVolume] = useState("10");
+  const [currentEC, setCurrentEC] = useState("1.0");
+  const [targetEC, setTargetEC] = useState("1.4");
+  
+  const calculateNutrients = () => {
+    const vol = parseFloat(volume) || 10;
+    const currEC = parseFloat(currentEC) || 1.0;
+    const tarEC = parseFloat(targetEC) || 1.4;
+    
+    if (tarEC <= currEC) {
+      return {
+        water: ((currEC - tarEC) / currEC * vol).toFixed(1),
+        nutrients: 0
+      };
+    }
+    
+    const nutrients = ((tarEC - currEC) / 0.1) * vol * 0.25;
+    return {
+      water: 0,
+      nutrients: nutrients.toFixed(1)
+    };
+  };
+  
+  const result = calculateNutrients();
+  
+  return (
+    <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-100 mb-6">
+      <div className="flex items-center gap-3 mb-4">
+        <Calculator className="text-blue-600" />
+        <h3 className="font-black text-blue-800 uppercase text-sm">Calculadora Rápida de Ajuste</h3>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div>
+          <label className="text-[10px] font-bold text-blue-700 mb-1 block">Volumen (L)</label>
+          <input 
+            type="number" 
+            value={volume}
+            onChange={(e) => setVolume(e.target.value)}
+            className="w-full p-3 bg-white border-2 border-blue-200 rounded-2xl text-center font-bold"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-blue-700 mb-1 block">EC Actual</label>
+          <input 
+            type="number" 
+            step="0.1"
+            value={currentEC}
+            onChange={(e) => setCurrentEC(e.target.value)}
+            className="w-full p-3 bg-white border-2 border-blue-200 rounded-2xl text-center font-bold"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-blue-700 mb-1 block">EC Objetivo</label>
+          <input 
+            type="number" 
+            step="0.1"
+            value={targetEC}
+            onChange={(e) => setTargetEC(e.target.value)}
+            className="w-full p-3 bg-white border-2 border-blue-200 rounded-2xl text-center font-bold"
+          />
+        </div>
+      </div>
+      
+      {parseFloat(result.nutrients) > 0 ? (
+        <div className="p-4 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl text-white">
+          <p className="text-[10px] font-bold uppercase mb-1">Añadir Nutrientes</p>
+          <p className="text-2xl font-black">{result.nutrients} ml A+B</p>
+          <p className="text-[9px] opacity-90">Para subir de {currentEC} a {targetEC} mS/cm</p>
+        </div>
+      ) : parseFloat(result.water) > 0 ? (
+        <div className="p-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl text-white">
+          <p className="text-[10px] font-bold uppercase mb-1">Añadir Agua</p>
+          <p className="text-2xl font-black">{result.water} L de agua</p>
+          <p className="text-[9px] opacity-90">Para bajar de {currentEC} a {targetEC} mS/cm</p>
+        </div>
+      ) : (
+        <div className="p-4 bg-gradient-to-r from-gray-400 to-gray-500 rounded-2xl text-white">
+          <p className="text-2xl font-black">✓ EC Correcta</p>
+          <p className="text-[9px] opacity-90">No se necesitan ajustes</p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function HydroAppFinalV31() {
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
@@ -228,22 +315,30 @@ export default function HydroAppFinalV31() {
   const [showWaterSelector, setShowWaterSelector] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("hydro_master_v31");
-    if (saved) {
-      const d = JSON.parse(saved);
-      setPlants(d.plants || []);
-      setConfig(d.config || config);
-      setHistory(d.history || []);
-      setLastRot(d.lastRot);
-      setLastClean(d.lastClean);
-      setStep(3);
+    try {
+      const saved = localStorage.getItem("hydro_master_v31");
+      if (saved) {
+        const d = JSON.parse(saved);
+        setPlants(d.plants || []);
+        setConfig(d.config || config);
+        setHistory(d.history || []);
+        setLastRot(d.lastRot);
+        setLastClean(d.lastClean);
+        setStep(3);
+      }
+    } catch (error) {
+      console.error("Error loading saved data:", error);
     }
   }, []);
 
   useEffect(() => {
     if (step >= 2) {
-      localStorage.setItem("hydro_master_v31", 
-        JSON.stringify({ plants, config, history, lastRot, lastClean }));
+      try {
+        localStorage.setItem("hydro_master_v31", 
+          JSON.stringify({ plants, config, history, lastRot, lastClean }));
+      } catch (error) {
+        console.error("Error saving data:", error);
+      }
     }
   }, [plants, config, history, lastRot, lastClean, step]);
 
@@ -1091,7 +1186,7 @@ export default function HydroAppFinalV31() {
           <TabsContent value="tips" className="space-y-6">
             <h2 className="text-2xl font-black uppercase italic text-slate-800 ml-4">Consejos Maestros</h2>
             
-            <hydrocalc />
+            <HydroCalc />
             
             <Card className="rounded-[3rem] border-4 border-blue-100 overflow-hidden shadow-xl bg-white">
               <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white flex items-center gap-4">
