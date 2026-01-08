@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import HydroCalc from './components/HydroCalc'
+import HydroCalc from './components/hydroCalc'
 
 // Configuración de tipos de agua
 const WATER_TYPES = {
