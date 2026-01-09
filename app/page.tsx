@@ -846,7 +846,7 @@ export default function HydroAppFinalV31() {
     <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 font-sans">
       <header className="bg-white border-b-4 p-6 flex justify-between items-center sticky top-0 z-50">
         <div>
-          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v4.2</h1>
+          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v4.3</h1>
           <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 italic">CANNA Aqua Vega | Sistema Escalonado</p>
         </div>
         <div className="flex items-center gap-3">
@@ -1236,6 +1236,61 @@ export default function HydroAppFinalV31() {
               </div>
             </Card>
 
+            {/* NUEVA SECCIÓN: PROCEDIMIENTOS ESENCIALES */}
+            <Card className="rounded-[3rem] border-4 border-amber-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-gradient-to-r from-amber-600 to-orange-600 p-6 text-white flex items-center gap-4">
+                <Scissors size={30}/>
+                <h3 className="font-black uppercase text-xs tracking-widest">🔧 PROCEDIMIENTOS ESENCIALES PASO A PASO</h3>
+              </div>
+              <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-8">
+
+                {/* --- 1. LIMPIAR PLÁNTULAS --- */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-amber-700 flex items-center gap-2">
+                    <span className="bg-amber-100 text-amber-700 rounded-full w-6 h-6 flex items-center justify-center">1</span>
+                    CÓMO LIMPIAR EL SUSTRATO DE LAS PLÁNTULAS DEL VIVERO
+                  </h4>
+                  <div className="bg-amber-50 p-4 rounded-2xl border-l-4 border-amber-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Prepara agua tibia</strong> (un bol). Nunca uses agua fría para no dañar raíces.</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Sujeta la plántula por la base del tallo</strong> (nunca por las hojas). Sumerge el cepellón en el agua.</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Con los dedos, masajea SUAVEMENTE</strong> las raíces bajo el agua. Deja que la tierra se desprenda sola. El objetivo es eliminar el <strong>80% de la tierra</strong>, no el 100%.</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Inspecciona:</strong> Si ves raíces negras/marrones (podridas), córtalas con tijera esterilizada. Quedan solo raíces <strong>blancas o crema</strong>.</p>
+                    <p className="text-[10px] text-center font-black text-amber-700 mt-3">⚠️ CLAVE: NO TIRES. NO JALES. Sé paciente. Una raíz rota es una semana de retraso.</p>
+                  </div>
+                </div>
+
+                {/* --- 2. PREPARAR LANA DE ROCA --- */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-blue-700 flex items-center gap-2">
+                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center">2</span>
+                    PREPARACIÓN Y COLOCACIÓN DE LA LANA DE ROCA EN LA CESTA
+                  </h4>
+                  <div className="bg-blue-50 p-4 rounded-2xl border-l-4 border-blue-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Neutralización (OBLIGATORIA):</strong> La lana de roca nueva es alcalina (pH ~8). Sumerge los cubos en agua con <strong>pH ajustado a 5.5 durante 24 horas</strong>. Esto estabiliza el material.</p>
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Escurrir, NO ESTRUJAR:</strong> Sácalos y deja que escurran por gravedad 1 hora. <strong>PROHIBIDO APRETAR.</strong> Al estrujar, destruyes la estructura de aire (poros) que las raíces necesitan.</p>
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Hacer el hoyo:</strong> Con un lápiz limpio, haz un hoyo en el centro del cubo de lana. Debe ser lo suficientemente profundo para enterrar el tallo hasta justo debajo de las primeras hojas (cotiledones).</p>
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Colocación en la cesta:</strong> Introduce la plántula limpia en el hoyo. Rodea el tallo con pequeños trozos sueltos de lana de roca para dar soporte. La cesta debe quedar llena, pero la lana <strong>NO debe estar compactada</strong>.</p>
+                  </div>
+                </div>
+
+                {/* --- 3. MEDIR PARÁMETROS --- */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-cyan-700 flex items-center gap-2">
+                    <span className="bg-cyan-100 text-cyan-700 rounded-full w-6 h-6 flex items-center justify-center">3</span>
+                    CÓMO MEDIR CORRECTAMENTE EN UN DEPÓSITO DE 20 LITROS
+                  </h4>
+                  <div className="bg-cyan-50 p-4 rounded-2xl border-l-4 border-cyan-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Preparación del medidor:</strong> Calibra tu medidor de pH/EC según las instrucciones (usando soluciones de calibración 4.0 y 7.0 para pH, 1413 µS/cm para EC). Hazlo <strong>1 vez por semana</strong>.</p>
+                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Punto de muestreo:</strong> No midas en la superficie. Sumerge el vaso de muestreo <strong>a la mitad de la profundidad</strong> del depósito (donde están la mayoría de raíces). Evita tomar agua cerca de la entrada del aireador.</p>
+                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Orden de medición:</strong> 1) <strong>Temperatura</strong> (espera a que se estabilice). 2) <strong>pH</strong> (enjuaga el electrodo con agua destilada entre usos). 3) <strong>EC</strong> (asegúrate de que no haya burbujas en la celda).</p>
+                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Frecuencia:</strong> Con tu sistema de 18 plantas, mide <strong>cada 2-3 días</strong>. Con CANNA Aqua Vega, el pH será estable. Si ves cambios bruscos (+/- 0.5 en un día), revisa raíces y temperatura.</p>
+                    <p className="text-[10px] text-center font-black text-cyan-700 mt-3">📊 Introduce estos valores en la pestaña "MEDIR" de la app para obtener recomendaciones exactas.</p>
+                  </div>
+                </div>
+
+              </div>
+            </Card>
+
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6 py-10">
@@ -1256,7 +1311,7 @@ export default function HydroAppFinalV31() {
             </button>
             
             <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest pt-10 leading-relaxed">
-              HydroCaru Master v4.2 - CANNA Aqua Vega<br/>
+              HydroCaru Master v4.3 - CANNA Aqua Vega<br/>
               Sistema Inteligente de Cultivo Escalonado 6-6-6
             </p>
           </TabsContent>
