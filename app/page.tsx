@@ -1867,10 +1867,10 @@ export default function HydroAppFinalV31() {
                 <div className="space-y-3">
                   <h4 className="text-sm font-black uppercase text-red-700">ALERTAS ESPECIALES PARA CASTELLÓN</h4>
                   <div className="bg-red-50 p-4 rounded-2xl border-l-4 border-red-300 space-y-2">
-                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Ola de calor (>35°C):</strong> Activar <strong>riego de emergencia</strong> al anochecer.</p>
+                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Ola de calor (&gt;35°C):</strong> Activar <strong>riego de emergencia</strong> al anochecer.</p>
                     <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Viento de poniente (12:00-18:00):</strong> <strong>+25% frecuencia</strong> de riego.</p>
                     <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Lluvias persistentes:</strong> <strong>Suspender riego 24h</strong> tras lluvia.</p>
-                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Humedad >80% (invierno):</strong> <strong>Reducir -30% frecuencia</strong>.</p>
+                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Humedad &gt;80% (invierno):</strong> <strong>Reducir -30% frecuencia</strong>.</p>
                   </div>
                 </div>
 
