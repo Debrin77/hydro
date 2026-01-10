@@ -10,7 +10,7 @@ import {
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, 
   RefreshCw, Skull, Info, Calculator, Filter, 
   Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun, 
-  WindIcon, Clipboard, ThermometerSnowflake, Settings
+  WindIcon, Clipboard, ThermometerSnowflake
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -126,100 +126,112 @@ const CASTELLON_CLIMA = {
   coordinates: "40.6789° N, 0.2822° O",
   clima: "Mediterráneo costero",
   
+  // Temperaturas medias anuales
   temperaturas: {
-    verano: { dia: 30, noche: 22 },
-    primavera_otono: { dia: 22, noche: 15 },
-    invierno: { dia: 16, noche: 8 },
+    verano: { dia: 30, noche: 22 },    // Jun-Sep
+    primavera_otono: { dia: 22, noche: 15 }, // Mar-May, Oct-Nov
+    invierno: { dia: 16, noche: 8 },   // Dic-Feb
   },
   
+  // Humedad relativa media
   humedad: {
-    verano: 65,
-    invierno: 75,
+    verano: 65,    // % (más seco)
+    invierno: 75,  // % (más húmedo)
     anual_promedio: 70
   },
   
+  // Horas de luz aproximadas
   horas_luz: {
-    verano: 15,
-    invierno: 10,
+    verano: 15,    // Junio (6:00-21:00)
+    invierno: 10,  // Diciembre (8:00-18:00)
     promedio: 12.5
   },
   
+  // Evapotranspiración (mm/día) - más alta en verano
   evapotranspiracion: {
-    verano: 6.0,
-    invierno: 2.0,
+    verano: 6.0,   // Alta evaporación
+    invierno: 2.0, // Baja evaporación
     promedio: 4.0
   }
 };
 
 // ============================================================================
-// CONFIGURACIÓN BOMBA AJUSTADA PARA 1 MINUTO MÍNIMO
+// CONFIGURACIÓN DE LA BOMBA Y SUSTRATO (LANA DE ROCA) AJUSTADA PARA CASTELLÓN
 // ============================================================================
 
 const ROCKWOOL_CHARACTERISTICS = {
-  waterRetention: 0.85,
-  drainageRate: 0.15,
-  saturationTime: 5,
-  dryingTime: {
-    seedling: 4,
-    growth: 3,
-    mature: 2
+  waterRetention: 0.85, // 85% de retención de agua
+  drainageRate: 0.15,   // 15% de drenaje inmediato
+  saturationTime: 5,    // segundos para saturar completamente
+  dryingTime: {         // Tiempo de secado aproximado (horas)
+    seedling: 4,        // Plántulas secan más lento (menor transpiración)
+    growth: 3,          // Plantas en crecimiento
+    mature: 2           // Plantas maduras (mayor transpiración)
   },
   cubeSizes: {
-    seedling: 0.25,
-    standard: 0.4
+    seedling: 0.25,     // Litros de capacidad del cubo pequeño (plántulas)
+    standard: 0.4       // Litros de capacidad del cubo estándar
   }
 };
 
 const PUMP_CONFIG = {
-  power: 7,
-  flowRate: 600,
-  flowRatePerSecond: 600 / 3600,
-  maxDailyRuntime: 16,
-  minCycleTime: 60, // MÍNIMO 60 SEGUNDOS POR CICLO (1 MINUTO)
-  maxCycleTime: 180, // MÁXIMO 180 SEGUNDOS (3 MINUTOS)
+  power: 7, // W
+  flowRate: 600, // L/h
+  flowRatePerSecond: 600 / 3600, // L/s (0.1667 L/s)
+  maxDailyRuntime: 16, // horas máximas de funcionamiento diario
+  minCycleTime: 10, // segundos mínimo por ciclo (reducido para lana de roca)
+  maxCycleTime: 45, // segundos máximo por ciclo (reducido para evitar encharcamiento)
   
+  // AJUSTADO PARA CLIMA MEDITERRÁNEO DE CASTELLÓN:
   waterPerPlant: {
-    seedling: 0.07,
-    growth: 0.13,
-    mature: 0.18
+    seedling: 0.07,    // L por planta por ciclo (70ml) - reducido por humedad ambiente
+    growth: 0.13,      // L por planta por ciclo (130ml) - ajustado para veranos secos
+    mature: 0.18       // L por planta por ciclo (180ml) - considerando alta evapotranspiración
   },
   
+  // FRECUENCIAS DIFERENCIADAS DÍA/NOCHE
   baseIntervals: {
+    // DÍA (más evaporación, más riego)
     day: {
-      seedling: 90,
-      growth: 60,
-      mature: 45
+      seedling: 90,   // minutos (1.5h) - menos en verano
+      growth: 60,     // minutos (1h)
+      mature: 45      // minutos (45min)
     },
+    // NOCHE (menos evaporación, menos riego)
     night: {
-      seedling: 180,
-      growth: 120,
-      mature: 90
+      seedling: 180,  // minutos (3h)
+      growth: 120,    // minutos (2h)
+      mature: 90      // minutos (1.5h)
     }
   },
   
+  // AJUSTES ESTACIONALES PARA CASTELLÓN
   seasonalAdjustments: {
-    summer: {
-      dayMultiplier: 0.7,
-      nightMultiplier: 0.9
+    summer: {    // Junio a Septiembre (calor seco)
+      dayMultiplier: 0.7,    // 30% más frecuente de día
+      nightMultiplier: 0.9   // 10% más frecuente de noche
     },
-    winter: {
-      dayMultiplier: 1.2,
-      nightMultiplier: 1.4
+    winter: {    // Diciembre a Febrero (fresco húmedo)
+      dayMultiplier: 1.2,    // 20% menos frecuente de día
+      nightMultiplier: 1.4   // 40% menos frecuente de noche
     },
-    spring_autumn: {
-      dayMultiplier: 0.9,
-      nightMultiplier: 1.1
+    spring_autumn: { // Marzo-Mayo, Octubre-Noviembre
+      dayMultiplier: 0.9,    // 10% más frecuente de día
+      nightMultiplier: 1.1   // 10% menos frecuente de noche
     }
   },
   
+  // Horarios recomendados para Castellón
   recommendedSchedule: {
     summer: {
       dayStart: "06:00",
       dayEnd: "21:00",
+      // Riegos cada 45-60min durante día, 90min noche
     },
     winter: {
       dayStart: "08:00",
       dayEnd: "18:00",
+      // Riegos cada 90-120min durante día, 180min noche
     }
   }
 };
@@ -316,33 +328,40 @@ const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_m
 };
 
 // ============================================================================
-// FUNCIÓN DE CÁLCULO DE RIEGO OPTIMIZADA PARA 1 MINUTO MÍNIMO
+// FUNCIONES DE CÁLCULO PARA RIEGO CON CLIMA MEDITERRÁNEO
 // ============================================================================
 
 const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date()) => {
   const stats = calculateSystemEC(plants, 20, "bajo_mineral").statistics;
   
+  // Determinar si es día o noche (basado en Castellón)
   const hour = currentTime.getHours();
-  const isDaytime = hour >= 6 && hour < 21;
+  const isDaytime = hour >= 6 && hour < 21; // Verano como referencia
   
-  const month = currentTime.getMonth() + 1;
+  // Determinar estación aproximada (basado en mes)
+  const month = currentTime.getMonth() + 1; // Enero = 1
   let season = "spring_autumn";
   if (month >= 6 && month <= 9) season = "summer";
   else if (month >= 12 || month <= 2) season = "winter";
   
+  // Cálculo de necesidades de agua por ciclo CONSIDERANDO LANTA DE ROCA
   const waterPerCycle = 
     (stats.seedlingCount * PUMP_CONFIG.waterPerPlant.seedling * ROCKWOOL_CHARACTERISTICS.waterRetention) +
     (stats.growthCount * PUMP_CONFIG.waterPerPlant.growth * ROCKWOOL_CHARACTERISTICS.waterRetention) +
     (stats.matureCount * PUMP_CONFIG.waterPerPlant.mature * ROCKWOOL_CHARACTERISTICS.waterRetention);
   
+  // Calcular tiempo de bomba por ciclo (en segundos)
   let pumpTimePerCycle = Math.ceil(waterPerCycle / PUMP_CONFIG.flowRatePerSecond);
   
+  // Ajustar según configuración manual
   if (irrigationConfig.mode === "manual") {
     pumpTimePerCycle = irrigationConfig.pumpTime;
   }
   
+  // Limitar a rangos seguros para lana de roca (evitar encharcamiento)
   pumpTimePerCycle = Math.max(PUMP_CONFIG.minCycleTime, Math.min(PUMP_CONFIG.maxCycleTime, pumpTimePerCycle));
   
+  // Calcular intervalo base según etapa y día/noche
   let baseIntervalDay, baseIntervalNight;
   if (stats.matureCount > 0) {
     baseIntervalDay = PUMP_CONFIG.baseIntervals.day.mature;
@@ -355,37 +374,44 @@ const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date())
     baseIntervalNight = PUMP_CONFIG.baseIntervals.night.seedling;
   }
   
+  // Aplicar ajuste estacional
   const dayMultiplier = PUMP_CONFIG.seasonalAdjustments[season].dayMultiplier;
   const nightMultiplier = PUMP_CONFIG.seasonalAdjustments[season].nightMultiplier;
   
+  // Ajustar según temperatura actual (Castellón específico)
   const temp = parseFloat(irrigationConfig.temperature || 22);
   let tempFactor = 1.0;
   
   if (temp > 30) {
-    tempFactor = 0.6;
+    tempFactor = 0.6; // 40% más frecuente si >30°C (olas de calor)
   } else if (temp > 25) {
-    tempFactor = 0.7;
+    tempFactor = 0.7; // 30% más frecuente (verano típico)
   } else if (temp > 20) {
-    tempFactor = 0.85;
+    tempFactor = 0.85; // 15% más frecuente
   } else if (temp < 10) {
-    tempFactor = 1.4;
+    tempFactor = 1.4; // 40% menos frecuente si <10°C
   } else if (temp < 15) {
-    tempFactor = 1.2;
+    tempFactor = 1.2; // 20% menos frecuente
   }
   
+  // Calcular intervalos finales día/noche
   let dayIntervalMinutes, nightIntervalMinutes;
   
   if (irrigationConfig.mode === "manual") {
     dayIntervalMinutes = irrigationConfig.interval;
-    nightIntervalMinutes = Math.round(irrigationConfig.interval * 1.5);
+    nightIntervalMinutes = Math.round(irrigationConfig.interval * 1.5); // 50% más espaciado de noche
   } else {
+    // Intervalo día (más frecuente)
     dayIntervalMinutes = Math.round(baseIntervalDay * dayMultiplier * tempFactor);
+    // Intervalo noche (más espaciado)
     nightIntervalMinutes = Math.round(baseIntervalNight * nightMultiplier * tempFactor);
   }
   
-  dayIntervalMinutes = Math.max(20, Math.min(240, dayIntervalMinutes));
+  // Asegurar limites seguros
+  dayIntervalMinutes = Math.max(20, Math.min(120, dayIntervalMinutes));
   nightIntervalMinutes = Math.max(30, Math.min(240, nightIntervalMinutes));
   
+  // Calcular horarios según estación en Castellón
   let dayStart, dayEnd, dayHours, nightHours;
   
   if (season === "summer") {
@@ -404,14 +430,17 @@ const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date())
   
   nightHours = 24 - dayHours;
   
+  // Calcular ciclos diferenciados día/noche
   const dayCycles = Math.floor((dayHours * 60) / dayIntervalMinutes);
   const nightCycles = Math.floor((nightHours * 60) / nightIntervalMinutes);
   const cyclesPerDay = dayCycles + nightCycles;
   
+  // Calcular métricas
   const totalPumpTimePerDay = (pumpTimePerCycle * cyclesPerDay) / 60;
   const totalWaterPerDay = totalPumpTimePerDay * (PUMP_CONFIG.flowRate / 60);
   const energyConsumption = (totalPumpTimePerDay / 60) * PUMP_CONFIG.power;
   
+  // Calcular humedad estimada en lana de roca
   const rockwoolMoisture = Math.min(100, Math.round(
     (waterPerCycle / 
       (stats.seedlingCount * ROCKWOOL_CHARACTERISTICS.cubeSizes.seedling +
@@ -445,6 +474,7 @@ const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date())
 const getCastellonRecommendations = (stats, temperature, dayInterval, nightInterval, isDaytime, season) => {
   const recs = [];
   
+  // Recomendaciones específicas para Castellón
   recs.push({
     icon: "📍",
     text: `Ubicación: <strong>Castellón de la Plana</strong> - Clima Mediterráneo`
@@ -488,6 +518,7 @@ const getCastellonRecommendations = (stats, temperature, dayInterval, nightInter
     });
   }
   
+  // Recomendación específica para lana de roca en clima mediterráneo
   recs.push({
     icon: "💧",
     text: `La lana de roca en Castellón se seca rápido en verano. Verifica humedad al tacto.`
@@ -497,77 +528,47 @@ const getCastellonRecommendations = (stats, temperature, dayInterval, nightInter
 };
 
 // ============================================================================
-// FUNCIONES PARA CICLOS DE 1 MINUTO MÍNIMO
+// FUNCIÓN PARA CALCULAR PROGRAMACIÓN DE TEMPORIZADOR
 // ============================================================================
 
-const calculateOptimizedSchedule = (irrigationData) => {
-  const { dayStart, dayEnd, dayHours, nightHours, dayCycles, nightCycles } = irrigationData;
+const calculateTimerProgram = (irrigationData, season) => {
+  // Determinar horarios según Castellón
+  let dayStart, dayEnd;
   
-  const startHour = parseInt(dayStart.split(":")[0]);
-  const endHour = parseInt(dayEnd.split(":")[0]);
-  
-  const dayInterval = Math.floor((dayHours * 60) / dayCycles);
-  const nightInterval = Math.floor((nightHours * 60) / nightCycles);
-  
-  const daySchedule = [];
-  for (let i = 0; i < dayCycles; i++) {
-    const minutesFromStart = i * dayInterval;
-    const hour = startHour + Math.floor(minutesFromStart / 60);
-    const minute = minutesFromStart % 60;
-    const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    daySchedule.push(time);
+  if (season === "summer") {
+    dayStart = "06:00";
+    dayEnd = "21:00";
+  } else if (season === "winter") {
+    dayStart = "08:00";
+    dayEnd = "18:00";
+  } else {
+    dayStart = "07:00";
+    dayEnd = "20:00";
   }
   
-  const nightSchedule = [];
-  for (let i = 0; i < nightCycles; i++) {
-    const minutesFromEnd = i * nightInterval;
-    const hour = endHour + Math.floor(minutesFromEnd / 60);
-    const minute = minutesFromEnd % 60;
-    const adjustedHour = hour >= 24 ? hour - 24 : hour;
-    const time = `${adjustedHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    nightSchedule.push(time);
-  }
+  const dayHours = parseInt(dayEnd.split(":")[0]) - parseInt(dayStart.split(":")[0]);
+  const nightHours = 24 - dayHours;
   
-  return { daySchedule, nightSchedule, dayInterval, nightInterval };
-};
-
-const calculateGroupedCycles = (irrigationData) => {
-  const originalPumpTime = irrigationData.pumpTimePerCycle;
-  const originalDayCycles = irrigationData.dayCycles;
-  const originalNightCycles = irrigationData.nightCycles;
-  
-  if (originalPumpTime >= 60) {
-    return {
-      needsGrouping: false,
-      message: "El tiempo de bomba ya cumple con el mínimo de 60 segundos"
-    };
-  }
-  
-  const groupingFactor = Math.ceil(60 / originalPumpTime);
-  const groupedPumpTime = originalPumpTime * groupingFactor;
-  const groupedDayCycles = Math.max(1, Math.floor(originalDayCycles / groupingFactor));
-  const groupedNightCycles = Math.max(1, Math.floor(originalNightCycles / groupingFactor));
-  
-  const newDayInterval = Math.round((irrigationData.dayHours * 60) / groupedDayCycles);
-  const newNightInterval = Math.round((irrigationData.nightHours * 60) / groupedNightCycles);
-  
-  return {
-    needsGrouping: true,
-    groupingFactor,
-    original: {
-      pumpTime: originalPumpTime,
-      dayCycles: originalDayCycles,
-      nightCycles: originalNightCycles
-    },
-    grouped: {
-      pumpTime: groupedPumpTime,
-      dayCycles: groupedDayCycles,
-      nightCycles: groupedNightCycles,
-      dayInterval: newDayInterval,
-      nightInterval: newNightInterval
-    },
-    instructions: `Agrupar ${groupingFactor} ciclos en 1 (${originalPumpTime}s × ${groupingFactor} = ${groupedPumpTime}s)`
+  // Para el temporizador, necesitamos frecuencia (cada X minutos) y duración (Y segundos)
+  const dayProgram = {
+    startTime: dayStart,
+    endTime: dayEnd,
+    interval: irrigationData.dayIntervalMinutes,
+    pumpTime: irrigationData.pumpTimePerCycle,
+    cycles: irrigationData.dayCycles,
+    hours: dayHours
   };
+  
+  const nightProgram = {
+    startTime: dayEnd,
+    endTime: dayStart,
+    interval: irrigationData.nightIntervalMinutes,
+    pumpTime: irrigationData.pumpTimePerCycle,
+    cycles: irrigationData.nightCycles,
+    hours: nightHours
+  };
+  
+  return { dayProgram, nightProgram, dayHours, nightHours };
 };
 
 // ============================================================================
@@ -589,17 +590,18 @@ export default function HydroAppFinalV31() {
     targetEC: "1.4", 
     targetPH: "6.0",
     waterType: "bajo_mineral",
-    hasHeater: true
+    hasHeater: true // NUEVO: Indica que tienes calentador
   });
   const [tab, setTab] = useState("overview");
   const [selPos, setSelPos] = useState(null);
   const [showWaterSelector, setShowWaterSelector] = useState(false);
   
+  // Nuevo estado para control de riego
   const [irrigationConfig, setIrrigationConfig] = useState({
     enabled: true,
-    mode: "auto",
-    pumpTime: 60, // MÍNIMO 60 SEGUNDOS
-    interval: 90,
+    mode: "auto", // "auto" o "manual"
+    pumpTime: 20, // segundos por ciclo (ajustado para lana de roca)
+    interval: 90, // minutos entre ciclos (ajustado para lana de roca)
     temperature: "22"
   });
 
@@ -658,6 +660,7 @@ export default function HydroAppFinalV31() {
     }
   }, [plants, config.totalVol, config.waterType, step]);
 
+  // Actualizar temperatura en configuración de riego
   useEffect(() => {
     setIrrigationConfig(prev => ({
       ...prev,
@@ -697,15 +700,13 @@ export default function HydroAppFinalV31() {
     return calculateIrrigation(plants, irrigationConfig, new Date());
   }, [plants, irrigationConfig]);
 
+  // =================== CÁLCULO DE PROGRAMACIÓN TEMPORIZADOR ===================
+
   const timerProgram = useMemo(() => {
-    return calculateOptimizedSchedule(irrigationData);
+    return calculateTimerProgram(irrigationData, irrigationData.season);
   }, [irrigationData]);
 
-  const groupedCycles = useMemo(() => {
-    return calculateGroupedCycles(irrigationData);
-  }, [irrigationData]);
-
-  // =================== CALENDARIO ===================
+  // =================== FUNCIÓN DEL NUEVO CALENDARIO ===================
 
   const generateCalendar = () => {
     const now = new Date();
@@ -722,6 +723,7 @@ export default function HydroAppFinalV31() {
     const totalCells = 42;
     const calendarDays = [];
 
+    // Días del mes anterior
     const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
     for (let i = 0; i < startOffset; i++) {
       const day = prevMonthLastDay - startOffset + i + 1;
@@ -734,6 +736,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // Días del mes actual
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentYear, currentMonth, i);
       calendarDays.push({
@@ -744,6 +747,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // Días del mes siguiente
     const remainingCells = totalCells - calendarDays.length;
     for (let i = 1; i <= remainingCells; i++) {
       const date = new Date(currentYear, currentMonth + 1, i);
@@ -755,6 +759,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // Calcular eventos
     const totalPlants = plants.length;
     const measureFrequency = totalPlants > 12 ? 2 : totalPlants > 6 ? 3 : 4;
     
@@ -770,15 +775,18 @@ export default function HydroAppFinalV31() {
       
       if (diffDays < 0) return;
 
+      // Evento de medición
       if (diffDays % measureFrequency === 0) {
         day.events.push('measure');
       }
 
+      // Evento de rotación
       const daysFromLastRot = Math.floor((dayDate - lastRotDate) / (1000 * 3600 * 24));
       if (daysFromLastRot > 0 && daysFromLastRot % 7 === 0) {
         day.events.push('rotation');
       }
 
+      // Evento de limpieza
       const daysFromLastClean = Math.floor((dayDate - lastCleanDate) / (1000 * 3600 * 24));
       if (daysFromLastClean > 0 && daysFromLastClean % 14 === 0) {
         day.events.push('clean');
@@ -953,6 +961,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // Alerta específica para lana de roca si el riego es muy frecuente
     if (irrigationData.dayIntervalMinutes < 45 && plants.filter(p => p.l === 1).length > 0) {
       res.push({
         t: "¡CUIDADO CON PLÁNTULAS!",
@@ -964,6 +973,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // Alerta si la humedad estimada es muy alta
     if (irrigationData.rockwoolMoisture > 90) {
       res.push({
         t: "EXCESO DE HUMEDAD",
@@ -975,6 +985,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // Alertas específicas para Castellón
     if (config.temp > 30 && irrigationData.isDaytime) {
       res.push({
         t: "¡OLA DE CALOR!",
@@ -986,6 +997,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // Alerta para viento de poniente (seco)
     const horaActual = new Date().getHours();
     if (horaActual >= 12 && horaActual <= 18 && irrigationData.isDaytime) {
       res.push({
@@ -998,6 +1010,7 @@ export default function HydroAppFinalV31() {
       });
     }
 
+    // ALERTA ESPECIAL: Calentador activo - temperatura estable
     if (config.hasHeater) {
       res.push({
         t: "🔥 CALENTADOR ACTIVO",
@@ -1301,8 +1314,8 @@ export default function HydroAppFinalV31() {
     <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 font-sans">
       <header className="bg-white border-b-4 p-6 flex justify-between items-center sticky top-0 z-50">
         <div>
-          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v6.0</h1>
-          <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 italic">CANNA Aqua Vega | Clima Mediterráneo | Riego 60s Mínimo</p>
+          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v5.0</h1>
+          <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 italic">CANNA Aqua Vega | Clima Mediterráneo | Riego Inteligente</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-2xl font-black text-lg">
@@ -1520,7 +1533,7 @@ export default function HydroAppFinalV31() {
             ))}
           </TabsContent>
 
-          {/* PESTAÑA DE RIEGO OPTIMIZADA PARA 1 MINUTO MÍNIMO */}
+          {/* PESTAÑA DE RIEGO ACTUALIZADA CON PROGRAMACIÓN DE TEMPORIZADOR */}
           <TabsContent value="irrigation" className="space-y-6">
             <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6">
               <div className="flex items-center justify-between mb-6">
@@ -1529,8 +1542,8 @@ export default function HydroAppFinalV31() {
                     <Droplets className="text-white" size={28} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-blue-800">Control de Riego 60s Mínimo</h2>
-                    <p className="text-xs text-slate-500">Optimizado para programadores de 1 minuto mínimo</p>
+                    <h2 className="text-xl font-black text-blue-800">Control de Riego Inteligente</h2>
+                    <p className="text-xs text-slate-500">Optimizado para <strong>Clima Mediterráneo - Castellón</strong></p>
                   </div>
                 </div>
                 <button 
@@ -1542,6 +1555,7 @@ export default function HydroAppFinalV31() {
                 </button>
               </div>
 
+              {/* INFO CLIMA CASTELLÓN */}
               <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 bg-orange-100 rounded-xl">
@@ -1585,6 +1599,7 @@ export default function HydroAppFinalV31() {
                 </div>
               </Card>
 
+              {/* MODO DE OPERACIÓN */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <p className="text-sm font-black text-slate-700">Modo de Operación</p>
@@ -1604,8 +1619,10 @@ export default function HydroAppFinalV31() {
                   </div>
                 </div>
 
+                {/* CONFIGURACIÓN DETALLADA */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2">
                   <div className="space-y-6">
+                    {/* TIEMPO DE BOMBA POR CICLO */}
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <p className="text-sm font-black text-blue-700">Tiempo de bomba por ciclo</p>
@@ -1621,12 +1638,13 @@ export default function HydroAppFinalV31() {
                         className="w-full"
                       />
                       <div className="flex justify-between text-xs text-slate-500">
-                        <span>60s (mínimo)</span>
-                        <span>120s (óptimo)</span>
-                        <span>180s (máximo)</span>
+                        <span>10s (plántulas)</span>
+                        <span>30s (maduras)</span>
+                        <span>45s (máx seguro)</span>
                       </div>
                     </div>
 
+                    {/* INTERVALO ENTRE CICLOS (DÍA) */}
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <p className="text-sm font-black text-amber-700">Intervalo DÍA</p>
@@ -1636,71 +1654,28 @@ export default function HydroAppFinalV31() {
                         value={[irrigationConfig.interval]}
                         onValueChange={(value) => setIrrigationConfig(prev => ({ ...prev, interval: value[0] }))}
                         min={20}
-                        max={240}
+                        max={120}
                         step={5}
                         disabled={irrigationConfig.mode === "auto"}
                         className="w-full"
                       />
                       <div className="flex justify-between text-xs text-slate-500">
                         <span>20min (verano)</span>
-                        <span>90min (óptimo)</span>
-                        <span>240min (invierno)</span>
+                        <span>60min (óptimo)</span>
+                        <span>120min (invierno)</span>
                       </div>
                     </div>
                   </div>
                 </Card>
 
-                {/* SECCIÓN DE PROGRAMACIÓN PARA 1 MINUTO MÍNIMO */}
+                {/* NUEVA SECCIÓN: PROGRAMACIÓN PARA TEMPORIZADOR */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-purple-50 to-violet-50 border-2 border-purple-200">
                   <h3 className="text-sm font-black text-purple-800 mb-4 flex items-center gap-2">
                     <Timer className="text-purple-600" size={16} />
-                    PROGRAMACIÓN PARA 1 MINUTO MÍNIMO
+                    PROGRAMACIÓN PARA TU TEMPORIZADOR
                   </h3>
                   
                   <div className="space-y-4">
-                    {groupedCycles.needsGrouping ? (
-                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-2xl border-2 border-amber-200">
-                        <div className="flex items-center gap-3 mb-3">
-                          <AlertTriangle className="text-amber-600" size={20} />
-                          <span className="font-black text-amber-700">AJUSTE NECESARIO</span>
-                        </div>
-                        
-                        <p className="text-xs text-amber-800 mb-3">
-                          El cálculo original es de <strong>{groupedCycles.original.pumpTime}s</strong> por ciclo, 
-                          pero tu programador requiere mínimo 60s.
-                        </p>
-                        
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                          <div className="text-center p-3 bg-white rounded-xl border border-amber-100">
-                            <p className="text-[10px] font-black uppercase text-amber-600">Original</p>
-                            <p className="text-xl font-black text-amber-700">{groupedCycles.original.pumpTime}s</p>
-                            <p className="text-[9px] text-amber-800">{groupedCycles.original.dayCycles} día</p>
-                          </div>
-                          
-                          <div className="text-center p-3 bg-white rounded-xl border border-green-100">
-                            <p className="text-[10px] font-black uppercase text-green-600">Ajustado</p>
-                            <p className="text-xl font-black text-green-700">{groupedCycles.grouped.pumpTime}s</p>
-                            <p className="text-[9px] text-green-800">{groupedCycles.grouped.dayCycles} día</p>
-                          </div>
-                        </div>
-                        
-                        <p className="text-xs font-bold text-amber-800">
-                          💡 <strong>Solución:</strong> {groupedCycles.instructions}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border-2 border-green-200">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Check className="text-green-600" size={20} />
-                          <span className="font-black text-green-700">CONFIGURACIÓN VÁLIDA</span>
-                        </div>
-                        <p className="text-xs text-green-800">
-                          El tiempo de bomba de <strong>{irrigationData.pumpTimePerCycle}s</strong> cumple con el mínimo de 60s.
-                          ¡Puedes usar la configuración calculada directamente!
-                        </p>
-                      </div>
-                    )}
-                    
                     <div className="bg-white p-4 rounded-2xl border-2 border-amber-100">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -1712,11 +1687,24 @@ export default function HydroAppFinalV31() {
                         </Badge>
                       </div>
                       
-                      <div className="space-y-2 mt-3">
-                        <p className="text-xs font-bold text-slate-800">
-                          ⏱️ <strong>En tu programador:</strong> Cada {irrigationData.dayIntervalMinutes}min durante {irrigationData.pumpTimePerCycle}s
+                      <div className="grid grid-cols-2 gap-3 mt-3">
+                        <div className="text-center p-3 bg-amber-50 rounded-xl">
+                          <p className="text-[10px] font-black uppercase text-amber-600">Frecuencia</p>
+                          <p className="text-xl font-black text-amber-700">{irrigationData.dayIntervalMinutes} min</p>
+                          <p className="text-[9px] text-amber-800">Cada {irrigationData.dayIntervalMinutes} minutos</p>
+                        </div>
+                        <div className="text-center p-3 bg-amber-50 rounded-xl">
+                          <p className="text-[10px] font-black uppercase text-amber-600">Duración</p>
+                          <p className="text-xl font-black text-amber-700">{irrigationData.pumpTimePerCycle} s</p>
+                          <p className="text-[9px] text-amber-800">{irrigationData.pumpTimePerCycle} segundos</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 text-center">
+                        <p className="text-xs font-bold text-amber-800">
+                          💡 <strong>En tu temporizador:</strong> Cada {irrigationData.dayIntervalMinutes} min → ON {irrigationData.pumpTimePerCycle} seg → OFF
                         </p>
-                        <p className="text-xs text-slate-600">
+                        <p className="text-[10px] text-amber-600 mt-1">
                           Total: {irrigationData.dayCycles} ciclos ({irrigationData.dayHours}h)
                         </p>
                       </div>
@@ -1733,51 +1721,79 @@ export default function HydroAppFinalV31() {
                         </Badge>
                       </div>
                       
-                      <div className="space-y-2 mt-3">
-                        <p className="text-xs font-bold text-slate-800">
-                          ⏱️ <strong>En tu programador:</strong> Cada {irrigationData.nightIntervalMinutes}min durante {irrigationData.pumpTimePerCycle}s
+                      <div className="grid grid-cols-2 gap-3 mt-3">
+                        <div className="text-center p-3 bg-blue-50 rounded-xl">
+                          <p className="text-[10px] font-black uppercase text-blue-600">Frecuencia</p>
+                          <p className="text-xl font-black text-blue-700">{irrigationData.nightIntervalMinutes} min</p>
+                          <p className="text-[9px] text-blue-800">Cada {irrigationData.nightIntervalMinutes} minutos</p>
+                        </div>
+                        <div className="text-center p-3 bg-blue-50 rounded-xl">
+                          <p className="text-[10px] font-black uppercase text-blue-600">Duración</p>
+                          <p className="text-xl font-black text-blue-700">{irrigationData.pumpTimePerCycle} s</p>
+                          <p className="text-[9px] text-blue-800">{irrigationData.pumpTimePerCycle} segundos</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 text-center">
+                        <p className="text-xs font-bold text-blue-800">
+                          💡 <strong>En tu temporizador:</strong> Cada {irrigationData.nightIntervalMinutes} min → ON {irrigationData.pumpTimePerCycle} seg → OFF
                         </p>
-                        <p className="text-xs text-slate-600">
+                        <p className="text-[10px] text-blue-600 mt-1">
                           Total: {irrigationData.nightCycles} ciclos ({irrigationData.nightHours}h)
                         </p>
                       </div>
                     </div>
                     
+                    {/* EJEMPLO PRÁCTICO */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border-2 border-green-200">
+                      <h4 className="text-xs font-black text-green-800 mb-2 flex items-center gap-2">
+                        <Zap className="text-green-600" size={14} />
+                        EJEMPLO PRÁCTICO PARA CASTELLÓN ({irrigationData.season}):
+                      </h4>
+                      <div className="text-xs text-green-700 space-y-1">
+                        <p><strong>Día ({irrigationData.dayStart} - {irrigationData.dayEnd}):</strong> Programa 1: Cada {irrigationData.dayIntervalMinutes}min → ON {irrigationData.pumpTimePerCycle}s → OFF</p>
+                        <p><strong>Noche ({irrigationData.dayEnd} - {irrigationData.dayStart}):</strong> Programa 2: Cada {irrigationData.nightIntervalMinutes}min → ON {irrigationData.pumpTimePerCycle}s → OFF</p>
+                        <p className="text-[10px] text-green-600 mt-2">💡 <strong>Consejo:</strong> Usa 2 programas en tu temporizador o 1 programador inteligente con horarios.</p>
+                      </div>
+                    </div>
+                    
+                    {/* BOTÓN PARA COPIAR CONFIGURACIÓN */}
                     <button
                       onClick={() => {
-                        const configText = `CONFIGURACIÓN RIEGO 60s MÍNIMO:\n\n` +
+                        const configText = `CONFIGURACIÓN RIEGO HYDROCARU:\n\n` +
                           `📍 Castellón de la Plana (${irrigationData.season})\n` +
-                          `🔥 Calentador activo: ${config.temp}°C estable\n\n` +
+                          `🔥 Calentador activo: Temperatura estable ${config.temp}°C\n\n` +
                           `🌞 DÍA (${irrigationData.dayStart}-${irrigationData.dayEnd}):\n` +
-                          `• Cada ${irrigationData.dayIntervalMinutes} minutos\n` +
-                          `• Duración: ${irrigationData.pumpTimePerCycle} segundos\n` +
-                          `• Ciclos: ${irrigationData.dayCycles}\n\n` +
+                          `• Frecuencia: Cada ${irrigationData.dayIntervalMinutes} minutos\n` +
+                          `• Duración bomba: ${irrigationData.pumpTimePerCycle} segundos\n` +
+                          `• Ciclos: ${irrigationData.dayCycles} veces\n\n` +
                           `🌙 NOCHE (${irrigationData.dayEnd}-${irrigationData.dayStart}):\n` +
-                          `• Cada ${irrigationData.nightIntervalMinutes} minutos\n` +
-                          `• Duración: ${irrigationData.pumpTimePerCycle} segundos\n` +
-                          `• Ciclos: ${irrigationData.nightCycles}\n\n` +
+                          `• Frecuencia: Cada ${irrigationData.nightIntervalMinutes} minutos\n` +
+                          `• Duración bomba: ${irrigationData.pumpTimePerCycle} segundos\n` +
+                          `• Ciclos: ${irrigationData.nightCycles} veces\n\n` +
                           `💧 Total agua/día: ${irrigationData.totalWaterPerDay}L\n` +
-                          `📊 Basado en: ${irrigationData.stats.seedlingCount} plántulas, ${irrigationData.stats.growthCount} crecimiento, ${irrigationData.stats.matureCount} maduras`;
+                          `⚡ Consumo/día: ${irrigationData.energyConsumption}Wh`;
                         
                         navigator.clipboard.writeText(configText);
-                        alert("✅ Configuración copiada al portapapeles\n\nPégalo en tu programador.");
+                        alert("✅ Configuración copiada al portapapeles\n\nPégalo en tu programador o en una nota.");
                       }}
                       className="w-full bg-gradient-to-r from-purple-500 to-violet-500 text-white p-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:shadow-xl transition-all"
                     >
                       <Clipboard className="text-white" size={18} />
-                      COPIAR CONFIGURACIÓN PARA PROGRAMADOR
+                      COPIAR CONFIGURACIÓN PARA EL TEMPORIZADOR
                     </button>
                   </div>
                 </Card>
 
+                {/* ESTADÍSTICAS DE RIEGO */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-emerald-50 to-green-50 border-2">
                   <h3 className="text-sm font-black text-emerald-800 mb-4">Estadísticas de Riego</h3>
                   
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="bg-white p-4 rounded-2xl border border-emerald-100">
-                      <p className="text-[10px] font-black uppercase text-emerald-600 mb-1">Tiempo por ciclo</p>
-                      <p className="text-xl font-black text-emerald-700">{irrigationData.pumpTimePerCycle} s</p>
-                      <p className="text-[9px] text-slate-500">Mínimo 60 segundos</p>
+                      <p className="text-[10px] font-black uppercase text-emerald-600 mb-1">Agua por ciclo</p>
+                      <p className="text-xl font-black text-emerald-700">{irrigationData.waterPerCycle} ml</p>
+                      <p className="text-[9px] text-slate-500">Para {plants.length} plantas</p>
                     </div>
                     <div className="bg-white p-4 rounded-2xl border border-blue-100">
                       <p className="text-[10px] font-black uppercase text-blue-600 mb-1">Ciclos por día</p>
@@ -1796,6 +1812,7 @@ export default function HydroAppFinalV31() {
                     </div>
                   </div>
 
+                  {/* BARRA DE HUMEDAD */}
                   <div className="mt-4">
                     <div className="flex justify-between mb-1">
                       <p className="text-xs font-black text-slate-700">Humedad estimada en lana de roca</p>
@@ -1819,10 +1836,11 @@ export default function HydroAppFinalV31() {
                   </div>
                 </Card>
 
+                {/* RECOMENDACIONES ESPECÍFICAS PARA CASTELLÓN */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-amber-50 to-orange-50 border-2">
                   <h3 className="text-sm font-black text-amber-800 mb-3 flex items-center gap-2">
                     <Lightbulb className="text-amber-600" size={16} />
-                    Recomendaciones para 60s mínimo
+                    Recomendaciones para Castellón
                   </h3>
                   <div className="space-y-3">
                     {irrigationData.recommendations.map((rec, index) => (
@@ -1832,37 +1850,30 @@ export default function HydroAppFinalV31() {
                       </div>
                     ))}
                     
+                    {/* RECOMENDACIÓN GENERAL */}
                     <div className="p-3 bg-amber-100 rounded-xl border border-amber-200">
-                      <p className="text-xs font-black text-amber-800">💡 CONSEJO PARA 60s MÍNIMO:</p>
+                      <p className="text-xs font-black text-amber-800">💡 CONSEJO CASTELLÓN:</p>
                       <p className="text-xs text-amber-700 mt-1">
-                        Con ciclos de 60+ segundos en lana de roca, asegúrate de que el drenaje sea rápido. 
-                        Considera aumentar el intervalo si la humedad supera el 80%.
+                        <strong>Verano:</strong> Riega al amanecer y atardecer. <strong>Invierno:</strong> Riega al mediodía.
+                        Evita los vientos de poniente (12:00-18:00) que secan mucho.
                       </p>
                     </div>
                   </div>
                 </Card>
 
+                {/* BOTÓN DE SIMULACIÓN */}
                 <button
                   onClick={() => {
                     const stats = irrigationData.stats;
-                    alert(`🚰 RESUMEN DE RIEGO 60s MÍNIMO:\n\n` +
-                      `• Modo: ${irrigationData.isDaytime ? '☀️ DÍA' : '🌙 NOCHE'}\n` +
-                      `• Estación: ${irrigationData.season === 'summer' ? 'Verano' : irrigationData.season === 'winter' ? 'Invierno' : 'Primavera/Otoño'}\n` +
-                      `• Calentador: ${config.temp}°C estable\n` +
-                      `• Tiempo bomba: ${irrigationData.pumpTimePerCycle}s (mínimo 60s)\n` +
-                      `• Intervalo día: ${irrigationData.dayIntervalMinutes}min\n` +
-                      `• Intervalo noche: ${irrigationData.nightIntervalMinutes}min\n` +
-                      `• Total agua/día: ${irrigationData.totalWaterPerDay}L\n` +
-                      `• Humedad lana: ${irrigationData.rockwoolMoisture}%\n\n` +
-                      `📊 COMPOSICIÓN:\n` +
-                      `• ${stats.seedlingCount} plántulas\n` +
-                      `• ${stats.growthCount} en crecimiento\n` +
-                      `• ${stats.matureCount} maduras\n\n` +
-                      `✅ Configuración lista para programador de 1 minuto mínimo`);
+                    const now = new Date();
+                    const hour = now.getHours();
+                    const isDay = hour >= 6 && hour < 21;
+                    
+                    alert(`🚰 SIMULACIÓN DE RIEGO PARA CASTELLÓN:\n\n• Modo: ${isDay ? '☀️ DÍA' : '🌙 NOCHE'}\n• Estación: ${irrigationData.season === 'summer' ? 'Verano' : irrigationData.season === 'winter' ? 'Invierno' : 'Primavera/Otoño'}\n• Calentador activo: ${config.temp}°C estable\n• Día: ${irrigationData.dayStart}-${irrigationData.dayEnd}\n• Bomba: ${irrigationData.pumpTimePerCycle}s cada ${isDay ? irrigationData.dayIntervalMinutes : irrigationData.nightIntervalMinutes}min\n• Agua utilizada: ${irrigationData.waterPerCycle} ml\n• Humedad estimada: ${irrigationData.rockwoolMoisture}%\n\n📊 BASADO EN:\n• ${stats.seedlingCount} plántulas\n• ${stats.growthCount} en crecimiento\n• ${stats.matureCount} maduras\n\n🌡️ Temperatura: ${config.temp}°C (estable)\n📍 Ubicación: Castellón de la Plana`);
                   }}
                   className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6 rounded-[2.5rem] font-black uppercase text-lg shadow-xl hover:shadow-2xl transition-all"
                 >
-                  Ver Resumen Completo
+                  Simular Ciclo de Riego
                 </button>
               </div>
             </Card>
@@ -2040,6 +2051,7 @@ export default function HydroAppFinalV31() {
               </div>
             </Card>
 
+            {/* NUEVA SECCIÓN ESPECÍFICA PARA CASTELLÓN */}
             <Card className="rounded-[3rem] border-4 border-orange-100 overflow-hidden shadow-xl bg-white">
               <div className="bg-gradient-to-r from-orange-600 to-amber-600 p-6 text-white flex items-center gap-4">
                 <Sun size={30}/>
@@ -2111,8 +2123,8 @@ export default function HydroAppFinalV31() {
             </button>
             
             <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest pt-10 leading-relaxed">
-              HydroCaru Master v6.0 - CANNA Aqua Vega<br/>
-              Sistema Inteligente para Clima Mediterráneo - Riego 60s Mínimo
+              HydroCaru Master v5.0 - CANNA Aqua Vega<br/>
+              Sistema Inteligente para Clima Mediterráneo - Castellón de la Plana
             </p>
           </TabsContent>
         </Tabs>
