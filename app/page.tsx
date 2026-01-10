@@ -9,7 +9,7 @@ import {
   Thermometer, Zap, ShieldAlert, ChevronRight, Anchor, 
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, 
   RefreshCw, Skull, Info, Calculator, Filter, 
-  Power, Timer, Gauge, Cloud, Sun
+  Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun, WindIcon
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -117,7 +117,45 @@ const VARIETIES = {
 };
 
 // ============================================================================
-// CONFIGURACIÓN DE LA BOMBA Y SUSTRATO (LANA DE ROCA)
+// CONFIGURACIÓN CLIMA MEDITERRÁNEO - CASTELLÓN DE LA PLANA
+// ============================================================================
+
+const CASTELLON_CLIMA = {
+  location: "Castellón de la Plana",
+  coordinates: "40.6789° N, 0.2822° O",
+  clima: "Mediterráneo costero",
+  
+  // Temperaturas medias anuales
+  temperaturas: {
+    verano: { dia: 30, noche: 22 },    // Jun-Sep
+    primavera_otono: { dia: 22, noche: 15 }, // Mar-May, Oct-Nov
+    invierno: { dia: 16, noche: 8 },   // Dic-Feb
+  },
+  
+  // Humedad relativa media
+  humedad: {
+    verano: 65,    // % (más seco)
+    invierno: 75,  // % (más húmedo)
+    anual_promedio: 70
+  },
+  
+  // Horas de luz aproximadas
+  horas_luz: {
+    verano: 15,    // Junio (6:00-21:00)
+    invierno: 10,  // Diciembre (8:00-18:00)
+    promedio: 12.5
+  },
+  
+  // Evapotranspiración (mm/día) - más alta en verano
+  evapotranspiracion: {
+    verano: 6.0,   // Alta evaporación
+    invierno: 2.0, // Baja evaporación
+    promedio: 4.0
+  }
+};
+
+// ============================================================================
+// CONFIGURACIÓN DE LA BOMBA Y SUSTRATO (LANA DE ROCA) AJUSTADA PARA CASTELLÓN
 // ============================================================================
 
 const ROCKWOOL_CHARACTERISTICS = {
@@ -143,18 +181,57 @@ const PUMP_CONFIG = {
   minCycleTime: 10, // segundos mínimo por ciclo (reducido para lana de roca)
   maxCycleTime: 45, // segundos máximo por ciclo (reducido para evitar encharcamiento)
   
-  // AJUSTADO PARA LANTA DE ROCA:
+  // AJUSTADO PARA CLIMA MEDITERRÁNEO DE CASTELLÓN:
   waterPerPlant: {
-    seedling: 0.08,    // L por planta por ciclo (80ml) - suficiente para humedecer cubo pequeño
-    growth: 0.15,      // L por planta por ciclo (150ml) - humedece cubo estándar
-    mature: 0.20       // L por planta por ciclo (200ml) - saturación completa con drenaje
+    seedling: 0.07,    // L por planta por ciclo (70ml) - reducido por humedad ambiente
+    growth: 0.13,      // L por planta por ciclo (130ml) - ajustado para veranos secos
+    mature: 0.18       // L por planta por ciclo (180ml) - considerando alta evapotranspiración
   },
   
-  // Frecuencias basadas en tiempo de secado de lana de roca
+  // FRECUENCIAS DIFERENCIADAS DÍA/NOCHE
   baseIntervals: {
-    seedling: 120, // minutos (2 horas) - lana de roca retiene humedad mucho tiempo
-    growth: 90,    // minutos (1.5 horas)
-    mature: 60     // minutos (1 hora)
+    // DÍA (más evaporación, más riego)
+    day: {
+      seedling: 90,   // minutos (1.5h) - menos en verano
+      growth: 60,     // minutos (1h)
+      mature: 45      // minutos (45min)
+    },
+    // NOCHE (menos evaporación, menos riego)
+    night: {
+      seedling: 180,  // minutos (3h)
+      growth: 120,    // minutos (2h)
+      mature: 90      // minutos (1.5h)
+    }
+  },
+  
+  // AJUSTES ESTACIONALES PARA CASTELLÓN
+  seasonalAdjustments: {
+    summer: {    // Junio a Septiembre (calor seco)
+      dayMultiplier: 0.7,    // 30% más frecuente de día
+      nightMultiplier: 0.9   // 10% más frecuente de noche
+    },
+    winter: {    // Diciembre a Febrero (fresco húmedo)
+      dayMultiplier: 1.2,    // 20% menos frecuente de día
+      nightMultiplier: 1.4   // 40% menos frecuente de noche
+    },
+    spring_autumn: { // Marzo-Mayo, Octubre-Noviembre
+      dayMultiplier: 0.9,    // 10% más frecuente de día
+      nightMultiplier: 1.1   // 10% menos frecuente de noche
+    }
+  },
+  
+  // Horarios recomendados para Castellón
+  recommendedSchedule: {
+    summer: {
+      dayStart: "06:00",
+      dayEnd: "21:00",
+      // Riegos cada 45-60min durante día, 90min noche
+    },
+    winter: {
+      dayStart: "08:00",
+      dayEnd: "18:00",
+      // Riegos cada 90-120min durante día, 180min noche
+    }
   }
 };
 
@@ -250,11 +327,21 @@ const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_m
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO PARA RIEGO CON LANTA DE ROCA
+// FUNCIONES DE CÁLCULO PARA RIEGO CON CLIMA MEDITERRÁNEO
 // ============================================================================
 
-const calculateIrrigation = (plants, irrigationConfig) => {
+const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date()) => {
   const stats = calculateSystemEC(plants, 20, "bajo_mineral").statistics;
+  
+  // Determinar si es día o noche (basado en Castellón)
+  const hour = currentTime.getHours();
+  const isDaytime = hour >= 6 && hour < 21; // Verano como referencia
+  
+  // Determinar estación aproximada (basado en mes)
+  const month = currentTime.getMonth() + 1; // Enero = 1
+  let season = "spring_autumn";
+  if (month >= 6 && month <= 9) season = "summer";
+  else if (month >= 12 || month <= 2) season = "winter";
   
   // Cálculo de necesidades de agua por ciclo CONSIDERANDO LANTA DE ROCA
   const waterPerCycle = 
@@ -273,42 +360,54 @@ const calculateIrrigation = (plants, irrigationConfig) => {
   // Limitar a rangos seguros para lana de roca (evitar encharcamiento)
   pumpTimePerCycle = Math.max(PUMP_CONFIG.minCycleTime, Math.min(PUMP_CONFIG.maxCycleTime, pumpTimePerCycle));
   
-  // Calcular intervalo basado en tiempo de secado de lana de roca
+  // Calcular intervalo base según etapa y día/noche
   let baseInterval;
-  
   if (stats.matureCount > 0) {
-    // Priorizar plantas maduras (secado más rápido)
-    baseInterval = PUMP_CONFIG.baseIntervals.mature;
+    baseInterval = isDaytime ? PUMP_CONFIG.baseIntervals.day.mature : PUMP_CONFIG.baseIntervals.night.mature;
   } else if (stats.growthCount > 0) {
-    baseInterval = PUMP_CONFIG.baseIntervals.growth;
+    baseInterval = isDaytime ? PUMP_CONFIG.baseIntervals.day.growth : PUMP_CONFIG.baseIntervals.night.growth;
   } else {
-    baseInterval = PUMP_CONFIG.baseIntervals.seedling;
+    baseInterval = isDaytime ? PUMP_CONFIG.baseIntervals.day.seedling : PUMP_CONFIG.baseIntervals.night.seedling;
   }
   
-  // Ajustar según temperatura (mayor temperatura = secado más rápido)
+  // Aplicar ajuste estacional
+  const seasonMultiplier = PUMP_CONFIG.seasonalAdjustments[season][isDaytime ? "dayMultiplier" : "nightMultiplier"];
+  
+  // Ajustar según temperatura actual (Castellón específico)
   const temp = parseFloat(irrigationConfig.temperature || 22);
   let tempFactor = 1.0;
   
-  if (temp > 25) {
-    tempFactor = 0.7; // 30% más frecuente si hace calor
-  } else if (temp > 22) {
+  if (temp > 30) {
+    tempFactor = 0.6; // 40% más frecuente si >30°C (olas de calor)
+  } else if (temp > 25) {
+    tempFactor = 0.7; // 30% más frecuente (verano típico)
+  } else if (temp > 20) {
     tempFactor = 0.85; // 15% más frecuente
-  } else if (temp < 18) {
-    tempFactor = 1.3; // 30% menos frecuente si hace frío
+  } else if (temp < 10) {
+    tempFactor = 1.4; // 40% menos frecuente si <10°C
+  } else if (temp < 15) {
+    tempFactor = 1.2; // 20% menos frecuente
   }
   
+  // Calcular intervalo final
   let intervalMinutes = irrigationConfig.mode === "manual" ? 
     irrigationConfig.interval : 
-    Math.round(baseInterval * tempFactor);
+    Math.round(baseInterval * seasonMultiplier * tempFactor);
   
-  // Asegurar intervalos mínimos y máximos
-  intervalMinutes = Math.max(30, Math.min(180, intervalMinutes));
+  // Asegurar limites seguros
+  intervalMinutes = Math.max(20, Math.min(240, intervalMinutes)); // 20min a 4h
   
-  // Calcular métricas
+  // Calcular métricas diferenciadas día/noche
   const cyclesPerDay = Math.floor((24 * 60) / intervalMinutes);
-  const totalPumpTimePerDay = (pumpTimePerCycle * cyclesPerDay) / 60; // en minutos
-  const totalWaterPerDay = totalPumpTimePerDay * (PUMP_CONFIG.flowRate / 60); // en litros
-  const energyConsumption = (totalPumpTimePerDay / 60) * PUMP_CONFIG.power; // en Wh
+  const dayHours = isDaytime ? 15 : 9; // Horas de luz según estación aprox
+  const nightHours = 24 - dayHours;
+  
+  const dayCycles = Math.floor((dayHours * 60) / intervalMinutes);
+  const nightCycles = cyclesPerDay - dayCycles;
+  
+  const totalPumpTimePerDay = (pumpTimePerCycle * cyclesPerDay) / 60;
+  const totalWaterPerDay = totalPumpTimePerDay * (PUMP_CONFIG.flowRate / 60);
+  const energyConsumption = (totalPumpTimePerDay / 60) * PUMP_CONFIG.power;
   
   // Calcular humedad estimada en lana de roca
   const rockwoolMoisture = Math.min(100, Math.round(
@@ -322,57 +421,71 @@ const calculateIrrigation = (plants, irrigationConfig) => {
     pumpTimePerCycle,
     intervalMinutes,
     cyclesPerDay,
+    dayCycles,
+    nightCycles,
+    isDaytime,
+    season,
     totalPumpTimePerDay: Math.round(totalPumpTimePerDay),
     totalWaterPerDay: Math.round(totalWaterPerDay * 10) / 10,
     energyConsumption: Math.round(energyConsumption * 10) / 10,
-    waterPerCycle: Math.round(waterPerCycle * 1000), // en ml
-    rockwoolMoisture, // % de humedad estimada
+    waterPerCycle: Math.round(waterPerCycle * 1000),
+    rockwoolMoisture,
     stats,
-    recommendations: getRockwoolRecommendations(stats, temp, intervalMinutes)
+    recommendations: getCastellonRecommendations(stats, temp, intervalMinutes, isDaytime, season)
   };
 };
 
-const getRockwoolRecommendations = (stats, temperature, interval) => {
+const getCastellonRecommendations = (stats, temperature, interval, isDaytime, season) => {
   const recs = [];
   
-  // Recomendaciones específicas para lana de roca
+  // Recomendaciones específicas para Castellón
+  recs.push({
+    icon: "📍",
+    text: `Ubicación: <strong>Castellón de la Plana</strong> - Clima Mediterráneo`
+  });
+  
+  if (isDaytime) {
+    recs.push({
+      icon: "☀️",
+      text: `Modo <strong>DÍA</strong> activo: Riegos más frecuentes (mayor evaporación)`
+    });
+  } else {
+    recs.push({
+      icon: "🌙",
+      text: `Modo <strong>NOCHE</strong> activo: Riegos más espaciados (menor transpiración)`
+    });
+  }
+  
+  if (season === "summer") {
+    recs.push({
+      icon: "🔥",
+      text: `Estación: <strong>VERANO</strong> - Máxima frecuencia de riego (+30% vs invierno)`
+    });
+    
+    if (temperature > 28) {
+      recs.push({
+        icon: "⚠️",
+        text: `¡Alerta calor! ${temperature}°C - Considera riego extra al atardecer`
+      });
+    }
+  } else if (season === "winter") {
+    recs.push({
+      icon: "⛄",
+      text: `Estación: <strong>INVIERNO</strong> - Reduce frecuencia (-20% vs verano)`
+    });
+  }
+  
   if (stats.seedlingCount > 0) {
     recs.push({
       icon: "🌱",
-      text: `Plántulas en lana de roca: Ciclos cortos (10-20s) para evitar encharcamiento. La lana retiene humedad 3-4 horas.`
+      text: `Plántulas: En verano castellonense, protege del sol directo 12:00-16:00`
     });
   }
   
-  if (temperature > 25) {
-    recs.push({
-      icon: "🔥",
-      text: `Temperatura alta (${temperature}°C): La lana de roca se seca más rápido. Considera intervalos más cortos.`
-    });
-  } else if (temperature < 18) {
-    recs.push({
-      icon: "❄️",
-      text: `Temperatura baja (${temperature}°C): La lana retiene humedad más tiempo. Puedes espaciar riegos.`
-    });
-  }
-  
-  if (interval < 45) {
-    recs.push({
-      icon: "💧",
-      text: `Riego muy frecuente: Asegúrate de que la lana de roca drena bien entre ciclos para evitar asfixia radicular.`
-    });
-  }
-  
-  if (stats.matureCount >= 4) {
-    recs.push({
-      icon: "🌿",
-      text: `Plantas maduras: Necesitan riegos más largos (30-45s) para saturar completamente la lana de roca.`
-    });
-  }
-  
-  // Recomendación general para lana de roca
+  // Recomendación específica para lana de roca en clima mediterráneo
   recs.push({
-    icon: "📊",
-    text: `La lana de roca idealmente debe mantenerse entre 60-80% de humedad. Evita la saturación completa prolongada.`
+    icon: "💧",
+    text: `La lana de roca en Castellón se seca rápido en verano. Verifica humedad al tacto.`
   });
   
   return recs;
@@ -503,7 +616,7 @@ export default function HydroAppFinalV31() {
   // =================== CÁLCULO DE RIEGO ===================
 
   const irrigationData = useMemo(() => {
-    return calculateIrrigation(plants, irrigationConfig);
+    return calculateIrrigation(plants, irrigationConfig, new Date());
   }, [plants, irrigationConfig]);
 
   // =================== FUNCIÓN DEL NUEVO CALENDARIO ===================
@@ -781,6 +894,31 @@ export default function HydroAppFinalV31() {
         d: "La lana de roca está demasiado saturada. Reduce tiempo de bomba.",
         c: "bg-gradient-to-r from-blue-700 to-cyan-800",
         icon: <Cloud className="text-white" size={28} />,
+        priority: 2
+      });
+    }
+
+    // Alertas específicas para Castellón
+    if (config.temp > 30 && irrigationData.isDaytime) {
+      res.push({
+        t: "¡OLA DE CALOR!",
+        v: `${config.temp}°C`,
+        d: "Temperatura extrema en Castellón. Activar riego de emergencia.",
+        c: "bg-gradient-to-r from-red-700 to-orange-700 animate-pulse",
+        icon: <Sun className="text-white" size={28} />,
+        priority: 1
+      });
+    }
+
+    // Alerta para viento de poniente (seco)
+    const horaActual = new Date().getHours();
+    if (horaActual >= 12 && horaActual <= 18 && irrigationData.isDaytime) {
+      res.push({
+        t: "VIENTO PONIENTE",
+        v: "¡Ojo!",
+        d: "Horario de vientos secos en Castellón. Vigila humedad.",
+        c: "bg-gradient-to-r from-yellow-600 to-amber-600",
+        icon: <WindIcon className="text-white" size={28} />,
         priority: 2
       });
     }
@@ -1077,8 +1215,8 @@ export default function HydroAppFinalV31() {
     <div className="min-h-screen bg-slate-50 pb-28 text-slate-900 font-sans">
       <header className="bg-white border-b-4 p-6 flex justify-between items-center sticky top-0 z-50">
         <div>
-          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v4.5</h1>
-          <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 italic">CANNA Aqua Vega | Lana de Roca | Sistema Escalonado</p>
+          <h1 className="text-2xl font-black italic text-green-700 leading-none uppercase">HydroCaru v5.0</h1>
+          <p className="text-[8px] font-black uppercase tracking-widest text-slate-300 italic">CANNA Aqua Vega | Clima Mediterráneo | Riego Inteligente</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-2xl font-black text-lg">
@@ -1296,7 +1434,7 @@ export default function HydroAppFinalV31() {
             ))}
           </TabsContent>
 
-          {/* PESTAÑA DE RIEGO ACTUALIZADA PARA LANTA DE ROCA */}
+          {/* PESTAÑA DE RIEGO ACTUALIZADA PARA CASTELLÓN */}
           <TabsContent value="irrigation" className="space-y-6">
             <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6">
               <div className="flex items-center justify-between mb-6">
@@ -1305,8 +1443,8 @@ export default function HydroAppFinalV31() {
                     <Droplets className="text-white" size={28} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-blue-800">Control de Riego</h2>
-                    <p className="text-xs text-slate-500">Optimizado para <strong>Lana de Roca</strong> - Bomba 7W/600L/h</p>
+                    <h2 className="text-xl font-black text-blue-800">Control de Riego Inteligente</h2>
+                    <p className="text-xs text-slate-500">Optimizado para <strong>Clima Mediterráneo - Castellón</strong></p>
                   </div>
                 </div>
                 <button 
@@ -1318,29 +1456,46 @@ export default function HydroAppFinalV31() {
                 </button>
               </div>
 
-              {/* INFO SOBRE LANTA DE ROCA */}
-              <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200">
+              {/* INFO CLIMA CASTELLÓN */}
+              <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-cyan-100 rounded-xl">
-                    <Droplets className="text-cyan-600" size={20} />
+                  <div className="p-2 bg-orange-100 rounded-xl">
+                    <Sun className="text-orange-600" size={20} />
                   </div>
                   <div>
-                    <h3 className="font-black text-cyan-800 text-sm">Características de la Lana de Roca</h3>
-                    <p className="text-xs text-cyan-600">85% retención - Secado en 2-4 horas</p>
+                    <h3 className="font-black text-orange-800 text-sm">Clima Mediterráneo - Castellón</h3>
+                    <p className="text-xs text-orange-600">Ajustes automáticos día/noche y estacionales</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
+                
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white p-3 rounded-xl">
-                    <p className="text-xs font-black text-cyan-700">Retención</p>
-                    <p className="text-lg font-black">{ROCKWOOL_CHARACTERISTICS.waterRetention * 100}%</p>
+                    <p className="text-xs font-black text-orange-700">Modo actual</p>
+                    <p className="text-lg font-black text-orange-800">
+                      {irrigationData.isDaytime ? '☀️ DÍA' : '🌙 NOCHE'}
+                    </p>
                   </div>
                   <div className="bg-white p-3 rounded-xl">
-                    <p className="text-xs font-black text-blue-700">Drenaje</p>
-                    <p className="text-lg font-black">{ROCKWOOL_CHARACTERISTICS.drainageRate * 100}%</p>
+                    <p className="text-xs font-black text-amber-700">Estación</p>
+                    <p className="text-lg font-black text-amber-800">
+                      {irrigationData.season === 'summer' ? 'Verano' : 
+                       irrigationData.season === 'winter' ? 'Invierno' : 'Primavera/Otoño'}
+                    </p>
                   </div>
-                  <div className="bg-white p-3 rounded-xl">
-                    <p className="text-xs font-black text-purple-700">Humedad</p>
-                    <p className="text-lg font-black">{irrigationData.rockwoolMoisture}%</p>
+                  <div className="bg-white p-3 rounded-xl col-span-2">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="text-xs font-black text-blue-700">Ciclos día</p>
+                        <p className="text-xl font-black">{irrigationData.dayCycles}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-purple-700">Ciclos noche</p>
+                        <p className="text-xl font-black">{irrigationData.nightCycles}</p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 text-center mt-1">
+                      Total: {irrigationData.cyclesPerDay} ciclos/24h
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -1399,16 +1554,16 @@ export default function HydroAppFinalV31() {
                       <Slider
                         value={[irrigationConfig.interval]}
                         onValueChange={(value) => setIrrigationConfig(prev => ({ ...prev, interval: value[0] }))}
-                        min={30}
-                        max={180}
-                        step={15}
+                        min={20}
+                        max={240}
+                        step={10}
                         disabled={irrigationConfig.mode === "auto"}
                         className="w-full"
                       />
                       <div className="flex justify-between text-xs text-slate-500">
-                        <span>30min (calor)</span>
+                        <span>20min (verano)</span>
                         <span>90min (óptimo)</span>
-                        <span>180min (frío)</span>
+                        <span>240min (invierno)</span>
                       </div>
                     </div>
                   </div>
@@ -1427,7 +1582,7 @@ export default function HydroAppFinalV31() {
                     <div className="bg-white p-4 rounded-2xl border border-blue-100">
                       <p className="text-[10px] font-black uppercase text-blue-600 mb-1">Ciclos por día</p>
                       <p className="text-xl font-black text-blue-700">{irrigationData.cyclesPerDay}</p>
-                      <p className="text-[9px] text-slate-500">Cada {irrigationData.intervalMinutes} min</p>
+                      <p className="text-[9px] text-slate-500">{irrigationData.dayCycles} día / {irrigationData.nightCycles} noche</p>
                     </div>
                     <div className="bg-white p-4 rounded-2xl border border-amber-100">
                       <p className="text-[10px] font-black uppercase text-amber-600 mb-1">Agua total/día</p>
@@ -1465,26 +1620,26 @@ export default function HydroAppFinalV31() {
                   </div>
                 </Card>
 
-                {/* RECOMENDACIONES ESPECÍFICAS */}
+                {/* RECOMENDACIONES ESPECÍFICAS PARA CASTELLÓN */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-amber-50 to-orange-50 border-2">
                   <h3 className="text-sm font-black text-amber-800 mb-3 flex items-center gap-2">
                     <Lightbulb className="text-amber-600" size={16} />
-                    Recomendaciones para Lana de Roca
+                    Recomendaciones para Castellón
                   </h3>
                   <div className="space-y-3">
                     {irrigationData.recommendations.map((rec, index) => (
                       <div key={index} className="flex items-start gap-3 p-3 bg-white/50 rounded-xl">
                         <span className="text-xl">{rec.icon}</span>
-                        <p className="text-sm text-slate-700 flex-1">{rec.text}</p>
+                        <p className="text-sm text-slate-700 flex-1" dangerouslySetInnerHTML={{ __html: rec.text }}></p>
                       </div>
                     ))}
                     
                     {/* RECOMENDACIÓN GENERAL */}
                     <div className="p-3 bg-amber-100 rounded-xl border border-amber-200">
-                      <p className="text-xs font-black text-amber-800">💡 CONSEJO MAESTRO:</p>
+                      <p className="text-xs font-black text-amber-800">💡 CONSEJO CASTELLÓN:</p>
                       <p className="text-xs text-amber-700 mt-1">
-                        <strong>Toca la lana de roca</strong> entre riegos. Debe sentirse húmeda pero no goteando. 
-                        Si está seca al tacto, reduce intervalos. Si está empapada, aumenta intervalos.
+                        <strong>Verano:</strong> Riega al amanecer y atardecer. <strong>Invierno:</strong> Riega al mediodía.
+                        Evita los vientos de poniente (12:00-18:00) que secan mucho.
                       </p>
                     </div>
                   </div>
@@ -1494,7 +1649,11 @@ export default function HydroAppFinalV31() {
                 <button
                   onClick={() => {
                     const stats = irrigationData.stats;
-                    alert(`🚰 SIMULACIÓN DE RIEGO PARA LANTA DE ROCA:\n\n• Bomba activada por ${irrigationData.pumpTimePerCycle} segundos\n• Próximo riego en ${irrigationData.intervalMinutes} minutos\n• Agua utilizada: ${irrigationData.waterPerCycle} ml\n• Humedad estimada: ${irrigationData.rockwoolMoisture}%\n\n📊 BASADO EN:\n• ${stats.seedlingCount} plántulas (cubo pequeño)\n• ${stats.growthCount} en crecimiento\n• ${stats.matureCount} maduras (cubo estándar)\n\n🌡️ Temperatura: ${config.temp}°C`);
+                    const now = new Date();
+                    const hour = now.getHours();
+                    const isDay = hour >= 6 && hour < 21;
+                    
+                    alert(`🚰 SIMULACIÓN DE RIEGO PARA CASTELLÓN:\n\n• Modo: ${isDay ? '☀️ DÍA' : '🌙 NOCHE'}\n• Estación: ${irrigationData.season === 'summer' ? 'Verano' : irrigationData.season === 'winter' ? 'Invierno' : 'Primavera/Otoño'}\n• Bomba activada por ${irrigationData.pumpTimePerCycle} segundos\n• Próximo riego en ${irrigationData.intervalMinutes} minutos\n• Agua utilizada: ${irrigationData.waterPerCycle} ml\n• Humedad estimada: ${irrigationData.rockwoolMoisture}%\n\n📊 BASADO EN:\n• ${stats.seedlingCount} plántulas\n• ${stats.growthCount} en crecimiento\n• ${stats.matureCount} maduras\n\n🌡️ Temperatura: ${config.temp}°C\n📍 Ubicación: Castellón de la Plana`);
                   }}
                   className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6 rounded-[2.5rem] font-black uppercase text-lg shadow-xl hover:shadow-2xl transition-all"
                 >
@@ -1663,7 +1822,7 @@ export default function HydroAppFinalV31() {
                 <p>• <span className="text-blue-700 uppercase font-black">Estabilizador de pH:</span> Este producto incluye buffers. Tras mezclar A y B, el pH se ajusta automáticamente a 5.8-6.2. Mídelo a las 2 horas y solo corrige si está fuera de 5.5-6.5.</p>
                 <p>• <span className="text-blue-700 uppercase font-black">Dosis Escalonada:</span> Para tu sistema de 18 plantas (6-6-6), la app calcula un <strong>EC promedio de ~1.35</strong>. Es seguro para plántulas y suficiente para adultas.</p>
                 <p>• <span className="text-blue-700 uppercase font-black">Mezcla:</span> <strong>SIEMPRE</strong> añade primero el componente A al agua y mezcla bien, luego el componente B. Nunca los mezcles concentrados.</p>
-                <p>• <span className="text-blue-700 uppercase font-black">Agua Dura:</span> Si tu agua tiene más de 150 ppm de dureza, considera cambiar a "Aqua Vega para Agua Dura". Esta versión está optimizada para menos de 50 ppm.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Agua Dura:</span> Si tu agua tiene más de 150 ppm de dureza, considera cambiar a "Aqua Vega para Agua Dura". Esta versión está optimizado para menos de 50 ppm.</p>
               </div>
             </Card>
             
@@ -1676,48 +1835,52 @@ export default function HydroAppFinalV31() {
               </div>
             </Card>
 
-            {/* NUEVA SECCIÓN SOBRE LANTA DE ROCA */}
-            <Card className="rounded-[3rem] border-4 border-cyan-100 overflow-hidden shadow-xl bg-white">
-              <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-6 text-white flex items-center gap-4">
-                <Droplets size={30}/>
-                <h3 className="font-black uppercase text-xs tracking-widest">🧱 GUÍA COMPLETA: LANTA DE ROCA EN TORRE VERTICAL</h3>
+            {/* NUEVA SECCIÓN ESPECÍFICA PARA CASTELLÓN */}
+            <Card className="rounded-[3rem] border-4 border-orange-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-gradient-to-r from-orange-600 to-amber-600 p-6 text-white flex items-center gap-4">
+                <Sun size={30}/>
+                <h3 className="font-black uppercase text-xs tracking-widest">🏖️ GUÍA ESPECÍFICA PARA CASTELLÓN DE LA PLANA</h3>
               </div>
               <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-6">
                 
                 <div className="space-y-3">
-                  <h4 className="text-sm font-black uppercase text-cyan-700">PREPARACIÓN INICIAL DE LA LANTA DE ROCA</h4>
+                  <h4 className="text-sm font-black uppercase text-orange-700">CLIMA MEDITERRÁNEO - CARACTERÍSTICAS</h4>
+                  <div className="bg-orange-50 p-4 rounded-2xl border-l-4 border-orange-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-orange-500 font-black">•</span> <strong>Veranos calurosos y secos:</strong> Julio-Agosto hasta 35°C. <strong>Máxima frecuencia de riego</strong> (cada 45-60min día).</p>
+                    <p className="flex items-start gap-2"><span className="text-orange-500 font-black">•</span> <strong>Inviernos suaves:</strong> Rara vez bajo 0°C. <strong>Reducir frecuencia</strong> (cada 90-120min día).</p>
+                    <p className="flex items-start gap-2"><span className="text-orange-500 font-black">•</span> <strong>Vientos de poniente:</strong> Secos, de tarde. <strong>Aumentar riego +25%</strong> cuando soplan.</p>
+                    <p className="flex items-start gap-2"><span className="text-orange-500 font-black">•</span> <strong>Brisa marina:</strong> Aporta humedad pero también salinidad. <strong>Enjuagar sustrato cada 15 días</strong>.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-amber-700">CALENDARIO ANUAL DE RIEGO EN CASTELLÓN</h4>
+                  <div className="bg-amber-50 p-4 rounded-2xl border-l-4 border-amber-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Enero-Febrero (Invierno):</strong> 120min día / 180min noche. Riego al mediodía.</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Marzo-Mayo (Primavera):</strong> 90min día / 150min noche. Ideal para crecimiento.</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Junio-Agosto (Verano):</strong> 45-60min día / 90-120min noche. ¡Máxima atención! Riego al amanecer y atardecer.</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Septiembre-Noviembre (Otoño):</strong> 75min día / 135min noche. Estable, reducir gradualmente.</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Diciembre (Inicio invierno):</strong> 105min día / 165min noche. Preparar para frío.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-red-700">ALERTAS ESPECIALES PARA CASTELLÓN</h4>
+                  <div className="bg-red-50 p-4 rounded-2xl border-l-4 border-red-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Ola de calor (>35°C):</strong> Activar <strong>riego de emergencia</strong> al anochecer.</p>
+                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Viento de poniente (12:00-18:00):</strong> <strong>+25% frecuencia</strong> de riego.</p>
+                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Lluvias persistentes:</strong> <strong>Suspender riego 24h</strong> tras lluvia.</p>
+                    <p className="flex items-start gap-2"><span className="text-red-500 font-black">•</span> <strong>Humedad >80% (invierno):</strong> <strong>Reducir -30% frecuencia</strong>.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-cyan-700">LANA DE ROCA EN CLIMA MEDITERRÁNEO</h4>
                   <div className="bg-cyan-50 p-4 rounded-2xl border-l-4 border-cyan-300 space-y-2">
-                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>pH Inicial:</strong> La lana de roca nueva tiene pH ~8.0. Debes <strong>remojar 24h en agua acidificada a pH 5.5</strong>. Usa pH- y mide hasta lograr 5.5 estable.</p>
-                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Escurrido:</strong> Después del remojo, deja escurrir NATURALMENTE 1-2 horas. <strong>NUNCA APRIETES</strong> la lana. Al apretar destruyes la estructura de aire que las raíces necesitan.</p>
-                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Hoyo de plantación:</strong> Con un lápiz limpio, haz un hoyo en el centro. Debe ser lo suficientemente profundo para enterrar el tallo hasta justo debajo de los cotiledones.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-sm font-black uppercase text-blue-700">TRASPLANTE DE PLÁNTULAS A LA LANTA DE ROCA</h4>
-                  <div className="bg-blue-50 p-4 rounded-2xl border-l-4 border-blue-300 space-y-2">
-                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Limpieza de raíces:</strong> Con las plántulas del vivero, limpia SUAVEMENTE el 80% de la tierra bajo agua tibia. No necesitas eliminar el 100%.</p>
-                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Colocación:</strong> Introduce las raíces en el hoyo. Rellena con pequeños trozos de lana para dar soporte, pero <strong>sin compactar</strong>.</p>
-                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Primer riego:</strong> Riega manualmente con solución nutritiva (EC 0.8-1.0) hasta que la lana esté uniformemente húmeda.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-sm font-black uppercase text-emerald-700">MANEJO DE HUMEDAD EN LA TORRE VERTICAL</h4>
-                  <div className="bg-emerald-50 p-4 rounded-2xl border-l-4 border-emerald-300 space-y-2">
-                    <p className="flex items-start gap-2"><span className="text-emerald-500 font-black">•</span> <strong>Prueba del tacto:</strong> La forma más precisa es tocar la lana entre riegos. Debe sentirse como una esponja <strong>húmeda pero no empapada</strong>.</p>
-                    <p className="flex items-start gap-2"><span className="text-emerald-500 font-black">•</span> <strong>Drenaje:</strong> La lana debe drenar el 15% del agua aplicada. Si no ves drenaje, el riego es insuficiente. Si ves mucho drenaje, es excesivo.</p>
-                    <p className="flex items-start gap-2"><span className="text-emerald-500 font-black">•</span> <strong>Señales de problemas:</strong> Raíces marrones = exceso de agua. Raíces secas = falta de agua. Raíces blancas = perfecto.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-sm font-black uppercase text-purple-700">AJUSTES DE RIEGO POR ETAPA</h4>
-                  <div className="bg-purple-50 p-4 rounded-2xl border-l-4 border-purple-300 space-y-2">
-                    <p className="flex items-start gap-2"><span className="text-purple-500 font-black">•</span> <strong>Plántulas (semana 1-2):</strong> Riegos cortos (10-15s) cada 2-3 horas. La lana debe permanecer húmeda pero con buen aireación.</p>
-                    <p className="flex items-start gap-2"><span className="text-purple-500 font-black">•</span> <strong>Crecimiento (semana 3-4):</strong> Riegos de 20-30s cada 1.5-2 horas. Las raíces ya exploran toda la lana.</p>
-                    <p className="flex items-start gap-2"><span className="text-purple-500 font-black">•</span> <strong>Maduración (semana 5+):</strong> Riegos de 30-45s cada 1-1.5 horas. Máxima absorción de agua y nutrientes.</p>
-                    <p className="text-center text-[10px] font-black text-purple-700 mt-3">⚠️ Estos tiempos son para temperatura de 22°C. Ajusta según tu ambiente.</p>
+                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Verano castellonense:</strong> La lana se seca en 2-3 horas. <strong>Tocar frecuentemente</strong> para verificar humedad.</p>
+                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Protección solar:</strong> En julio-agosto, <strong>sombra ligera 12:00-16:00</strong> para plántulas.</p>
+                    <p className="flex items-start gap-2"><span className="text-cyan-500 font-black">•</span> <strong>Enjuague salino:</strong> Cada 15 días, <strong>regar solo con agua</strong> para eliminar sales marinas.</p>
+                    <p className="text-center text-[10px] font-black text-cyan-700 mt-3">📍 La app ajusta automáticamente para Castellón. Confía en las recomendaciones.</p>
                   </div>
                 </div>
 
@@ -1744,8 +1907,8 @@ export default function HydroAppFinalV31() {
             </button>
             
             <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest pt-10 leading-relaxed">
-              HydroCaru Master v4.5 - CANNA Aqua Vega<br/>
-              Sistema Inteligente de Cultivo Escalonado 6-6-6
+              HydroCaru Master v5.0 - CANNA Aqua Vega<br/>
+              Sistema Inteligente para Clima Mediterráneo - Castellón de la Plana
             </p>
           </TabsContent>
         </Tabs>
