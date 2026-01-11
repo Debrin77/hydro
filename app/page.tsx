@@ -24,7 +24,7 @@ const WATER_TYPES = {
   "osmosis": {
     name: "Ósmosis Inversa",
     icon: <Filter className="text-blue-500" />,
-    ecBase: 0.0,
+    ecBase: 0.0, // 0 µS/cm
     hardness: 0,
     phBase: 7.0,
     description: "Agua pura, EC casi 0. Perfecta para hidroponía.",
@@ -33,7 +33,7 @@ const WATER_TYPES = {
   "bajo_mineral": {
     name: "Baja Mineralización (Agua Blanda)",
     icon: <Droplets className="text-cyan-500" />,
-    ecBase: 0.2,
+    ecBase: 200, // 0.2 mS/cm = 200 µS/cm
     hardness: 50,
     phBase: 7.2,
     description: "Agua blanda, ideal para CANNA Aqua Vega.",
@@ -42,7 +42,7 @@ const WATER_TYPES = {
   "medio_mineral": {
     name: "Media Mineralización",
     icon: <Droplets className="text-teal-500" />,
-    ecBase: 0.4,
+    ecBase: 400, // 0.4 mS/cm = 400 µS/cm
     hardness: 150,
     phBase: 7.5,
     description: "Agua de grifo típica.",
@@ -51,7 +51,7 @@ const WATER_TYPES = {
   "alta_mineral": {
     name: "Alta Mineralización (Agua Dura)",
     icon: <Droplets className="text-amber-500" />,
-    ecBase: 0.8,
+    ecBase: 800, // 0.8 mS/cm = 800 µS/cm
     hardness: 300,
     phBase: 8.0,
     description: "Agua dura, alta en calcio/magnesio.",
@@ -62,56 +62,56 @@ const WATER_TYPES = {
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-cyan-500",
-    ecMax: 1.6,
+    ecMax: 1600, // 1.6 mS/cm = 1600 µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 0.9 },
-      growth:   { a: 22, b: 22, ec: 1.3 },
-      mature:   { a: 28, b: 28, ec: 1.6 }
+      seedling: { a: 18, b: 18, ec: 900 }, // 0.9 mS/cm = 900 µS/cm
+      growth:   { a: 22, b: 22, ec: 1300 }, // 1.3 mS/cm = 1300 µS/cm
+      mature:   { a: 28, b: 28, ec: 1600 }  // 1.6 mS/cm = 1600 µS/cm
     },
     info: "Sensible al exceso de sales. Usar EC conservador."
   },
   "Lollo Rosso": { 
     color: "bg-purple-600",
-    ecMax: 1.8,
+    ecMax: 1800, // 1.8 mS/cm = 1800 µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 0.9 },
-      growth:   { a: 22, b: 22, ec: 1.4 },
-      mature:   { a: 28, b: 28, ec: 1.7 }
+      seedling: { a: 18, b: 18, ec: 900 },  // 0.9 mS/cm = 900 µS/cm
+      growth:   { a: 22, b: 22, ec: 1400 }, // 1.4 mS/cm = 1400 µS/cm
+      mature:   { a: 28, b: 28, ec: 1700 }  // 1.7 mS/cm = 1700 µS/cm
     },
     info: "Color intenso con EC algo más alta."
   },
   "Maravilla": { 
     color: "bg-amber-600",
-    ecMax: 1.7,
+    ecMax: 1700, // 1.7 mS/cm = 1700 µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 0.9 },
-      growth:   { a: 22, b: 22, ec: 1.3 },
-      mature:   { a: 28, b: 28, ec: 1.6 }
+      seedling: { a: 18, b: 18, ec: 900 },  // 0.9 mS/cm = 900 µS/cm
+      growth:   { a: 22, b: 22, ec: 1300 }, // 1.3 mS/cm = 1300 µS/cm
+      mature:   { a: 28, b: 28, ec: 1600 }  // 1.6 mS/cm = 1600 µS/cm
     },
     info: "Clásica de alto rendimiento."
   },
   "Trocadero": { 
     color: "bg-lime-600",
-    ecMax: 1.6,
+    ecMax: 1600, // 1.6 mS/cm = 1600 µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 0.9 },
-      growth:   { a: 22, b: 22, ec: 1.3 },
-      mature:   { a: 28, b: 28, ec: 1.6 }
+      seedling: { a: 18, b: 18, ec: 900 },  // 0.9 mS/cm = 900 µS/cm
+      growth:   { a: 22, b: 22, ec: 1300 }, // 1.3 mS/cm = 1300 µS/cm
+      mature:   { a: 28, b: 28, ec: 1600 }  // 1.6 mS/cm = 1600 µS/cm
     },
     info: "Sabor suave. Cuidado en plántula."
   },
   "Hoja de Roble Rojo": { 
     color: "bg-red-600",
-    ecMax: 1.9,
+    ecMax: 1900, // 1.9 mS/cm = 1900 µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 1.0 },
-      growth:   { a: 22, b: 22, ec: 1.5 },
-      mature:   { a: 28, b: 28, ec: 1.8 }
+      seedling: { a: 18, b: 18, ec: 1000 }, // 1.0 mS/cm = 1000 µS/cm
+      growth:   { a: 22, b: 22, ec: 1500 }, // 1.5 mS/cm = 1500 µS/cm
+      mature:   { a: 28, b: 28, ec: 1800 }  // 1.8 mS/cm = 1800 µS/cm
     },
     info: "Crecimiento rápido, tolera EC alta."
   }
@@ -241,7 +241,7 @@ const PUMP_CONFIG = {
 // ============================================================================
 
 const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
-  if (plants.length === 0) return { targetEC: "1.2", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
+  if (plants.length === 0) return { targetEC: "1200", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
   
   let totalECWeighted = 0;
   let totalPH = 0;
@@ -274,12 +274,12 @@ const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
   
-  finalEC = Math.max(0.8, Math.min(1.9, finalEC));
+  finalEC = Math.max(800, Math.min(1900, finalEC)); // 800-1900 µS/cm
   
   let targetPH = (totalPH / plants.length).toFixed(1);
   
   return {
-    targetEC: finalEC.toFixed(2),
+    targetEC: Math.round(finalEC).toString(),
     targetPH: targetPH,
     statistics: { seedlingCount, growthCount, matureCount }
   };
@@ -307,7 +307,7 @@ const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_m
     totalB += plantContribution;
   });
   
-  let ecRatio = parseFloat(targetEC) / 1.3;
+  let ecRatio = parseFloat(targetEC) / 1300; // Cambiado de 1.3 (1300 µS/cm)
   
   if (usedWaterType.hardness > 150) {
     ecRatio *= 0.9;
@@ -585,12 +585,12 @@ export default function HydroAppFinalV31() {
     totalVol: "20", 
     currentVol: "20", 
     ph: "6.0", 
-    ec: "1.2", 
+    ec: "1200", // Cambiado a µS/cm
     temp: "22", 
-    targetEC: "1.4", 
+    targetEC: "1400", // Cambiado a µS/cm
     targetPH: "6.0",
     waterType: "bajo_mineral",
-    hasHeater: true // NUEVO: Indica que tienes calentador
+    hasHeater: true
   });
   const [tab, setTab] = useState("overview");
   const [selPos, setSelPos] = useState(null);
@@ -599,9 +599,9 @@ export default function HydroAppFinalV31() {
   // Nuevo estado para control de riego
   const [irrigationConfig, setIrrigationConfig] = useState({
     enabled: true,
-    mode: "auto", // "auto" o "manual"
-    pumpTime: 20, // segundos por ciclo (ajustado para lana de roca)
-    interval: 90, // minutos entre ciclos (ajustado para lana de roca)
+    mode: "auto",
+    pumpTime: 20,
+    interval: 90,
     temperature: "22"
   });
 
@@ -650,7 +650,7 @@ export default function HydroAppFinalV31() {
       const currentTargetEC = parseFloat(config.targetEC);
       const newTargetEC = parseFloat(optimal.targetEC);
       
-      if (Math.abs(currentTargetEC - newTargetEC) > 0.1) {
+      if (Math.abs(currentTargetEC - newTargetEC) > 100) {
         setConfig(prev => ({
           ...prev,
           targetEC: optimal.targetEC,
@@ -801,7 +801,7 @@ export default function HydroAppFinalV31() {
     const vTot = parseFloat(config.totalVol) || 20;
     const ph = parseFloat(config.ph) || 6.0;
     const ec = parseFloat(config.ec) || 0;
-    const tEc = parseFloat(config.targetEC) || 1.4;
+    const tEc = parseFloat(config.targetEC) || 1400;
     const tPh = parseFloat(config.targetPH) || 6.0;
     const temp = parseFloat(config.temp) || 20;
     const waterType = config.waterType || "bajo_mineral";
@@ -897,49 +897,49 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    if (ec < tEc - 0.4 && ec > 0) {
+    if (ec < tEc - 400 && ec > 0) { // Cambiado de 0.4 (400 µS/cm)
       const dosageNeeded = calculateCannaDosage(plants, vAct, tEc, waterType);
       const mlPerLiter = dosageNeeded.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 0.1) * vAct * mlPerLiter * 0.5;
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5; // Ajustado para µS/cm
       res.push({ 
         t: "¡FALTAN NUTRIENTES!", 
         v: `${Math.round(mlToAdd)}ml A+B`, 
-        d: `EC ${ec} (muy baja). Añadir CANNA Aqua Vega.`, 
+        d: `EC ${ec} µS/cm (muy baja). Añadir CANNA Aqua Vega.`, 
         c: "bg-gradient-to-r from-blue-800 to-cyan-800 animate-pulse",
         icon: <FlaskConical className="text-white" size={28} />,
         priority: 1
       });
     } 
-    else if (ec < tEc - 0.2 && ec > 0) {
+    else if (ec < tEc - 200 && ec > 0) { // Cambiado de 0.2 (200 µS/cm)
       const dosageNeeded = calculateCannaDosage(plants, vAct, tEc, waterType);
       const mlPerLiter = dosageNeeded.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 0.1) * vAct * mlPerLiter * 0.5;
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5; // Ajustado para µS/cm
       res.push({ 
         t: "AÑADIR NUTRIENTES", 
         v: `${Math.round(mlToAdd)}ml A+B`, 
-        d: `Subir de ${ec} a ${tEc} mS/cm`, 
+        d: `Subir de ${ec} a ${tEc} µS/cm`, 
         c: "bg-gradient-to-r from-blue-600 to-cyan-600",
         icon: <FlaskConical className="text-white" size={28} />,
         priority: 2
       });
     } 
-    else if (ec > tEc + 0.5) {
+    else if (ec > tEc + 500) { // Cambiado de 0.5 (500 µS/cm)
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         t: "¡EC PELIGROSAMENTE ALTA!", 
         v: `${water}L AGUA`, 
-        d: `EC ${ec}. Diluir URGENTE para salvar raíces.`, 
+        d: `EC ${ec} µS/cm. Diluir URGENTE para salvar raíces.`, 
         c: "bg-gradient-to-r from-red-800 to-amber-900 animate-pulse shadow-lg shadow-amber-900/50",
         icon: <Skull className="text-white" size={28} />,
         priority: 1
       });
     } 
-    else if (ec > tEc + 0.3) {
+    else if (ec > tEc + 300) { // Cambiado de 0.3 (300 µS/cm)
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         t: "DILUIR CON AGUA", 
         v: `${water}L`, 
-        d: `EC ${ec} > objetivo ${tEc}. Añadir agua sola.`, 
+        d: `EC ${ec} µS/cm > objetivo ${tEc} µS/cm. Añadir agua sola.`, 
         c: "bg-gradient-to-r from-amber-600 to-orange-600",
         icon: <AlertTriangle className="text-white" size={28} />,
         priority: 2
@@ -1127,7 +1127,7 @@ export default function HydroAppFinalV31() {
                       <div className="text-left">
                         <span className="text-xl uppercase italic tracking-tighter leading-none block">{v}</span>
                         <span className="text-[10px] opacity-80 lowercase font-medium">
-                          EC máx: {VARIETIES[v].ecMax} | pH: {VARIETIES[v].phIdeal}
+                          EC máx: {VARIETIES[v].ecMax} µS/cm | pH: {VARIETIES[v].phIdeal}
                         </span>
                       </div>
                       <Zap size={20}/>
@@ -1169,7 +1169,7 @@ export default function HydroAppFinalV31() {
                 <p className="text-xs font-bold text-blue-700">
                   Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
                 </p>
-                <p className="text-xs text-blue-600">EC base: {WATER_TYPES[config.waterType].ecBase} | Dureza: {WATER_TYPES[config.waterType].hardness} ppm</p>
+                <p className="text-xs text-blue-600">EC base: {WATER_TYPES[config.waterType].ecBase} µS/cm | Dureza: {WATER_TYPES[config.waterType].hardness} ppm</p>
               </div>
               <button 
                 onClick={() => setShowWaterSelector(true)}
@@ -1192,7 +1192,7 @@ export default function HydroAppFinalV31() {
             <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-100">
               <div className="flex justify-between items-center">
                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">EC ÓPTIMA CALCULADA</p>
-                <p className="text-4xl font-black italic text-blue-700 leading-none">{optimalEC.targetEC} mS/cm</p>
+                <p className="text-4xl font-black italic text-blue-700 leading-none">{optimalEC.targetEC} µS/cm</p>
                 <p className="text-[9px] font-bold mt-1 text-slate-500">Ajustada para {WATER_TYPES[config.waterType].name.toLowerCase()}</p></div>
                 <Activity className="text-blue-500" size={40} />
               </div>
@@ -1258,7 +1258,7 @@ export default function HydroAppFinalV31() {
                 <p className="text-xs font-bold text-blue-700">
                   Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
                 </p>
-                <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} | pH objetivo: {config.targetPH}</p>
+                <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} µS/cm | pH objetivo: {config.targetPH}</p>
               </div>
               <button 
                 onClick={() => setShowWaterSelector(true)}
@@ -1277,9 +1277,9 @@ export default function HydroAppFinalV31() {
                 <input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} 
                   className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" placeholder="6.0"/>
               </div>
-              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label>
-                <input type="number" step="0.1" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} 
-                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" placeholder="1.2"/>
+              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida (µS/cm)</label>
+                <input type="number" step="100" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} 
+                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" placeholder="1200"/>
               </div>
               <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label>
                 <input type="number" value={config.currentVol} onChange={e => setConfig({...config, currentVol: e.target.value})} 
@@ -1372,7 +1372,7 @@ export default function HydroAppFinalV31() {
                     <p className="font-black text-slate-800">{water.name}</p>
                     <p className="text-xs text-slate-500">{water.description}</p>
                     <div className="flex gap-4 mt-2 text-xs">
-                      <span className="text-blue-600 font-bold">EC base: {water.ecBase}</span>
+                      <span className="text-blue-600 font-bold">EC base: {water.ecBase} µS/cm</span>
                       <span className="text-amber-600 font-bold">Dureza: {water.hardness} ppm</span>
                     </div>
                   </div>
@@ -1483,14 +1483,14 @@ export default function HydroAppFinalV31() {
                     <p className="text-xs font-bold text-blue-700">
                       Agua: <span className="font-black">{WATER_TYPES[config.waterType].name}</span>
                     </p>
-                    <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} | pH objetivo: {config.targetPH}</p>
+                    <p className="text-xs text-blue-600">EC objetivo: {config.targetEC} µS/cm | pH objetivo: {config.targetPH}</p>
                   </div>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label><input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
-                <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label><input type="number" step="0.1" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
+                <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida (µS/cm)</label><input type="number" step="100" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
                 <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label><input type="number" value={config.currentVol} onChange={e => setConfig({...config, currentVol: e.target.value})} className="w-full p-5 bg-cyan-50 border-4 border-cyan-100 rounded-3xl text-center text-4xl font-black text-cyan-800" /></div>
                 <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label><input type="number" value={config.temp} onChange={e => setConfig({...config, temp: e.target.value})} className="w-full p-5 bg-orange-50 border-4 border-orange-100 rounded-3xl text-center text-3xl font-black text-orange-800" /></div>
               </div>
@@ -2007,7 +2007,7 @@ export default function HydroAppFinalV31() {
                   <span className="text-slate-400">{h.d.split(',')[0]}</span>
                   <div className="flex gap-4 uppercase">
                     <span className="text-purple-600">pH {h.ph}</span>
-                    <span className="text-blue-600">EC {h.ec}</span>
+                    <span className="text-blue-600">EC {h.ec} µS/cm</span>
                     <span className="text-orange-500">{h.temp}°C</span>
                   </div>
                 </div>
@@ -2024,8 +2024,8 @@ export default function HydroAppFinalV31() {
                 <h3 className="font-black text-blue-800 uppercase text-sm">Ajuste Rápido EC</h3>
               </div>
               <div className="text-[11px] font-bold text-slate-700 italic p-4 bg-white rounded-2xl">
-                <p>• <span className="text-blue-700">EC baja:</span> Añade <strong>2 ml de CANNA A+B por cada 0.1 de EC</strong> que quieras subir, por cada 10L de agua.</p>
-                <p>• <span className="text-blue-700">EC alta:</span> Añade <strong>1 L de agua pura</strong> por cada 0.3 de EC que quieras bajar, por cada 10L de solución.</p>
+                <p>• <span className="text-blue-700">EC baja:</span> Añade <strong>2 ml de CANNA A+B por cada 100 µS/cm</strong> que quieras subir, por cada 10L de agua.</p>
+                <p>• <span className="text-blue-700">EC alta:</span> Añade <strong>1 L de agua pura</strong> por cada 300 µS/cm que quieras bajar, por cada 10L de solución.</p>
               </div>
             </Card>
             
@@ -2036,7 +2036,7 @@ export default function HydroAppFinalV31() {
               </div>
               <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
                 <p>• <span className="text-blue-700 uppercase font-black">Estabilizador de pH:</span> Este producto incluye buffers. Tras mezclar A y B, el pH se ajusta automáticamente a 5.8-6.2. Mídelo a las 2 horas y solo corrige si está fuera de 5.5-6.5.</p>
-                <p>• <span className="text-blue-700 uppercase font-black">Dosis Escalonada:</span> Para tu sistema de 18 plantas (6-6-6), la app calcula un <strong>EC promedio de ~1.35</strong>. Es seguro para plántulas y suficiente para adultas.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Dosis Escalonada:</span> Para tu sistema de 18 plantas (6-6-6), la app calcula un <strong>EC promedio de ~1350 µS/cm</strong>. Es seguro para plántulas y suficiente para adultas.</p>
                 <p>• <span className="text-blue-700 uppercase font-black">Mezcla:</span> <strong>SIEMPRE</strong> añade primero el componente A al agua y mezcla bien, luego el componente B. Nunca los mezcles concentrados.</p>
                 <p>• <span className="text-blue-700 uppercase font-black">Agua Dura:</span> Si tu agua tiene más de 150 ppm de dureza, considera cambiar a "Aqua Vega para Agua Dura". Esta versión está optimizado para menos de 50 ppm.</p>
               </div>
@@ -2045,9 +2045,9 @@ export default function HydroAppFinalV31() {
             <Card className="rounded-[3rem] border-4 border-emerald-100 overflow-hidden shadow-xl bg-white">
               <div className="bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white flex items-center gap-4"><Sprout size={30}/><h3 className="font-black uppercase text-xs tracking-widest">🌱 SISTEMA ESCALONADO (6-6-6)</h3></div>
               <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
-                <p>• <span className="text-emerald-700 uppercase font-black">Cálculo del Promedio:</span> La app promedia las necesidades de EC de tus 18 plantas. 6 plántulas (EC 0.9) + 6 crecimiento (EC 1.35) + 6 maduras (EC 1.65) = <strong>EC objetivo del sistema: ~1.3</strong>.</p>
+                <p>• <span className="text-emerald-700 uppercase font-black">Cálculo del Promedio:</span> La app promedia las necesidades de EC de tus 18 plantas. 6 plántulas (EC 900 µS/cm) + 6 crecimiento (EC 1350 µS/cm) + 6 maduras (EC 1650 µS/cm) = <strong>EC objetivo del sistema: ~1300 µS/cm</strong>.</p>
                 <p>• <span className="text-emerald-700 uppercase font-black">Rotación Semanal:</span> Cada 7 días cosecha 6, mueve 6 de crecimiento a maduración, 6 de plántula a crecimiento, y siembra 6 nuevas. El EC objetivo se recalcula automáticamente.</p>
-                <p>• <span className="text-emerald-700 uppercase font-black">Ventaja:</span> Este promedio evita que las plántulas se quemen (si usaras EC 1.6) y que las adultas se queden cortas (si usaras EC 0.9). Es el punto óptimo para todo el ciclo.</p>
+                <p>• <span className="text-emerald-700 uppercase font-black">Ventaja:</span> Este promedio evita que las plántulas se quemen (si usaras EC 1600 µS/cm) y que las adultas se queden cortas (si usaras EC 900 µS/cm). Es el punto óptimo para todo el ciclo.</p>
               </div>
             </Card>
 
@@ -2151,7 +2151,7 @@ export default function HydroAppFinalV31() {
                 }} className={`w-full p-7 rounded-[2.2rem] font-black text-white shadow-xl flex justify-between items-center hover:scale-105 active:scale-95 transition-all ${VARIETIES[v].color}`}>
                     <div className="text-left">
                         <span className="text-2xl uppercase italic tracking-tighter leading-none block">{v}</span>
-                        <span className="text-[10px] opacity-80 lowercase font-medium">EC máx: {VARIETIES[v].ecMax}</span>
+                        <span className="text-[10px] opacity-80 lowercase font-medium">EC máx: {VARIETIES[v].ecMax} µS/cm</span>
                     </div>
                     <Zap size={24}/>
                 </button>
