@@ -10,7 +10,7 @@ import {
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, 
   RefreshCw, Skull, Info, Calculator, Filter, 
   Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun, 
-  WindIcon, Clipboard, ThermometerSnowflake
+  WindIcon, Clipboard, ThermometerSnowflake, TreePine, Settings
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -33,7 +33,7 @@ const WATER_TYPES = {
   "bajo_mineral": {
     name: "Baja Mineralización (Agua Blanda)",
     icon: <Droplets className="text-cyan-500" />,
-    ecBase: 200, // 0.2 mS/cm = 200 µS/cm
+    ecBase: 200, // 200 µS/cm
     hardness: 50,
     phBase: 7.2,
     description: "Agua blanda, ideal para CANNA Aqua Vega.",
@@ -42,7 +42,7 @@ const WATER_TYPES = {
   "medio_mineral": {
     name: "Media Mineralización",
     icon: <Droplets className="text-teal-500" />,
-    ecBase: 400, // 0.4 mS/cm = 400 µS/cm
+    ecBase: 400, // 400 µS/cm
     hardness: 150,
     phBase: 7.5,
     description: "Agua de grifo típica.",
@@ -51,7 +51,7 @@ const WATER_TYPES = {
   "alta_mineral": {
     name: "Alta Mineralización (Agua Dura)",
     icon: <Droplets className="text-amber-500" />,
-    ecBase: 800, // 0.8 mS/cm = 800 µS/cm
+    ecBase: 800, // 800 µS/cm
     hardness: 300,
     phBase: 8.0,
     description: "Agua dura, alta en calcio/magnesio.",
@@ -62,56 +62,56 @@ const WATER_TYPES = {
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-cyan-500",
-    ecMax: 1600, // 1.6 mS/cm = 1600 µS/cm
+    ecMax: 1600, // µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 }, // 0.9 mS/cm = 900 µS/cm
-      growth:   { a: 22, b: 22, ec: 1300 }, // 1.3 mS/cm = 1300 µS/cm
-      mature:   { a: 28, b: 28, ec: 1600 }  // 1.6 mS/cm = 1600 µS/cm
+      seedling: { a: 18, b: 18, ec: 900 }, // µS/cm
+      growth:   { a: 22, b: 22, ec: 1300 }, // µS/cm
+      mature:   { a: 28, b: 28, ec: 1600 }  // µS/cm
     },
     info: "Sensible al exceso de sales. Usar EC conservador."
   },
   "Lollo Rosso": { 
     color: "bg-purple-600",
-    ecMax: 1800, // 1.8 mS/cm = 1800 µS/cm
+    ecMax: 1800, // µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 },  // 0.9 mS/cm = 900 µS/cm
-      growth:   { a: 22, b: 22, ec: 1400 }, // 1.4 mS/cm = 1400 µS/cm
-      mature:   { a: 28, b: 28, ec: 1700 }  // 1.7 mS/cm = 1700 µS/cm
+      seedling: { a: 18, b: 18, ec: 900 },  // µS/cm
+      growth:   { a: 22, b: 22, ec: 1400 }, // µS/cm
+      mature:   { a: 28, b: 28, ec: 1700 }  // µS/cm
     },
     info: "Color intenso con EC algo más alta."
   },
   "Maravilla": { 
     color: "bg-amber-600",
-    ecMax: 1700, // 1.7 mS/cm = 1700 µS/cm
+    ecMax: 1700, // µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 },  // 0.9 mS/cm = 900 µS/cm
-      growth:   { a: 22, b: 22, ec: 1300 }, // 1.3 mS/cm = 1300 µS/cm
-      mature:   { a: 28, b: 28, ec: 1600 }  // 1.6 mS/cm = 1600 µS/cm
+      seedling: { a: 18, b: 18, ec: 900 },  // µS/cm
+      growth:   { a: 22, b: 22, ec: 1300 }, // µS/cm
+      mature:   { a: 28, b: 28, ec: 1600 }  // µS/cm
     },
     info: "Clásica de alto rendimiento."
   },
   "Trocadero": { 
     color: "bg-lime-600",
-    ecMax: 1600, // 1.6 mS/cm = 1600 µS/cm
+    ecMax: 1600, // µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 },  // 0.9 mS/cm = 900 µS/cm
-      growth:   { a: 22, b: 22, ec: 1300 }, // 1.3 mS/cm = 1300 µS/cm
-      mature:   { a: 28, b: 28, ec: 1600 }  // 1.6 mS/cm = 1600 µS/cm
+      seedling: { a: 18, b: 18, ec: 900 },  // µS/cm
+      growth:   { a: 22, b: 22, ec: 1300 }, // µS/cm
+      mature:   { a: 28, b: 28, ec: 1600 }  // µS/cm
     },
     info: "Sabor suave. Cuidado en plántula."
   },
   "Hoja de Roble Rojo": { 
     color: "bg-red-600",
-    ecMax: 1900, // 1.9 mS/cm = 1900 µS/cm
+    ecMax: 1900, // µS/cm
     phIdeal: 6.0,
     cannaDosage: {
-      seedling: { a: 18, b: 18, ec: 1000 }, // 1.0 mS/cm = 1000 µS/cm
-      growth:   { a: 22, b: 22, ec: 1500 }, // 1.5 mS/cm = 1500 µS/cm
-      mature:   { a: 28, b: 28, ec: 1800 }  // 1.8 mS/cm = 1800 µS/cm
+      seedling: { a: 18, b: 18, ec: 1000 }, // µS/cm
+      growth:   { a: 22, b: 22, ec: 1500 }, // µS/cm
+      mature:   { a: 28, b: 28, ec: 1800 }  // µS/cm
     },
     info: "Crecimiento rápido, tolera EC alta."
   }
@@ -126,31 +126,27 @@ const CASTELLON_CLIMA = {
   coordinates: "40.6789° N, 0.2822° O",
   clima: "Mediterráneo costero",
   
-  // Temperaturas medias anuales
   temperaturas: {
-    verano: { dia: 30, noche: 22 },    // Jun-Sep
-    primavera_otono: { dia: 22, noche: 15 }, // Mar-May, Oct-Nov
-    invierno: { dia: 16, noche: 8 },   // Dic-Feb
+    verano: { dia: 30, noche: 22 },
+    primavera_otono: { dia: 22, noche: 15 },
+    invierno: { dia: 16, noche: 8 },
   },
   
-  // Humedad relativa media
   humedad: {
-    verano: 65,    // % (más seco)
-    invierno: 75,  // % (más húmedo)
+    verano: 65,
+    invierno: 75,
     anual_promedio: 70
   },
   
-  // Horas de luz aproximadas
   horas_luz: {
-    verano: 15,    // Junio (6:00-21:00)
-    invierno: 10,  // Diciembre (8:00-18:00)
+    verano: 15,
+    invierno: 10,
     promedio: 12.5
   },
   
-  // Evapotranspiración (mm/día) - más alta en verano
   evapotranspiracion: {
-    verano: 6.0,   // Alta evaporación
-    invierno: 2.0, // Baja evaporación
+    verano: 6.0,
+    invierno: 2.0,
     promedio: 4.0
   }
 };
@@ -160,78 +156,70 @@ const CASTELLON_CLIMA = {
 // ============================================================================
 
 const ROCKWOOL_CHARACTERISTICS = {
-  waterRetention: 0.85, // 85% de retención de agua
-  drainageRate: 0.15,   // 15% de drenaje inmediato
-  saturationTime: 5,    // segundos para saturar completamente
-  dryingTime: {         // Tiempo de secado aproximado (horas)
-    seedling: 4,        // Plántulas secan más lento (menor transpiración)
-    growth: 3,          // Plantas en crecimiento
-    mature: 2           // Plantas maduras (mayor transpiración)
+  waterRetention: 0.85,
+  drainageRate: 0.15,
+  saturationTime: 5,
+  dryingTime: {
+    seedling: 4,
+    growth: 3,
+    mature: 2
   },
   cubeSizes: {
-    seedling: 0.25,     // Litros de capacidad del cubo pequeño (plántulas)
-    standard: 0.4       // Litros de capacidad del cubo estándar
+    seedling: 0.25,
+    standard: 0.4
   }
 };
 
 const PUMP_CONFIG = {
-  power: 7, // W
-  flowRate: 600, // L/h
-  flowRatePerSecond: 600 / 3600, // L/s (0.1667 L/s)
-  maxDailyRuntime: 16, // horas máximas de funcionamiento diario
-  minCycleTime: 10, // segundos mínimo por ciclo (reducido para lana de roca)
-  maxCycleTime: 45, // segundos máximo por ciclo (reducido para evitar encharcamiento)
+  power: 7,
+  flowRate: 600,
+  flowRatePerSecond: 600 / 3600,
+  maxDailyRuntime: 16,
+  minCycleTime: 10,
+  maxCycleTime: 45,
   
-  // AJUSTADO PARA CLIMA MEDITERRÁNEO DE CASTELLÓN:
   waterPerPlant: {
-    seedling: 0.07,    // L por planta por ciclo (70ml) - reducido por humedad ambiente
-    growth: 0.13,      // L por planta por ciclo (130ml) - ajustado para veranos secos
-    mature: 0.18       // L por planta por ciclo (180ml) - considerando alta evapotranspiración
+    seedling: 0.07,
+    growth: 0.13,
+    mature: 0.18
   },
   
-  // FRECUENCIAS DIFERENCIADAS DÍA/NOCHE
   baseIntervals: {
-    // DÍA (más evaporación, más riego)
     day: {
-      seedling: 90,   // minutos (1.5h) - menos en verano
-      growth: 60,     // minutos (1h)
-      mature: 45      // minutos (45min)
+      seedling: 90,
+      growth: 60,
+      mature: 45
     },
-    // NOCHE (menos evaporación, menos riego)
     night: {
-      seedling: 180,  // minutos (3h)
-      growth: 120,    // minutos (2h)
-      mature: 90      // minutos (1.5h)
+      seedling: 180,
+      growth: 120,
+      mature: 90
     }
   },
   
-  // AJUSTES ESTACIONALES PARA CASTELLÓN
   seasonalAdjustments: {
-    summer: {    // Junio a Septiembre (calor seco)
-      dayMultiplier: 0.7,    // 30% más frecuente de día
-      nightMultiplier: 0.9   // 10% más frecuente de noche
+    summer: {
+      dayMultiplier: 0.7,
+      nightMultiplier: 0.9
     },
-    winter: {    // Diciembre a Febrero (fresco húmedo)
-      dayMultiplier: 1.2,    // 20% menos frecuente de día
-      nightMultiplier: 1.4   // 40% menos frecuente de noche
+    winter: {
+      dayMultiplier: 1.2,
+      nightMultiplier: 1.4
     },
-    spring_autumn: { // Marzo-Mayo, Octubre-Noviembre
-      dayMultiplier: 0.9,    // 10% más frecuente de día
-      nightMultiplier: 1.1   // 10% menos frecuente de noche
+    spring_autumn: {
+      dayMultiplier: 0.9,
+      nightMultiplier: 1.1
     }
   },
   
-  // Horarios recomendados para Castellón
   recommendedSchedule: {
     summer: {
       dayStart: "06:00",
       dayEnd: "21:00",
-      // Riegos cada 45-60min durante día, 90min noche
     },
     winter: {
       dayStart: "08:00",
       dayEnd: "18:00",
-      // Riegos cada 90-120min durante día, 180min noche
     }
   }
 };
@@ -274,7 +262,7 @@ const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
   
-  finalEC = Math.max(800, Math.min(1900, finalEC)); // 800-1900 µS/cm
+  finalEC = Math.max(800, Math.min(1900, finalEC));
   
   let targetPH = (totalPH / plants.length).toFixed(1);
   
@@ -307,7 +295,7 @@ const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_m
     totalB += plantContribution;
   });
   
-  let ecRatio = parseFloat(targetEC) / 1300; // Cambiado de 1.3 (1300 µS/cm)
+  let ecRatio = parseFloat(targetEC) / 1300;
   
   if (usedWaterType.hardness > 150) {
     ecRatio *= 0.9;
@@ -334,34 +322,27 @@ const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_m
 const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date()) => {
   const stats = calculateSystemEC(plants, 20, "bajo_mineral").statistics;
   
-  // Determinar si es día o noche (basado en Castellón)
   const hour = currentTime.getHours();
-  const isDaytime = hour >= 6 && hour < 21; // Verano como referencia
+  const isDaytime = hour >= 6 && hour < 21;
   
-  // Determinar estación aproximada (basado en mes)
-  const month = currentTime.getMonth() + 1; // Enero = 1
+  const month = currentTime.getMonth() + 1;
   let season = "spring_autumn";
   if (month >= 6 && month <= 9) season = "summer";
   else if (month >= 12 || month <= 2) season = "winter";
   
-  // Cálculo de necesidades de agua por ciclo CONSIDERANDO LANTA DE ROCA
   const waterPerCycle = 
     (stats.seedlingCount * PUMP_CONFIG.waterPerPlant.seedling * ROCKWOOL_CHARACTERISTICS.waterRetention) +
     (stats.growthCount * PUMP_CONFIG.waterPerPlant.growth * ROCKWOOL_CHARACTERISTICS.waterRetention) +
     (stats.matureCount * PUMP_CONFIG.waterPerPlant.mature * ROCKWOOL_CHARACTERISTICS.waterRetention);
   
-  // Calcular tiempo de bomba por ciclo (en segundos)
   let pumpTimePerCycle = Math.ceil(waterPerCycle / PUMP_CONFIG.flowRatePerSecond);
   
-  // Ajustar según configuración manual
   if (irrigationConfig.mode === "manual") {
     pumpTimePerCycle = irrigationConfig.pumpTime;
   }
   
-  // Limitar a rangos seguros para lana de roca (evitar encharcamiento)
   pumpTimePerCycle = Math.max(PUMP_CONFIG.minCycleTime, Math.min(PUMP_CONFIG.maxCycleTime, pumpTimePerCycle));
   
-  // Calcular intervalo base según etapa y día/noche
   let baseIntervalDay, baseIntervalNight;
   if (stats.matureCount > 0) {
     baseIntervalDay = PUMP_CONFIG.baseIntervals.day.mature;
@@ -374,44 +355,37 @@ const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date())
     baseIntervalNight = PUMP_CONFIG.baseIntervals.night.seedling;
   }
   
-  // Aplicar ajuste estacional
   const dayMultiplier = PUMP_CONFIG.seasonalAdjustments[season].dayMultiplier;
   const nightMultiplier = PUMP_CONFIG.seasonalAdjustments[season].nightMultiplier;
   
-  // Ajustar según temperatura actual (Castellón específico)
   const temp = parseFloat(irrigationConfig.temperature || 22);
   let tempFactor = 1.0;
   
   if (temp > 30) {
-    tempFactor = 0.6; // 40% más frecuente si >30°C (olas de calor)
+    tempFactor = 0.6;
   } else if (temp > 25) {
-    tempFactor = 0.7; // 30% más frecuente (verano típico)
+    tempFactor = 0.7;
   } else if (temp > 20) {
-    tempFactor = 0.85; // 15% más frecuente
+    tempFactor = 0.85;
   } else if (temp < 10) {
-    tempFactor = 1.4; // 40% menos frecuente si <10°C
+    tempFactor = 1.4;
   } else if (temp < 15) {
-    tempFactor = 1.2; // 20% menos frecuente
+    tempFactor = 1.2;
   }
   
-  // Calcular intervalos finales día/noche
   let dayIntervalMinutes, nightIntervalMinutes;
   
   if (irrigationConfig.mode === "manual") {
     dayIntervalMinutes = irrigationConfig.interval;
-    nightIntervalMinutes = Math.round(irrigationConfig.interval * 1.5); // 50% más espaciado de noche
+    nightIntervalMinutes = Math.round(irrigationConfig.interval * 1.5);
   } else {
-    // Intervalo día (más frecuente)
     dayIntervalMinutes = Math.round(baseIntervalDay * dayMultiplier * tempFactor);
-    // Intervalo noche (más espaciado)
     nightIntervalMinutes = Math.round(baseIntervalNight * nightMultiplier * tempFactor);
   }
   
-  // Asegurar limites seguros
   dayIntervalMinutes = Math.max(20, Math.min(120, dayIntervalMinutes));
   nightIntervalMinutes = Math.max(30, Math.min(240, nightIntervalMinutes));
   
-  // Calcular horarios según estación en Castellón
   let dayStart, dayEnd, dayHours, nightHours;
   
   if (season === "summer") {
@@ -430,17 +404,14 @@ const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date())
   
   nightHours = 24 - dayHours;
   
-  // Calcular ciclos diferenciados día/noche
   const dayCycles = Math.floor((dayHours * 60) / dayIntervalMinutes);
   const nightCycles = Math.floor((nightHours * 60) / nightIntervalMinutes);
   const cyclesPerDay = dayCycles + nightCycles;
   
-  // Calcular métricas
   const totalPumpTimePerDay = (pumpTimePerCycle * cyclesPerDay) / 60;
   const totalWaterPerDay = totalPumpTimePerDay * (PUMP_CONFIG.flowRate / 60);
   const energyConsumption = (totalPumpTimePerDay / 60) * PUMP_CONFIG.power;
   
-  // Calcular humedad estimada en lana de roca
   const rockwoolMoisture = Math.min(100, Math.round(
     (waterPerCycle / 
       (stats.seedlingCount * ROCKWOOL_CHARACTERISTICS.cubeSizes.seedling +
@@ -474,7 +445,6 @@ const calculateIrrigation = (plants, irrigationConfig, currentTime = new Date())
 const getCastellonRecommendations = (stats, temperature, dayInterval, nightInterval, isDaytime, season) => {
   const recs = [];
   
-  // Recomendaciones específicas para Castellón
   recs.push({
     icon: "📍",
     text: `Ubicación: <strong>Castellón de la Plana</strong> - Clima Mediterráneo`
@@ -518,7 +488,6 @@ const getCastellonRecommendations = (stats, temperature, dayInterval, nightInter
     });
   }
   
-  // Recomendación específica para lana de roca en clima mediterráneo
   recs.push({
     icon: "💧",
     text: `La lana de roca en Castellón se seca rápido en verano. Verifica humedad al tacto.`
@@ -532,7 +501,6 @@ const getCastellonRecommendations = (stats, temperature, dayInterval, nightInter
 // ============================================================================
 
 const calculateTimerProgram = (irrigationData, season) => {
-  // Determinar horarios según Castellón
   let dayStart, dayEnd;
   
   if (season === "summer") {
@@ -549,7 +517,6 @@ const calculateTimerProgram = (irrigationData, season) => {
   const dayHours = parseInt(dayEnd.split(":")[0]) - parseInt(dayStart.split(":")[0]);
   const nightHours = 24 - dayHours;
   
-  // Para el temporizador, necesitamos frecuencia (cada X minutos) y duración (Y segundos)
   const dayProgram = {
     startTime: dayStart,
     endTime: dayEnd,
@@ -585,9 +552,9 @@ export default function HydroAppFinalV31() {
     totalVol: "20", 
     currentVol: "20", 
     ph: "6.0", 
-    ec: "1200", // Cambiado a µS/cm
+    ec: "1200",
     temp: "22", 
-    targetEC: "1400", // Cambiado a µS/cm
+    targetEC: "1400",
     targetPH: "6.0",
     waterType: "bajo_mineral",
     hasHeater: true
@@ -596,7 +563,6 @@ export default function HydroAppFinalV31() {
   const [selPos, setSelPos] = useState(null);
   const [showWaterSelector, setShowWaterSelector] = useState(false);
   
-  // Nuevo estado para control de riego
   const [irrigationConfig, setIrrigationConfig] = useState({
     enabled: true,
     mode: "auto",
@@ -660,7 +626,6 @@ export default function HydroAppFinalV31() {
     }
   }, [plants, config.totalVol, config.waterType, step]);
 
-  // Actualizar temperatura en configuración de riego
   useEffect(() => {
     setIrrigationConfig(prev => ({
       ...prev,
@@ -700,12 +665,6 @@ export default function HydroAppFinalV31() {
     return calculateIrrigation(plants, irrigationConfig, new Date());
   }, [plants, irrigationConfig]);
 
-  // =================== CÁLCULO DE PROGRAMACIÓN TEMPORIZADOR ===================
-
-  const timerProgram = useMemo(() => {
-    return calculateTimerProgram(irrigationData, irrigationData.season);
-  }, [irrigationData]);
-
   // =================== FUNCIÓN DEL NUEVO CALENDARIO ===================
 
   const generateCalendar = () => {
@@ -723,7 +682,6 @@ export default function HydroAppFinalV31() {
     const totalCells = 42;
     const calendarDays = [];
 
-    // Días del mes anterior
     const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
     for (let i = 0; i < startOffset; i++) {
       const day = prevMonthLastDay - startOffset + i + 1;
@@ -736,7 +694,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Días del mes actual
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentYear, currentMonth, i);
       calendarDays.push({
@@ -747,7 +704,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Días del mes siguiente
     const remainingCells = totalCells - calendarDays.length;
     for (let i = 1; i <= remainingCells; i++) {
       const date = new Date(currentYear, currentMonth + 1, i);
@@ -759,9 +715,8 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Calcular eventos
     const totalPlants = plants.length;
-    const measureFrequency = totalPlants > 12 ? 2 : totalPlants > 6 ? 3 : 4;
+    const measureFrequency = totalPlants > 10 ? 2 : totalPlants > 5 ? 3 : 4;
     
     const lastRotDate = new Date(lastRot);
     const lastCleanDate = new Date(lastClean);
@@ -775,18 +730,15 @@ export default function HydroAppFinalV31() {
       
       if (diffDays < 0) return;
 
-      // Evento de medición
       if (diffDays % measureFrequency === 0) {
         day.events.push('measure');
       }
 
-      // Evento de rotación
       const daysFromLastRot = Math.floor((dayDate - lastRotDate) / (1000 * 3600 * 24));
       if (daysFromLastRot > 0 && daysFromLastRot % 7 === 0) {
         day.events.push('rotation');
       }
 
-      // Evento de limpieza
       const daysFromLastClean = Math.floor((dayDate - lastCleanDate) / (1000 * 3600 * 24));
       if (daysFromLastClean > 0 && daysFromLastClean % 14 === 0) {
         day.events.push('clean');
@@ -897,10 +849,10 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    if (ec < tEc - 400 && ec > 0) { // Cambiado de 0.4 (400 µS/cm)
+    if (ec < tEc - 400 && ec > 0) {
       const dosageNeeded = calculateCannaDosage(plants, vAct, tEc, waterType);
       const mlPerLiter = dosageNeeded.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5; // Ajustado para µS/cm
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5;
       res.push({ 
         t: "¡FALTAN NUTRIENTES!", 
         v: `${Math.round(mlToAdd)}ml A+B`, 
@@ -910,10 +862,10 @@ export default function HydroAppFinalV31() {
         priority: 1
       });
     } 
-    else if (ec < tEc - 200 && ec > 0) { // Cambiado de 0.2 (200 µS/cm)
+    else if (ec < tEc - 200 && ec > 0) {
       const dosageNeeded = calculateCannaDosage(plants, vAct, tEc, waterType);
       const mlPerLiter = dosageNeeded.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5; // Ajustado para µS/cm
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5;
       res.push({ 
         t: "AÑADIR NUTRIENTES", 
         v: `${Math.round(mlToAdd)}ml A+B`, 
@@ -923,7 +875,7 @@ export default function HydroAppFinalV31() {
         priority: 2
       });
     } 
-    else if (ec > tEc + 500) { // Cambiado de 0.5 (500 µS/cm)
+    else if (ec > tEc + 500) {
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         t: "¡EC PELIGROSAMENTE ALTA!", 
@@ -934,7 +886,7 @@ export default function HydroAppFinalV31() {
         priority: 1
       });
     } 
-    else if (ec > tEc + 300) { // Cambiado de 0.3 (300 µS/cm)
+    else if (ec > tEc + 300) {
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         t: "DILUIR CON AGUA", 
@@ -961,7 +913,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Alerta específica para lana de roca si el riego es muy frecuente
     if (irrigationData.dayIntervalMinutes < 45 && plants.filter(p => p.l === 1).length > 0) {
       res.push({
         t: "¡CUIDADO CON PLÁNTULAS!",
@@ -973,7 +924,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Alerta si la humedad estimada es muy alta
     if (irrigationData.rockwoolMoisture > 90) {
       res.push({
         t: "EXCESO DE HUMEDAD",
@@ -985,7 +935,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Alertas específicas para Castellón
     if (config.temp > 30 && irrigationData.isDaytime) {
       res.push({
         t: "¡OLA DE CALOR!",
@@ -997,7 +946,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // Alerta para viento de poniente (seco)
     const horaActual = new Date().getHours();
     if (horaActual >= 12 && horaActual <= 18 && irrigationData.isDaytime) {
       res.push({
@@ -1010,7 +958,6 @@ export default function HydroAppFinalV31() {
       });
     }
 
-    // ALERTA ESPECIAL: Calentador activo - temperatura estable
     if (config.hasHeater) {
       res.push({
         t: "🔥 CALENTADOR ACTIVO",
@@ -1078,8 +1025,8 @@ export default function HydroAppFinalV31() {
             Selecciona las variedades en el NIVEL DE SIEMBRA (Nivel 1)
           </p>
           <div className="mb-8">
-            <div className="bg-emerald-100 p-5 rounded-[2.5rem] grid grid-cols-3 gap-4 border-4 border-emerald-200 shadow-inner">
-              {[1, 2, 3, 4, 5, 6].map(p => {
+            <div className="bg-emerald-100 p-5 rounded-[2.5rem] grid grid-cols-5 gap-4 border-4 border-emerald-200 shadow-inner">
+              {[1, 2, 3, 4, 5].map(p => {
                 const pl = plants.find(x => x.l === 1 && x.p === p);
                 return (
                   <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l: 1, p})} 
@@ -1091,7 +1038,7 @@ export default function HydroAppFinalV31() {
               })}
             </div>
             <p className="text-center text-[10px] font-bold text-slate-400 mt-4">
-              {plants.filter(p => p.l === 1).length} / 6 plantas seleccionadas
+              {plants.filter(p => p.l === 1).length} / 5 plantas seleccionadas
             </p>
           </div>
           <button onClick={() => plants.length > 0 ? setStep(2) : alert("Selecciona al menos una planta")} 
@@ -1273,19 +1220,24 @@ export default function HydroAppFinalV31() {
           
           <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6 mb-8">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label>
                 <input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} 
                   className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" placeholder="6.0"/>
               </div>
-              <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida (µS/cm)</label>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label>
                 <input type="number" step="100" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} 
-                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" placeholder="1200"/>
+                  className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black text-sm" placeholder="1200"/>
+                <p className="text-[8px] text-slate-500 text-center mt-1">µS/cm</p>
               </div>
-              <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label>
                 <input type="number" value={config.currentVol} onChange={e => setConfig({...config, currentVol: e.target.value})} 
                   className="w-full p-5 bg-cyan-50 border-4 border-cyan-100 rounded-3xl text-center text-4xl font-black text-cyan-800" placeholder={config.totalVol}/>
               </div>
-              <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label>
                 <input type="number" value={config.temp} onChange={e => setConfig({...config, temp: e.target.value})} 
                   className="w-full p-5 bg-orange-50 border-4 border-orange-100 rounded-3xl text-center text-3xl font-black text-orange-800" placeholder="22"/>
               </div>
@@ -1405,7 +1357,7 @@ export default function HydroAppFinalV31() {
             <TabsTrigger value="irrigation"><Droplets /></TabsTrigger>
             <TabsTrigger value="calendar"><Calendar /></TabsTrigger>
             <TabsTrigger value="tips"><Lightbulb /></TabsTrigger>
-            <TabsTrigger value="settings"><Trash2 /></TabsTrigger>
+            <TabsTrigger value="settings"><Settings /></TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -1489,10 +1441,23 @@ export default function HydroAppFinalV31() {
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label><input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
-                <div className="space-y-1"><label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida (µS/cm)</label><input type="number" step="100" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" /></div>
-                <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label><input type="number" value={config.currentVol} onChange={e => setConfig({...config, currentVol: e.target.value})} className="w-full p-5 bg-cyan-50 border-4 border-cyan-100 rounded-3xl text-center text-4xl font-black text-cyan-800" /></div>
-                <div className="space-y-1 col-span-2"><label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label><input type="number" value={config.temp} onChange={e => setConfig({...config, temp: e.target.value})} className="w-full p-5 bg-orange-50 border-4 border-orange-100 rounded-3xl text-center text-3xl font-black text-orange-800" /></div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 ml-4">pH Medido</label>
+                  <input type="number" step="0.1" value={config.ph} onChange={e => setConfig({...config, ph: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 ml-4">EC Medida</label>
+                  <input type="number" step="100" value={config.ec} onChange={e => setConfig({...config, ec: e.target.value})} className="w-full p-5 bg-slate-50 border-4 rounded-3xl text-center text-3xl font-black text-sm" />
+                  <p className="text-[8px] text-slate-500 text-center mt-1">µS/cm</p>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[9px] font-black uppercase text-cyan-600 ml-4">Litros actuales en depósito</label>
+                  <input type="number" value={config.currentVol} onChange={e => setConfig({...config, currentVol: e.target.value})} className="w-full p-5 bg-cyan-50 border-4 border-cyan-100 rounded-3xl text-center text-4xl font-black text-cyan-800" />
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[9px] font-black uppercase text-orange-600 ml-4">Temperatura Agua °C</label>
+                  <input type="number" value={config.temp} onChange={e => setConfig({...config, temp: e.target.value})} className="w-full p-5 bg-orange-50 border-4 border-orange-100 rounded-3xl text-center text-3xl font-black text-orange-800" />
+                </div>
               </div>
               <button onClick={() => { 
                 setHistory([{...config, id: Date.now(), d: new Date().toLocaleString()}, ...history]); 
@@ -1516,10 +1481,10 @@ export default function HydroAppFinalV31() {
               <div key={l}>
                 <p className="text-[10px] font-black mb-3 px-4 flex justify-between uppercase italic text-slate-400">
                     <span>Nivel {l} {l===1?'(Siembra)':l===3?'(Cosecha)':'(Crecimiento)'}</span>
-                    <Badge variant="outline" className="border-2">{plants.filter(p => p.l === l).length}/6</Badge>
+                    <Badge variant="outline" className="border-2">{plants.filter(p => p.l === l).length}/5</Badge>
                 </p>
-                <div className="bg-slate-200/50 p-5 rounded-[2.5rem] grid grid-cols-3 gap-4 border-4 border-white shadow-inner">
-                  {[1, 2, 3, 4, 5, 6].map(p => {
+                <div className="bg-slate-200/50 p-5 rounded-[2.5rem] grid grid-cols-5 gap-4 border-4 border-white shadow-inner">
+                  {[1, 2, 3, 4, 5].map(p => {
                     const pl = plants.find(x => x.l === l && x.p === p);
                     return (
                       <button key={p} onClick={() => pl ? setPlants(plants.filter(x => x.id !== pl.id)) : setSelPos({l, p})} className={`aspect-square rounded-[1.8rem] flex flex-col items-center justify-center border-4 relative transition-all ${pl ? `${VARIETIES[pl.v].color} border-white shadow-xl scale-110` : 'bg-white border-slate-100 hover:bg-slate-50'}`}>
@@ -1533,7 +1498,6 @@ export default function HydroAppFinalV31() {
             ))}
           </TabsContent>
 
-          {/* PESTAÑA DE RIEGO ACTUALIZADA CON PROGRAMACIÓN DE TEMPORIZADOR */}
           <TabsContent value="irrigation" className="space-y-6">
             <Card className="p-8 rounded-[3rem] bg-white shadow-2xl border-2 space-y-6">
               <div className="flex items-center justify-between mb-6">
@@ -1555,7 +1519,6 @@ export default function HydroAppFinalV31() {
                 </button>
               </div>
 
-              {/* INFO CLIMA CASTELLÓN */}
               <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 bg-orange-100 rounded-xl">
@@ -1599,7 +1562,6 @@ export default function HydroAppFinalV31() {
                 </div>
               </Card>
 
-              {/* MODO DE OPERACIÓN */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <p className="text-sm font-black text-slate-700">Modo de Operación</p>
@@ -1619,10 +1581,8 @@ export default function HydroAppFinalV31() {
                   </div>
                 </div>
 
-                {/* CONFIGURACIÓN DETALLADA */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2">
                   <div className="space-y-6">
-                    {/* TIEMPO DE BOMBA POR CICLO */}
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <p className="text-sm font-black text-blue-700">Tiempo de bomba por ciclo</p>
@@ -1644,7 +1604,6 @@ export default function HydroAppFinalV31() {
                       </div>
                     </div>
 
-                    {/* INTERVALO ENTRE CICLOS (DÍA) */}
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <p className="text-sm font-black text-amber-700">Intervalo DÍA</p>
@@ -1668,124 +1627,6 @@ export default function HydroAppFinalV31() {
                   </div>
                 </Card>
 
-                {/* NUEVA SECCIÓN: PROGRAMACIÓN PARA TEMPORIZADOR */}
-                <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-purple-50 to-violet-50 border-2 border-purple-200">
-                  <h3 className="text-sm font-black text-purple-800 mb-4 flex items-center gap-2">
-                    <Timer className="text-purple-600" size={16} />
-                    PROGRAMACIÓN PARA TU TEMPORIZADOR
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-white p-4 rounded-2xl border-2 border-amber-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Sun className="text-amber-500" size={20} />
-                          <span className="font-black text-amber-700">PROGRAMACIÓN DÍA</span>
-                        </div>
-                        <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                          {irrigationData.dayStart} - {irrigationData.dayEnd}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3 mt-3">
-                        <div className="text-center p-3 bg-amber-50 rounded-xl">
-                          <p className="text-[10px] font-black uppercase text-amber-600">Frecuencia</p>
-                          <p className="text-xl font-black text-amber-700">{irrigationData.dayIntervalMinutes} min</p>
-                          <p className="text-[9px] text-amber-800">Cada {irrigationData.dayIntervalMinutes} minutos</p>
-                        </div>
-                        <div className="text-center p-3 bg-amber-50 rounded-xl">
-                          <p className="text-[10px] font-black uppercase text-amber-600">Duración</p>
-                          <p className="text-xl font-black text-amber-700">{irrigationData.pumpTimePerCycle} s</p>
-                          <p className="text-[9px] text-amber-800">{irrigationData.pumpTimePerCycle} segundos</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 text-center">
-                        <p className="text-xs font-bold text-amber-800">
-                          💡 <strong>En tu temporizador:</strong> Cada {irrigationData.dayIntervalMinutes} min → ON {irrigationData.pumpTimePerCycle} seg → OFF
-                        </p>
-                        <p className="text-[10px] text-amber-600 mt-1">
-                          Total: {irrigationData.dayCycles} ciclos ({irrigationData.dayHours}h)
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-2xl border-2 border-blue-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Moon className="text-blue-500" size={20} />
-                          <span className="font-black text-blue-700">PROGRAMACIÓN NOCHE</span>
-                        </div>
-                        <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
-                          {irrigationData.dayEnd} - {irrigationData.dayStart}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3 mt-3">
-                        <div className="text-center p-3 bg-blue-50 rounded-xl">
-                          <p className="text-[10px] font-black uppercase text-blue-600">Frecuencia</p>
-                          <p className="text-xl font-black text-blue-700">{irrigationData.nightIntervalMinutes} min</p>
-                          <p className="text-[9px] text-blue-800">Cada {irrigationData.nightIntervalMinutes} minutos</p>
-                        </div>
-                        <div className="text-center p-3 bg-blue-50 rounded-xl">
-                          <p className="text-[10px] font-black uppercase text-blue-600">Duración</p>
-                          <p className="text-xl font-black text-blue-700">{irrigationData.pumpTimePerCycle} s</p>
-                          <p className="text-[9px] text-blue-800">{irrigationData.pumpTimePerCycle} segundos</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 text-center">
-                        <p className="text-xs font-bold text-blue-800">
-                          💡 <strong>En tu temporizador:</strong> Cada {irrigationData.nightIntervalMinutes} min → ON {irrigationData.pumpTimePerCycle} seg → OFF
-                        </p>
-                        <p className="text-[10px] text-blue-600 mt-1">
-                          Total: {irrigationData.nightCycles} ciclos ({irrigationData.nightHours}h)
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* EJEMPLO PRÁCTICO */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border-2 border-green-200">
-                      <h4 className="text-xs font-black text-green-800 mb-2 flex items-center gap-2">
-                        <Zap className="text-green-600" size={14} />
-                        EJEMPLO PRÁCTICO PARA CASTELLÓN ({irrigationData.season}):
-                      </h4>
-                      <div className="text-xs text-green-700 space-y-1">
-                        <p><strong>Día ({irrigationData.dayStart} - {irrigationData.dayEnd}):</strong> Programa 1: Cada {irrigationData.dayIntervalMinutes}min → ON {irrigationData.pumpTimePerCycle}s → OFF</p>
-                        <p><strong>Noche ({irrigationData.dayEnd} - {irrigationData.dayStart}):</strong> Programa 2: Cada {irrigationData.nightIntervalMinutes}min → ON {irrigationData.pumpTimePerCycle}s → OFF</p>
-                        <p className="text-[10px] text-green-600 mt-2">💡 <strong>Consejo:</strong> Usa 2 programas en tu temporizador o 1 programador inteligente con horarios.</p>
-                      </div>
-                    </div>
-                    
-                    {/* BOTÓN PARA COPIAR CONFIGURACIÓN */}
-                    <button
-                      onClick={() => {
-                        const configText = `CONFIGURACIÓN RIEGO HYDROCARU:\n\n` +
-                          `📍 Castellón de la Plana (${irrigationData.season})\n` +
-                          `🔥 Calentador activo: Temperatura estable ${config.temp}°C\n\n` +
-                          `🌞 DÍA (${irrigationData.dayStart}-${irrigationData.dayEnd}):\n` +
-                          `• Frecuencia: Cada ${irrigationData.dayIntervalMinutes} minutos\n` +
-                          `• Duración bomba: ${irrigationData.pumpTimePerCycle} segundos\n` +
-                          `• Ciclos: ${irrigationData.dayCycles} veces\n\n` +
-                          `🌙 NOCHE (${irrigationData.dayEnd}-${irrigationData.dayStart}):\n` +
-                          `• Frecuencia: Cada ${irrigationData.nightIntervalMinutes} minutos\n` +
-                          `• Duración bomba: ${irrigationData.pumpTimePerCycle} segundos\n` +
-                          `• Ciclos: ${irrigationData.nightCycles} veces\n\n` +
-                          `💧 Total agua/día: ${irrigationData.totalWaterPerDay}L\n` +
-                          `⚡ Consumo/día: ${irrigationData.energyConsumption}Wh`;
-                        
-                        navigator.clipboard.writeText(configText);
-                        alert("✅ Configuración copiada al portapapeles\n\nPégalo en tu programador o en una nota.");
-                      }}
-                      className="w-full bg-gradient-to-r from-purple-500 to-violet-500 text-white p-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:shadow-xl transition-all"
-                    >
-                      <Clipboard className="text-white" size={18} />
-                      COPIAR CONFIGURACIÓN PARA EL TEMPORIZADOR
-                    </button>
-                  </div>
-                </Card>
-
-                {/* ESTADÍSTICAS DE RIEGO */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-emerald-50 to-green-50 border-2">
                   <h3 className="text-sm font-black text-emerald-800 mb-4">Estadísticas de Riego</h3>
                   
@@ -1812,7 +1653,6 @@ export default function HydroAppFinalV31() {
                     </div>
                   </div>
 
-                  {/* BARRA DE HUMEDAD */}
                   <div className="mt-4">
                     <div className="flex justify-between mb-1">
                       <p className="text-xs font-black text-slate-700">Humedad estimada en lana de roca</p>
@@ -1836,7 +1676,6 @@ export default function HydroAppFinalV31() {
                   </div>
                 </Card>
 
-                {/* RECOMENDACIONES ESPECÍFICAS PARA CASTELLÓN */}
                 <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-amber-50 to-orange-50 border-2">
                   <h3 className="text-sm font-black text-amber-800 mb-3 flex items-center gap-2">
                     <Lightbulb className="text-amber-600" size={16} />
@@ -1850,7 +1689,6 @@ export default function HydroAppFinalV31() {
                       </div>
                     ))}
                     
-                    {/* RECOMENDACIÓN GENERAL */}
                     <div className="p-3 bg-amber-100 rounded-xl border border-amber-200">
                       <p className="text-xs font-black text-amber-800">💡 CONSEJO CASTELLÓN:</p>
                       <p className="text-xs text-amber-700 mt-1">
@@ -1860,21 +1698,6 @@ export default function HydroAppFinalV31() {
                     </div>
                   </div>
                 </Card>
-
-                {/* BOTÓN DE SIMULACIÓN */}
-                <button
-                  onClick={() => {
-                    const stats = irrigationData.stats;
-                    const now = new Date();
-                    const hour = now.getHours();
-                    const isDay = hour >= 6 && hour < 21;
-                    
-                    alert(`🚰 SIMULACIÓN DE RIEGO PARA CASTELLÓN:\n\n• Modo: ${isDay ? '☀️ DÍA' : '🌙 NOCHE'}\n• Estación: ${irrigationData.season === 'summer' ? 'Verano' : irrigationData.season === 'winter' ? 'Invierno' : 'Primavera/Otoño'}\n• Calentador activo: ${config.temp}°C estable\n• Día: ${irrigationData.dayStart}-${irrigationData.dayEnd}\n• Bomba: ${irrigationData.pumpTimePerCycle}s cada ${isDay ? irrigationData.dayIntervalMinutes : irrigationData.nightIntervalMinutes}min\n• Agua utilizada: ${irrigationData.waterPerCycle} ml\n• Humedad estimada: ${irrigationData.rockwoolMoisture}%\n\n📊 BASADO EN:\n• ${stats.seedlingCount} plántulas\n• ${stats.growthCount} en crecimiento\n• ${stats.matureCount} maduras\n\n🌡️ Temperatura: ${config.temp}°C (estable)\n📍 Ubicación: Castellón de la Plana`);
-                  }}
-                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6 rounded-[2.5rem] font-black uppercase text-lg shadow-xl hover:shadow-2xl transition-all"
-                >
-                  Simular Ciclo de Riego
-                </button>
               </div>
             </Card>
           </TabsContent>
@@ -1894,7 +1717,7 @@ export default function HydroAppFinalV31() {
               <div className="mb-6 grid grid-cols-3 gap-3 text-center">
                 <div className="p-3 bg-blue-900/50 rounded-2xl">
                   <p className="text-[10px] font-black text-blue-300 uppercase">Mediciones</p>
-                  <p className="text-xl font-black">{plants.length > 12 ? 'Cada 2 días' : plants.length > 6 ? 'Cada 3 días' : 'Cada 4 días'}</p>
+                  <p className="text-xl font-black">{plants.length > 10 ? 'Cada 2 días' : plants.length > 5 ? 'Cada 3 días' : 'Cada 4 días'}</p>
                 </div>
                 <div className="p-3 bg-orange-900/50 rounded-2xl">
                   <p className="text-[10px] font-black text-orange-300 uppercase">Rotaciones</p>
@@ -2007,7 +1830,7 @@ export default function HydroAppFinalV31() {
                   <span className="text-slate-400">{h.d.split(',')[0]}</span>
                   <div className="flex gap-4 uppercase">
                     <span className="text-purple-600">pH {h.ph}</span>
-                    <span className="text-blue-600">EC {h.ec} µS/cm</span>
+                    <span className="text-blue-600">EC {h.ec}</span>
                     <span className="text-orange-500">{h.temp}°C</span>
                   </div>
                 </div>
@@ -2017,6 +1840,66 @@ export default function HydroAppFinalV31() {
 
           <TabsContent value="tips" className="space-y-6">
             <h2 className="text-2xl font-black uppercase italic text-slate-800 ml-4">Consejos Maestros</h2>
+            
+            {/* SECCIÓN NUEVA: PROCESO DE PLÁNTULAS Y LANTA DE ROCA */}
+            <Card className="rounded-[3rem] border-4 border-emerald-100 overflow-hidden shadow-xl bg-white">
+              <div className="bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white flex items-center gap-4">
+                <Sprout size={30}/>
+                <h3 className="font-black uppercase text-xs tracking-widest">🌱 PROCESO DE PLÁNTULAS Y LANTA DE ROCA</h3>
+              </div>
+              <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-6">
+                
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-emerald-700">1. PREPARACIÓN DE DADOS DE LANA DE ROCA</h4>
+                  <div className="bg-emerald-50 p-4 rounded-2xl border-l-4 border-emerald-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-emerald-500 font-black">•</span> <strong>pH inicial:</strong> Remojar dados en agua con pH 5.5 durante 24h antes de sembrar.</p>
+                    <p className="flex items-start gap-2"><span className="text-emerald-500 font-black">•</span> <strong>EC inicial:</strong> Remojar en solución con EC 600-800 µS/cm (nutrientes muy diluidos).</p>
+                    <p className="flex items-start gap-2"><span className="text-emerald-500 font-black">•</span> <strong>Exceso de agua:</strong> Escurrir bien hasta que no gotee. La lana debe estar húmeda, no encharcada.</p>
+                    <p className="flex items-start gap-2"><span className="text-emerald-500 font-black">•</span> <strong>Hoyos de siembra:</strong> Hacer hoyo de 1cm de profundidad con lápiz estéril.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-blue-700">2. LIMPIEZA DE PLÁNTULAS</h4>
+                  <div className="bg-blue-50 p-4 rounded-2xl border-l-4 border-blue-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Raíces limpias:</strong> Enjuagar raíces con agua de ósmosis a 20-22°C antes de trasplantar.</p>
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Esterilización:</strong> Sumergir en solución de peróxido de hidrógeno al 3% (10ml por litro) durante 2 minutos.</p>
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Enjuague final:</strong> Enjuagar con agua de ósmosis con pH 5.8.</p>
+                    <p className="flex items-start gap-2"><span className="text-blue-500 font-black">•</span> <strong>Herramientas:</strong> Usar pinzas estériles para manipular plántulas.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-purple-700">3. COLOCACIÓN EN DADOS</h4>
+                  <div className="bg-purple-50 p-4 rounded-2xl border-l-4 border-purple-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-purple-500 font-black">•</span> <strong>Posición:</strong> Colocar plántula en el hoyo, cubrir ligeramente con fibras de lana.</p>
+                    <p className="flex items-start gap-2"><span className="text-purple-500 font-black">•</span> <strong>Profundidad:</strong> Raíz principal a 1cm de profundidad, tallo completamente cubierto.</p>
+                    <p className="flex items-start gap-2"><span className="text-purple-500 font-black">•</span> <strong>Compactación:</strong> No apretar demasiado, la lana debe estar aireada.</p>
+                    <p className="flex items-start gap-2"><span className="text-purple-500 font-black">•</span> <strong>Primer riego:</strong> Regar con 20ml de solución nutritiva EC 800-900 µS/cm.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black uppercase text-amber-700">4. VALORES DE pH RECOMENDADOS</h4>
+                  <div className="bg-amber-50 p-4 rounded-2xl border-l-4 border-amber-300 space-y-2">
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Germinación:</strong> pH 5.5 - 5.8 (absorción óptima de nutrientes para semillas).</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Plántula (días 1-7):</strong> pH 5.8 - 6.0 (equilibrio entre nitrógeno y microelementos).</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Crecimiento (días 8-21):</strong> pH 6.0 - 6.2 (máxima absorción de nitrógeno y potasio).</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>Maduración:</strong> pH 6.0 - 6.3 (óptimo para calcio y fósforo).</p>
+                    <p className="flex items-start gap-2"><span className="text-amber-500 font-black">•</span> <strong>💡 Consejo:</strong> Mantén el pH entre 5.8-6.2 para todo el ciclo. CANNA Aqua Vega lo estabiliza automáticamente.</p>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border-2 border-green-200">
+                  <p className="text-xs font-black text-green-800">📅 CRONOGRAMA DE PRIMEROS DÍAS:</p>
+                  <p className="text-xs text-green-700 mt-2">
+                    <strong>Día 1:</strong> Siembra en dados preparados • <strong>Día 2-3:</strong> Primeras raíces visibles • 
+                    <strong> Día 4-5:</strong> Primer riego con nutrientes • <strong>Día 7:</strong> Trasplantar a torre
+                  </p>
+                </div>
+
+              </div>
+            </Card>
             
             <Card className="p-6 rounded-[2.5rem] bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-100 mb-6">
               <div className="flex items-center gap-3 mb-4">
@@ -2036,22 +1919,21 @@ export default function HydroAppFinalV31() {
               </div>
               <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
                 <p>• <span className="text-blue-700 uppercase font-black">Estabilizador de pH:</span> Este producto incluye buffers. Tras mezclar A y B, el pH se ajusta automáticamente a 5.8-6.2. Mídelo a las 2 horas y solo corrige si está fuera de 5.5-6.5.</p>
-                <p>• <span className="text-blue-700 uppercase font-black">Dosis Escalonada:</span> Para tu sistema de 18 plantas (6-6-6), la app calcula un <strong>EC promedio de ~1350 µS/cm</strong>. Es seguro para plántulas y suficiente para adultas.</p>
+                <p>• <span className="text-blue-700 uppercase font-black">Dosis Escalonada:</span> Para tu sistema de 15 plantas (5-5-5), la app calcula un <strong>EC promedio de ~1300 µS/cm</strong>. Es seguro para plántulas y suficiente para adultas.</p>
                 <p>• <span className="text-blue-700 uppercase font-black">Mezcla:</span> <strong>SIEMPRE</strong> añade primero el componente A al agua y mezcla bien, luego el componente B. Nunca los mezcles concentrados.</p>
                 <p>• <span className="text-blue-700 uppercase font-black">Agua Dura:</span> Si tu agua tiene más de 150 ppm de dureza, considera cambiar a "Aqua Vega para Agua Dura". Esta versión está optimizado para menos de 50 ppm.</p>
               </div>
             </Card>
             
             <Card className="rounded-[3rem] border-4 border-emerald-100 overflow-hidden shadow-xl bg-white">
-              <div className="bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white flex items-center gap-4"><Sprout size={30}/><h3 className="font-black uppercase text-xs tracking-widest">🌱 SISTEMA ESCALONADO (6-6-6)</h3></div>
+              <div className="bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white flex items-center gap-4"><TreePine size={30}/><h3 className="font-black uppercase text-xs tracking-widest">🌿 SISTEMA ESCALONADO (5-5-5)</h3></div>
               <div className="p-8 text-[11px] font-bold text-slate-700 italic leading-relaxed space-y-4">
-                <p>• <span className="text-emerald-700 uppercase font-black">Cálculo del Promedio:</span> La app promedia las necesidades de EC de tus 18 plantas. 6 plántulas (EC 900 µS/cm) + 6 crecimiento (EC 1350 µS/cm) + 6 maduras (EC 1650 µS/cm) = <strong>EC objetivo del sistema: ~1300 µS/cm</strong>.</p>
-                <p>• <span className="text-emerald-700 uppercase font-black">Rotación Semanal:</span> Cada 7 días cosecha 6, mueve 6 de crecimiento a maduración, 6 de plántula a crecimiento, y siembra 6 nuevas. El EC objetivo se recalcula automáticamente.</p>
+                <p>• <span className="text-emerald-700 uppercase font-black">Cálculo del Promedio:</span> La app promedia las necesidades de EC de tus 15 plantas. 5 plántulas (EC 900 µS/cm) + 5 crecimiento (EC 1350 µS/cm) + 5 maduras (EC 1650 µS/cm) = <strong>EC objetivo del sistema: ~1300 µS/cm</strong>.</p>
+                <p>• <span className="text-emerald-700 uppercase font-black">Rotación Semanal:</span> Cada 7 días cosecha 5, mueve 5 de crecimiento a maduración, 5 de plántula a crecimiento, y siembra 5 nuevas. El EC objetivo se recalcula automáticamente.</p>
                 <p>• <span className="text-emerald-700 uppercase font-black">Ventaja:</span> Este promedio evita que las plántulas se quemen (si usaras EC 1600 µS/cm) y que las adultas se queden cortas (si usaras EC 900 µS/cm). Es el punto óptimo para todo el ciclo.</p>
               </div>
             </Card>
 
-            {/* NUEVA SECCIÓN ESPECÍFICA PARA CASTELLÓN */}
             <Card className="rounded-[3rem] border-4 border-orange-100 overflow-hidden shadow-xl bg-white">
               <div className="bg-gradient-to-r from-orange-600 to-amber-600 p-6 text-white flex items-center gap-4">
                 <Sun size={30}/>
@@ -2124,7 +2006,8 @@ export default function HydroAppFinalV31() {
             
             <p className="text-center text-[10px] font-black text-slate-300 uppercase italic tracking-widest pt-10 leading-relaxed">
               HydroCaru Master v5.0 - CANNA Aqua Vega<br/>
-              Sistema Inteligente para Clima Mediterráneo - Castellón de la Plana
+              Sistema Inteligente para Clima Mediterráneo - Castellón de la Plana<br/>
+              Torre 15 plantas (5-5-5) | EC en µS/cm
             </p>
           </TabsContent>
         </Tabs>
