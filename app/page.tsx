@@ -93,11 +93,13 @@ const HARD_WATER_PRETREATMENT = {
   ]
 };
 
-// Variedades (sin cambios)
+// Variedades (con iconos añadidos)
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
     textColor: "text-cyan-700",
+    icon: <Sprout className="text-white" size={16} />,
+    iconSelected: <Check className="text-white" size={16} />,
     ecMax: 1600,
     phIdeal: 6.0,
     cannaDosage: {
@@ -110,6 +112,8 @@ const VARIETIES = {
   "Lollo Rosso": { 
     color: "bg-gradient-to-br from-purple-600 to-purple-700",
     textColor: "text-purple-700",
+    icon: <Activity className="text-white" size={16} />,
+    iconSelected: <Check className="text-white" size={16} />,
     ecMax: 1800,
     phIdeal: 6.0,
     cannaDosage: {
@@ -122,6 +126,8 @@ const VARIETIES = {
   "Maravilla": { 
     color: "bg-gradient-to-br from-amber-600 to-amber-700",
     textColor: "text-amber-700",
+    icon: <Leaf className="text-white" size={16} />,
+    iconSelected: <Check className="text-white" size={16} />,
     ecMax: 1700,
     phIdeal: 6.0,
     cannaDosage: {
@@ -134,6 +140,8 @@ const VARIETIES = {
   "Trocadero": { 
     color: "bg-gradient-to-br from-lime-600 to-lime-700",
     textColor: "text-lime-700",
+    icon: <Sprout className="text-white" size={16} />,
+    iconSelected: <Check className="text-white" size={16} />,
     ecMax: 1600,
     phIdeal: 6.0,
     cannaDosage: {
@@ -146,6 +154,8 @@ const VARIETIES = {
   "Hoja de Roble Rojo": { 
     color: "bg-gradient-to-br from-red-600 to-red-700",
     textColor: "text-red-700",
+    icon: <Leaf className="text-white" size={16} />,
+    iconSelected: <Check className="text-white" size={16} />,
     ecMax: 1900,
     phIdeal: 6.0,
     cannaDosage: {
@@ -157,7 +167,7 @@ const VARIETIES = {
   }
 };
 
-// Configuración específica para dados pequeños de lana de roca (sin cambios)
+// Configuración específica para dados pequeños de lana de roca
 const ROCKWOOL_CHARACTERISTICS = {
   name: "Dados Grodan 2.5x2.5cm",
   size: "2.5x2.5cm",
@@ -195,7 +205,7 @@ const ROCKWOOL_CHARACTERISTICS = {
   }
 };
 
-// Configuración de bomba (sin cambios)
+// Configuración de bomba
 const PUMP_CONFIG = {
   power: 7,
   flowRate: 600,
@@ -274,7 +284,7 @@ const PUMP_CONFIG = {
   }
 };
 
-// Configuración clima Castellón (sin cambios)
+// Configuración clima Castellón
 const CASTELLON_CLIMA = {
   location: "Castellón de la Plana",
   coordinates: "40.6789° N, 0.2822° O",
@@ -319,7 +329,7 @@ const CASTELLON_CLIMA = {
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO - NUEVAS FUNCIONES AÑADIDAS
+// FUNCIONES DE CÁLCULO
 // ============================================================================
 
 /**
@@ -605,10 +615,6 @@ const detectPHSpikes = (phHistory, hours = 24) => {
     trend: recentReadings[recentReadings.length-1].ph - recentReadings[0].ph
   };
 };
-
-// ============================================================================
-// FUNCIONES DE CÁLCULO EXISTENTES (MANTENIDAS)
-// ============================================================================
 
 const getSeason = (currentTime = new Date()) => {
   const month = currentTime.getMonth() + 1;
@@ -1118,7 +1124,7 @@ const generateCalendar = (plants, lastRot, lastClean) => {
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL - ACTUALIZADO
+// COMPONENTE PRINCIPAL - CORREGIDO
 // ============================================================================
 
 export default function HydroAppFinal() {
@@ -1129,12 +1135,13 @@ export default function HydroAppFinal() {
   const [lastRot, setLastRot] = useState(new Date().toISOString());
   const [lastClean, setLastClean] = useState(new Date().toISOString());
   const [tab, setTab] = useState("dashboard");
-  const [selPos, setSelPos] = useState(null);
+  const [selPos, setSelPos] = useState({ l: null, v: null, p: null }); // CORREGIDO: Inicializado como objeto
   const [showWaterSelector, setShowWaterSelector] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [expandedTips, setExpandedTips] = useState({});
+  const [showAddForm, setShowAddForm] = useState(false); // Nuevo estado para mostrar formulario en TowerTab
   
-  // Configuración del sistema - ACTUALIZADO
+  // Configuración del sistema
   const [config, setConfig] = useState({ 
     totalVol: "20", 
     currentVol: "20", 
@@ -1145,9 +1152,8 @@ export default function HydroAppFinal() {
     targetPH: "6.0",
     waterType: "bajo_mineral",
     hasHeater: true,
-    // Nuevos campos
     useOsmosisMix: false,
-    osmosisMixPercentage: 0, // Porcentaje de agua de ósmosis en la mezcla
+    osmosisMixPercentage: 0,
     waterNotes: ""
   });
   
@@ -1221,6 +1227,7 @@ export default function HydroAppFinal() {
       setLastRot(new Date().toISOString());
       alert("✅ Rotación completada\n\nAhora añade NUEVAS PLÁNTULAS en el nivel 1.");
       setTab("tower");
+      setShowAddForm(true); // Mostrar formulario para añadir nuevas plantas
     }
   };
 
@@ -1271,7 +1278,7 @@ export default function HydroAppFinal() {
         date: record.date
       }))
       .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(-10); // Últimas 10 lecturas
+      .slice(-10);
     
     return diagnosePHProblem(
       parseFloat(config.ph),
@@ -1306,7 +1313,7 @@ export default function HydroAppFinal() {
     );
   }, [config.ph, config.targetPH, config.waterType, config.useOsmosisMix, config.osmosisMixPercentage, config.currentVol]);
 
-  // =================== CÁLCULO DE ALERTAS - ACTUALIZADO ===================
+  // =================== CÁLCULO DE ALERTAS ===================
 
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
@@ -1367,7 +1374,7 @@ export default function HydroAppFinal() {
       });
     }
 
-    // Alertas existentes (mantenidas)
+    // Alertas existentes
     if (waterType === "alta_mineral") {
       res.push({ 
         title: "AGUA DURA DETECTADA", 
@@ -1526,7 +1533,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture > 80) {
       res.push({
         title: "¡DADO DEMASIADO HÚMEDO!",
-        value: `${irrigationData.rockwoolMoisture}% humedad`,
+        value: `${irrigationData.rockwoolMoisture}% humedad",
         description: "Riesgo de asfixia radicular en dados pequeños. Aumentar intervalo.",
         color: "bg-gradient-to-r from-blue-700 to-cyan-800",
         icon: <Droplets className="text-white" size={28} />,
@@ -1537,7 +1544,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture < 50) {
       res.push({
         title: "DADO DEMASIADO SECO",
-        value: `${irrigationData.rockwoolMoisture}% humedad`,
+        value: `${irrigationData.rockwoolMoisture}% humedad",
         description: "Dados pequeños secan rápido. Reducir intervalo entre riegos.",
         color: "bg-gradient-to-r from-amber-600 to-orange-700",
         icon: <Cloud className="text-white" size={28} />,
@@ -1572,7 +1579,7 @@ export default function HydroAppFinal() {
     return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean, plants, irrigationData, waterCharacteristics, calmagNeeded, phSpikes, phDiagnosis]);
 
-  // =================== FLUJO DE CONFIGURACIÓN - ACTUALIZADO ===================
+  // =================== FLUJO DE CONFIGURACIÓN - CORREGIDO ===================
 
   const renderStep = () => {
     switch(step) {
@@ -1652,7 +1659,6 @@ export default function HydroAppFinal() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Tarjeta de volumen (sin cambios) */}
               <Card className="p-6 rounded-2xl">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -1713,7 +1719,6 @@ export default function HydroAppFinal() {
                 </div>
               </Card>
               
-              {/* Tarjeta de temperatura (sin cambios) */}
               <Card className="p-6 rounded-2xl">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -1787,7 +1792,6 @@ export default function HydroAppFinal() {
                 </div>
               </Card>
               
-              {/* Tarjeta de tipo de agua - ACTUALIZADA */}
               <Card className="p-6 rounded-2xl md:col-span-2">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -1833,7 +1837,6 @@ export default function HydroAppFinal() {
                   ))}
                 </div>
                 
-                {/* Configuración de mezcla con ósmosis */}
                 <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -1935,7 +1938,6 @@ export default function HydroAppFinal() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Tarjeta de pH - ACTUALIZADA */}
               <Card className="p-6 rounded-2xl">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
@@ -1979,7 +1981,6 @@ export default function HydroAppFinal() {
                     </div>
                   </div>
                   
-                  {/* Diagnóstico rápido de pH */}
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
                     <h4 className="font-bold text-blue-700 mb-2">📊 Diagnóstico Rápido</h4>
                     <div className="space-y-2">
@@ -2002,7 +2003,6 @@ export default function HydroAppFinal() {
                 </div>
               </Card>
               
-              {/* Tarjeta de EC (sin cambios) */}
               <Card className="p-6 rounded-2xl">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
@@ -2072,7 +2072,6 @@ export default function HydroAppFinal() {
                 </div>
               </Card>
               
-              {/* Tarjeta de objetivos (sin cambios) */}
               <Card className="p-6 rounded-2xl md:col-span-2">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
@@ -2171,7 +2170,6 @@ export default function HydroAppFinal() {
               <p className="text-slate-600">Añade plantas a tu sistema hidropónico</p>
             </div>
             
-            {/* Contenido de la torre (sin cambios) */}
             <Card className="p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
@@ -2250,7 +2248,7 @@ export default function HydroAppFinal() {
                           <button
                             key={level}
                             type="button"
-                            onClick={() => setSelPos(prev => ({...prev, l: level}))}
+                            onClick={() => setSelPos({...selPos, l: level})}
                             className={`flex-1 py-3 rounded-lg text-center font-medium transition-all ${
                               selPos?.l === level 
                                 ? level === 1 ? 'bg-cyan-500 text-white' :
@@ -2277,14 +2275,17 @@ export default function HydroAppFinal() {
                           <button
                             key={variety}
                             type="button"
-                            onClick={() => setSelPos(prev => ({...prev, v: variety}))}
+                            onClick={() => setSelPos({...selPos, v: variety})}
                             className={`py-2 px-3 rounded-lg text-center text-sm font-medium transition-all ${
                               selPos?.v === variety 
                                 ? `${VARIETIES[variety].color} text-white`
                                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
                           >
-                            {variety}
+                            <div className="flex items-center justify-center gap-2">
+                              {selPos?.v === variety ? VARIETIES[variety].iconSelected : VARIETIES[variety].icon}
+                              <span>{variety}</span>
+                            </div>
                           </button>
                         ))}
                       </div>
@@ -2301,7 +2302,7 @@ export default function HydroAppFinal() {
                             <button
                               key={pos}
                               type="button"
-                              onClick={() => !ocupada && setSelPos(prev => ({...prev, p: pos}))}
+                              onClick={() => !ocupada && setSelPos({...selPos, p: pos})}
                               className={`aspect-square rounded-lg flex items-center justify-center font-medium transition-all ${
                                 ocupada 
                                   ? 'bg-red-100 text-red-700'
@@ -2312,7 +2313,13 @@ export default function HydroAppFinal() {
                               disabled={ocupada}
                               title={ocupada ? `Ocupada por ${ocupada.v}` : `Posición ${pos}`}
                             >
-                              {ocupada ? '✗' : pos}
+                              {ocupada ? (
+                                <X className="text-red-500" size={16} />
+                              ) : selPos?.p === pos ? (
+                                <Check className="text-white" size={16} />
+                              ) : (
+                                pos
+                              )}
                             </button>
                           );
                         })}
@@ -2323,6 +2330,13 @@ export default function HydroAppFinal() {
                   <Button
                     onClick={() => {
                       if (selPos?.l && selPos?.v && selPos?.p) {
+                        // Verificar si la posición ya está ocupada
+                        const isPositionOccupied = plants.some(p => p.p === selPos.p);
+                        if (isPositionOccupied) {
+                          alert(`La posición ${selPos.p} ya está ocupada. Por favor selecciona otra posición.`);
+                          return;
+                        }
+                        
                         setPlants([...plants, {
                           id: generatePlantId(),
                           l: selPos.l,
@@ -2330,7 +2344,7 @@ export default function HydroAppFinal() {
                           p: selPos.p,
                           date: new Date().toISOString()
                         }]);
-                        setSelPos(null);
+                        setSelPos({ l: null, v: null, p: null }); // Reiniciar selección
                       }
                     }}
                     disabled={!(selPos?.l && selPos?.v && selPos?.p)}
@@ -2349,7 +2363,7 @@ export default function HydroAppFinal() {
                         <div key={plant.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
                           <div className="flex items-center gap-4">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
-                              <span className="text-white font-bold">{plant.p}</span>
+                              {VARIETIES[plant.v]?.icon || <Sprout className="text-white" size={16} />}
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
@@ -2363,7 +2377,7 @@ export default function HydroAppFinal() {
                                 </Badge>
                               </div>
                               <p className="text-sm text-slate-600">
-                                {plant.l === 1 ? 'Plántula' : plant.l === 2 ? 'Crecimiento' : 'Maduración'}
+                                Posición {plant.p} • {plant.l === 1 ? 'Plántula' : plant.l === 2 ? 'Crecimiento' : 'Maduración'}
                               </p>
                             </div>
                           </div>
@@ -2414,11 +2428,10 @@ export default function HydroAppFinal() {
     }
   };
 
-  // =================== COMPONENTES DE PESTAÑAS - ACTUALIZADOS ===================
+  // =================== COMPONENTES DE PESTAÑAS ===================
 
   const DashboardTab = () => (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">Panel de Control</h1>
@@ -2447,7 +2460,6 @@ export default function HydroAppFinal() {
         </div>
       </div>
       
-      {/* Alertas */}
       {alerts.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-slate-800">Alertas del Sistema</h2>
@@ -2471,7 +2483,6 @@ export default function HydroAppFinal() {
         </div>
       )}
       
-      {/* Sistema de Riego (sin cambios) */}
       <Card className="p-6 rounded-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -2516,7 +2527,6 @@ export default function HydroAppFinal() {
           </div>
         </div>
         
-        {/* Configuración de riego (sin cambios) */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-slate-800">Configuración de Riego</h3>
@@ -2666,7 +2676,6 @@ export default function HydroAppFinal() {
           )}
         </div>
         
-        {/* Recomendaciones de Riego (sin cambios) */}
         <div className="mt-8 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
           <h3 className="font-bold text-blue-800 mb-3">💡 Recomendaciones de Riego</h3>
           <div className="space-y-3">
@@ -2680,7 +2689,6 @@ export default function HydroAppFinal() {
         </div>
       </Card>
       
-      {/* Nuevo: Panel de Diagnóstico de pH */}
       <Card className="p-6 rounded-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -2704,7 +2712,6 @@ export default function HydroAppFinal() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Problemas detectados */}
           <div>
             <h3 className="font-bold text-slate-800 mb-4">Problemas Detectados</h3>
             <div className="space-y-3">
@@ -2747,7 +2754,6 @@ export default function HydroAppFinal() {
             </div>
           </div>
           
-          {/* Soluciones recomendadas */}
           <div>
             <h3 className="font-bold text-slate-800 mb-4">Soluciones Recomendadas</h3>
             <div className="space-y-3">
@@ -2780,7 +2786,6 @@ export default function HydroAppFinal() {
           </div>
         </div>
         
-        {/* Información adicional */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-white rounded-xl border border-slate-200">
             <div className="flex items-center gap-2 mb-2">
@@ -2824,7 +2829,6 @@ export default function HydroAppFinal() {
         </div>
       </Card>
       
-      {/* Resumen del Sistema (sin cambios) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-5 rounded-2xl">
           <div className="flex items-center gap-3 mb-4">
@@ -2953,7 +2957,6 @@ export default function HydroAppFinal() {
         </Card>
       </div>
       
-      {/* Botones de Acción (actualizado) */}
       <div className="flex flex-wrap gap-3">
         <Button
           onClick={handleRotation}
@@ -3009,7 +3012,324 @@ export default function HydroAppFinal() {
     </div>
   );
 
-  // =================== CALCULATOR TAB - ACTUALIZADO ===================
+  // =================== TOWER TAB - CORREGIDO CON FORMULARIO ===================
+
+  const TowerTab = () => {
+    // Estado local para el formulario en TowerTab
+    const [localSelPos, setLocalSelPos] = useState({ l: null, v: null, p: null });
+    
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre</h2>
+          <p className="text-slate-600">Sistema escalonado 5-5-5</p>
+        </div>
+        
+        {/* Botón para mostrar/ocultar formulario de añadir planta */}
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-slate-800">Plantas en la Torre</h3>
+          <Button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
+          >
+            {showAddForm ? (
+              <>
+                <X className="mr-2" size={16} />
+                Ocultar Formulario
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2" size={16} />
+                Añadir Nueva Planta
+              </>
+            )}
+          </Button>
+        </div>
+        
+        {/* Formulario para añadir planta */}
+        {showAddForm && (
+          <Card className="p-6 rounded-2xl mb-8">
+            <h3 className="font-bold text-slate-800 mb-4">Añadir Nueva Planta</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Nivel
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3].map(level => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setLocalSelPos({...localSelPos, l: level})}
+                      className={`flex-1 py-3 rounded-lg text-center font-medium transition-all ${
+                        localSelPos?.l === level 
+                          ? level === 1 ? 'bg-cyan-500 text-white' :
+                            level === 2 ? 'bg-green-500 text-white' :
+                            'bg-emerald-500 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      Nivel {level}
+                      <div className="text-xs opacity-80">
+                        {level === 1 ? 'Plántula' : level === 2 ? 'Crecimiento' : 'Madura'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Variedad
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.keys(VARIETIES).map(variety => (
+                    <button
+                      key={variety}
+                      type="button"
+                      onClick={() => setLocalSelPos({...localSelPos, v: variety})}
+                      className={`py-2 px-3 rounded-lg text-center text-sm font-medium transition-all ${
+                        localSelPos?.v === variety 
+                          ? `${VARIETIES[variety].color} text-white`
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        {localSelPos?.v === variety ? VARIETIES[variety].iconSelected : VARIETIES[variety].icon}
+                        <span>{variety}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Posición en Torre
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {Array.from({length: 15}, (_, i) => i + 1).map(pos => {
+                    const ocupada = plants.find(p => p.p === pos);
+                    return (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => !ocupada && setLocalSelPos({...localSelPos, p: pos})}
+                        className={`aspect-square rounded-lg flex items-center justify-center font-medium transition-all ${
+                          ocupada 
+                            ? 'bg-red-100 text-red-700'
+                            : localSelPos?.p === pos
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                        disabled={ocupada}
+                        title={ocupada ? `Ocupada por ${ocupada.v}` : `Posición ${pos}`}
+                      >
+                        {ocupada ? (
+                          <X className="text-red-500" size={16} />
+                        ) : localSelPos?.p === pos ? (
+                          <Check className="text-white" size={16} />
+                        ) : (
+                          pos
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            
+            <Button
+              onClick={() => {
+                if (localSelPos?.l && localSelPos?.v && localSelPos?.p) {
+                  // Verificar si la posición ya está ocupada
+                  const isPositionOccupied = plants.some(p => p.p === localSelPos.p);
+                  if (isPositionOccupied) {
+                    alert(`La posición ${localSelPos.p} ya está ocupada. Por favor selecciona otra posición.`);
+                    return;
+                  }
+                  
+                  if (plants.length >= 15) {
+                    alert("La torre está llena (15/15 plantas). Elimina alguna planta antes de añadir más.");
+                    return;
+                  }
+                  
+                  setPlants([...plants, {
+                    id: generatePlantId(),
+                    l: localSelPos.l,
+                    v: localSelPos.v,
+                    p: localSelPos.p,
+                    date: new Date().toISOString()
+                  }]);
+                  setLocalSelPos({ l: null, v: null, p: null }); // Reiniciar selección
+                  alert("✅ Planta añadida correctamente");
+                } else {
+                  alert("Por favor selecciona nivel, variedad y posición");
+                }
+              }}
+              disabled={!(localSelPos?.l && localSelPos?.v && localSelPos?.p)}
+              className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl"
+            >
+              <Plus className="mr-2" />
+              Añadir Planta a la Torre
+            </Button>
+          </Card>
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="p-5 rounded-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <Sprout className="text-white" size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">Nivel 1 - Plántulas</h3>
+                <p className="text-sm text-slate-600">Plantas jóvenes</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {plants.filter(p => p.l === 1).map(plant => (
+                <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                      {VARIETIES[plant.v]?.icon || <Sprout className="text-white" size={12} />}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-800">{plant.v}</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(plant.id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              ))}
+              
+              {plants.filter(p => p.l === 1).length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-slate-500">No hay plántulas</p>
+                </div>
+              )}
+            </div>
+          </Card>
+          
+          <Card className="p-5 rounded-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <Activity className="text-white" size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">Nivel 2 - Crecimiento</h3>
+                <p className="text-sm text-slate-600">Plantas en desarrollo</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {plants.filter(p => p.l === 2).map(plant => (
+                <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                      {VARIETIES[plant.v]?.icon || <Activity className="text-white" size={12} />}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-800">{plant.v}</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(plant.id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              ))}
+              
+              {plants.filter(p => p.l === 2).length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-slate-500">No hay plantas en crecimiento</p>
+                </div>
+              )}
+            </div>
+          </Card>
+          
+          <Card className="p-5 rounded-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+                <Leaf className="text-white" size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">Nivel 3 - Maduración</h3>
+                <p className="text-sm text-slate-600">Plantas listas para cosechar</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {plants.filter(p => p.l === 3).map(plant => (
+                <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                      {VARIETIES[plant.v]?.icon || <Leaf className="text-white" size={12} />}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-800">{plant.v}</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDeleteConfirm(plant.id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              ))}
+              
+              {plants.filter(p => p.l === 3).length === 0 && (
+                <div className="text-center py-4">
+                  <p className="text-slate-500">No hay plantas maduras</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+        
+        <div className="flex justify-between">
+          <Button
+            onClick={handleRotation}
+            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+          >
+            <RotateCcw className="mr-2" />
+            Rotar Niveles
+          </Button>
+          
+          <Button
+            onClick={() => {
+              if (plants.length >= 15) {
+                alert("La torre está llena (15/15 plantas)");
+                return;
+              }
+              setShowAddForm(true);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <Plus className="mr-2" />
+            Añadir Planta
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // =================== CALCULATOR TAB ===================
 
   const CalculatorTab = () => {
     const dosage = calculateCannaDosage(plants, config.currentVol, config.targetEC, config.waterType);
@@ -3022,9 +3342,7 @@ export default function HydroAppFinal() {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Columna 1: Cálculo de dosis */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Cálculo de dosis CANNA */}
             <Card className="p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
@@ -3104,7 +3422,6 @@ export default function HydroAppFinal() {
               )}
             </Card>
             
-            {/* Diagnóstico completo de pH */}
             <Card className="p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
@@ -3117,7 +3434,6 @@ export default function HydroAppFinal() {
               </div>
               
               <div className="space-y-6">
-                {/* Resumen del diagnóstico */}
                 <div className={`p-4 rounded-xl border-2 ${
                   phDiagnosis.riskLevel === "high" ? "border-red-200 bg-red-50" :
                   phDiagnosis.riskLevel === "medium" ? "border-amber-200 bg-amber-50" :
@@ -3138,7 +3454,6 @@ export default function HydroAppFinal() {
                   </div>
                 </div>
                 
-                {/* Problemas y soluciones */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-bold text-slate-800 mb-3">Problemas Detectados</h4>
@@ -3192,7 +3507,6 @@ export default function HydroAppFinal() {
                   </div>
                 </div>
                 
-                {/* Advertencias */}
                 {phDiagnosis.warnings.length > 0 && (
                   <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
                     <h4 className="font-bold text-amber-800 mb-3">⚠️ Advertencias</h4>
@@ -3213,9 +3527,7 @@ export default function HydroAppFinal() {
             </Card>
           </div>
           
-          {/* Columna 2: Ajuste de pH y CalMag */}
           <div className="space-y-6">
-            {/* Ajuste de pH con pretratamiento */}
             <Card className="p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center">
@@ -3228,7 +3540,6 @@ export default function HydroAppFinal() {
               </div>
               
               <div className="space-y-6">
-                {/* Ajuste básico */}
                 <div className={`p-4 rounded-xl border-2 ${
                   Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5 
                     ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200' 
@@ -3262,7 +3573,6 @@ export default function HydroAppFinal() {
                   </div>
                 </div>
                 
-                {/* Pre-tratamiento para agua dura */}
                 {phAdjustmentWithPretreatment.pretreatment && (
                   <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
                     <h4 className="font-bold text-blue-700 mb-3">💧 Pre-tratamiento para Agua Dura</h4>
@@ -3286,7 +3596,6 @@ export default function HydroAppFinal() {
                   </div>
                 )}
                 
-                {/* Recomendaciones específicas */}
                 <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
                   <h4 className="font-bold text-purple-700 mb-3">📝 Recomendaciones para Castellón</h4>
                   <ul className="space-y-2 text-sm text-slate-700">
@@ -3307,7 +3616,6 @@ export default function HydroAppFinal() {
               </div>
             </Card>
             
-            {/* CalMag Calculator */}
             <Card className="p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
@@ -3320,7 +3628,6 @@ export default function HydroAppFinal() {
               </div>
               
               <div className="space-y-6">
-                {/* Resultado CalMag */}
                 <div className={`p-4 rounded-xl border-2 ${
                   calmagNeeded.required 
                     ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200' 
@@ -3339,7 +3646,6 @@ export default function HydroAppFinal() {
                   </div>
                 </div>
                 
-                {/* Información detallada */}
                 <div className="p-4 bg-white rounded-xl border border-slate-200">
                   <h4 className="font-bold text-slate-800 mb-3">📊 Información del Agua</h4>
                   <div className="space-y-3">
@@ -3373,7 +3679,6 @@ export default function HydroAppFinal() {
                   )}
                 </div>
                 
-                {/* Instrucciones de uso */}
                 {calmagNeeded.required && (
                   <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
                     <h4 className="font-bold text-amber-700 mb-3">📝 Instrucciones de uso</h4>
@@ -3404,167 +3709,6 @@ export default function HydroAppFinal() {
       </div>
     );
   };
-
-  // =================== TOWER TAB ===================
-
-  const TowerTab = () => (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre</h2>
-        <p className="text-slate-600">Sistema escalonado 5-5-5</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-5 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <Sprout className="text-white" size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Nivel 1 - Plántulas</h3>
-              <p className="text-sm text-slate-600">Plantas jóvenes</p>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            {plants.filter(p => p.l === 1).map(plant => (
-              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
-                    <span className="text-white text-xs font-bold">{plant.p}</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-800">{plant.v}</p>
-                    <p className="text-xs text-slate-500">Posición {plant.p}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(plant.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            ))}
-            
-            {plants.filter(p => p.l === 1).length === 0 && (
-              <div className="text-center py-4">
-                <p className="text-slate-500">No hay plántulas</p>
-              </div>
-            )}
-          </div>
-        </Card>
-        
-        <Card className="p-5 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-              <Activity className="text-white" size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Nivel 2 - Crecimiento</h3>
-              <p className="text-sm text-slate-600">Plantas en desarrollo</p>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            {plants.filter(p => p.l === 2).map(plant => (
-              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
-                    <span className="text-white text-xs font-bold">{plant.p}</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-800">{plant.v}</p>
-                    <p className="text-xs text-slate-500">Posición {plant.p}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(plant.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            ))}
-            
-            {plants.filter(p => p.l === 2).length === 0 && (
-              <div className="text-center py-4">
-                <p className="text-slate-500">No hay plantas en crecimiento</p>
-              </div>
-            )}
-          </div>
-        </Card>
-        
-        <Card className="p-5 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-              <Leaf className="text-white" size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Nivel 3 - Maduración</h3>
-              <p className="text-sm text-slate-600">Plantas listas para cosechar</p>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            {plants.filter(p => p.l === 3).map(plant => (
-              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
-                    <span className="text-white text-xs font-bold">{plant.p}</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-800">{plant.v}</p>
-                    <p className="text-xs text-slate-500">Posición {plant.p}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(plant.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            ))}
-            
-            {plants.filter(p => p.l === 3).length === 0 && (
-              <div className="text-center py-4">
-                <p className="text-slate-500">No hay plantas maduras</p>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
-      
-      <div className="flex justify-between">
-        <Button
-          onClick={handleRotation}
-          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
-        >
-          <RotateCcw className="mr-2" />
-          Rotar Niveles
-        </Button>
-        
-        <Button
-          onClick={() => {
-            if (plants.length >= 15) {
-              alert("La torre está llena (15/15 plantas)");
-              return;
-            }
-            setSelPos({ l: 1, v: "Iceberg", p: 1 });
-            // Scroll to top to see the add plant form
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-        >
-          <Plus className="mr-2" />
-          Añadir Planta
-        </Button>
-      </div>
-    </div>
-  );
 
   // =================== CALENDAR TAB ===================
 
@@ -3940,7 +4084,6 @@ export default function HydroAppFinal() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="container mx-auto p-4 max-w-6xl">
           <div className="flex items-center justify-between">
@@ -3988,6 +4131,8 @@ export default function HydroAppFinal() {
                           showAdvanced: false
                         });
                         setTab("dashboard");
+                        setSelPos({ l: null, v: null, p: null });
+                        setShowAddForm(false);
                       }
                     }}
                   >
@@ -4020,7 +4165,6 @@ export default function HydroAppFinal() {
         </div>
       </header>
 
-      {/* Navegación por pestañas (actualizada) */}
       {step >= 4 && (
         <div className="sticky top-16 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
           <div className="container mx-auto p-4 max-w-6xl">
@@ -4056,12 +4200,10 @@ export default function HydroAppFinal() {
 
       <main className="container mx-auto p-4 max-w-6xl">
         {step < 4 ? (
-          // Flujo de configuración (pasos 0-3)
           <div className="max-w-2xl mx-auto">
             {renderStep()}
           </div>
         ) : (
-          // Panel principal con pestañas
           <Tabs value={tab} onValueChange={setTab}>
             <TabsContent value="dashboard" className="mt-6">
               <DashboardTab />
@@ -4090,7 +4232,6 @@ export default function HydroAppFinal() {
         )}
       </main>
 
-      {/* Modales y footer (sin cambios) */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="p-6 rounded-2xl max-w-md w-full">
@@ -4157,7 +4298,6 @@ export default function HydroAppFinal() {
         </div>
       )}
 
-      {/* Footer actualizado */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 py-3">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
