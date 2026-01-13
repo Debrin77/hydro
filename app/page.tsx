@@ -28,7 +28,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 
 // ============================================================================
-// CONFIGURACIÓN BASE - ACTUALIZADA
+// CONFIGURACIÓN BASE
 // ============================================================================
 
 const WATER_TYPES = {
@@ -74,20 +74,18 @@ const WATER_TYPES = {
   }
 };
 
-// Configuración de CalMag
 const CALMAG_CONFIG = {
-  minRequiredHardness: 100, // ppm - debajo de esto se recomienda CalMag
-  dosagePerLiter: 1.0, // ml por litro para agua de ósmosis pura
-  calciumPercent: 5.0, // 5% Ca
-  magnesiumPercent: 1.5, // 1.5% Mg
-  maxDosage: 5, // ml por litro máximo
+  minRequiredHardness: 100,
+  dosagePerLiter: 1.0,
+  calciumPercent: 5.0,
+  magnesiumPercent: 1.5,
+  maxDosage: 5,
 };
 
-// Configuración de pretratamiento para agua dura
 const HARD_WATER_PRETREATMENT = {
-  phDownForHardWater: 1.5, // Factor multiplicador para pH- en agua dura
-  preAdjustmentPH: 5.0, // Ajustar a pH 5.0 antes de añadir nutrientes
-  waitingTime: 30, // minutos de espera después del pretratamiento
+  phDownForHardWater: 1.5,
+  preAdjustmentPH: 5.0,
+  waitingTime: 30,
   recommendations: [
     "Usar ácido fosfórico en lugar de ácido nítrico para agua dura",
     "Pre-tratar el agua 30 minutos antes de añadir nutrientes",
@@ -95,7 +93,6 @@ const HARD_WATER_PRETREATMENT = {
   ]
 };
 
-// Variedades (con iconos añadidos)
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
@@ -169,7 +166,6 @@ const VARIETIES = {
   }
 };
 
-// Configuración específica para dados pequeños de lana de roca
 const ROCKWOOL_CHARACTERISTICS = {
   name: "Dados Grodan 2.5x2.5cm",
   size: "2.5x2.5cm",
@@ -194,11 +190,6 @@ const ROCKWOOL_CHARACTERISTICS = {
     growth: { summer: 1.5, winter: 3.5, spring: 2.5 },
     mature: { summer: 1.0, winter: 3.0, spring: 2.0 }
   },
-  irrigationPrinciples: {
-    cycleLength: 10,
-    drainagePercentage: 0.15,
-    drybackPeriod: 0.25
-  },
   volumePerDado: 15,
   preparation: {
     phSoak: 5.5,
@@ -207,7 +198,6 @@ const ROCKWOOL_CHARACTERISTICS = {
   }
 };
 
-// Configuración de bomba
 const PUMP_CONFIG = {
   power: 7,
   flowRate: 600,
@@ -250,22 +240,6 @@ const PUMP_CONFIG = {
       spring: { day: 30, night: 70 }
     }
   },
-  castellonAdjustments: {
-    summer: {
-      vientoPoniente: 0.7,
-      olaCalor: 0.6,
-      humedadAlta: 1.3
-    },
-    winter: {
-      lluvia: 1.6,
-      frio: 1.4,
-      humedadAlta: 1.5
-    },
-    spring: {
-      normal: 1.0,
-      viento: 0.8
-    }
-  },
   schedule: {
     summer: {
       dayStart: "06:00",
@@ -286,62 +260,14 @@ const PUMP_CONFIG = {
   }
 };
 
-// Configuración clima Castellón
-const CASTELLON_CLIMA = {
-  location: "Castellón de la Plana",
-  coordinates: "40.6789° N, 0.2822° O",
-  clima: "Mediterráneo costero",
-  elevacion: "30m",
-  temperaturas: {
-    verano: { max: 31, min: 22, promedio: 26.5 },
-    invierno: { max: 16, min: 8, promedio: 12 },
-    primavera: { max: 22, min: 13, promedio: 17.5 }
-  },
-  humedad: {
-    verano: 65,
-    invierno: 75,
-    primavera: 70
-  },
-  vientos: {
-    poniente: { 
-      direccion: "Oeste",
-      temporada: "Verano",
-      horas: "12:00-20:00",
-      efecto: "Secante, reduce humedad 30%",
-      impactoRiego: "+30% frecuencia"
-    },
-    levante: {
-      direccion: "Este",
-      temporada: "Invierno",
-      efecto: "Húmedo, aumenta humedad 20%",
-      impactoRiego: "-20% frecuencia"
-    }
-  },
-  evapotranspiracion: {
-    verano: 7.0,
-    invierno: 2.5,
-    primavera: 4.5,
-    promedio: 4.7
-  },
-  recomendacionesRiego: {
-    verano: "Riegos cortos (8-12s) cada 20-40min día. Evitar 12:00-16:00.",
-    invierno: "Riegos moderados (10-15s) cada 45-90min. Riego al mediodía.",
-    primavera: "Riegos adaptativos según temperatura del día."
-  }
-};
-
 // ============================================================================
 // FUNCIONES DE CÁLCULO
 // ============================================================================
 
-/**
- * Calcula las características del agua según el tipo y mezcla
- */
 const getWaterCharacteristics = (waterType, osmosisMix = 0) => {
   const baseWater = WATER_TYPES[waterType] || WATER_TYPES.bajo_mineral;
   const osmosisWater = WATER_TYPES.osmosis;
   
-  // Si no se usa mezcla o el tipo ya es osmosis, devolver base
   if (waterType === "osmosis" || osmosisMix === 0) {
     return {
       ...baseWater,
@@ -352,7 +278,6 @@ const getWaterCharacteristics = (waterType, osmosisMix = 0) => {
     };
   }
   
-  // Calcular mezcla
   const mixRatio = osmosisMix / 100;
   const finalHardness = baseWater.hardness * (1 - mixRatio);
   const finalECBase = baseWater.ecBase * (1 - mixRatio);
@@ -369,9 +294,6 @@ const getWaterCharacteristics = (waterType, osmosisMix = 0) => {
   };
 };
 
-/**
- * Calcula la dosis de CalMag necesaria
- */
 const calculateCalMagNeeded = (waterType, osmosisMix, volume) => {
   const waterChar = getWaterCharacteristics(waterType, osmosisMix);
   
@@ -383,7 +305,6 @@ const calculateCalMagNeeded = (waterType, osmosisMix, volume) => {
     };
   }
   
-  // Calcular dosis basada en la deficiencia
   const hardnessDeficit = CALMAG_CONFIG.minRequiredHardness - waterChar.finalHardness;
   const dosagePerLiter = CALMAG_CONFIG.dosagePerLiter * (hardnessDeficit / CALMAG_CONFIG.minRequiredHardness);
   const totalDosage = Math.min(dosagePerLiter * volume, CALMAG_CONFIG.maxDosage * volume);
@@ -396,19 +317,14 @@ const calculateCalMagNeeded = (waterType, osmosisMix, volume) => {
   };
 };
 
-/**
- * Diagnóstico avanzado de problemas de pH para Castellón
- */
 const diagnosePHProblem = (currentPH, targetPH, waterType, osmosisMix, phHistory = [], temperature) => {
   const waterChar = getWaterCharacteristics(waterType, osmosisMix);
   const problems = [];
   const solutions = [];
-  const warnings = [];
   
   const phDiff = currentPH - targetPH;
   const absoluteDiff = Math.abs(phDiff);
   
-  // 1. Diagnóstico básico de diferencia
   if (absoluteDiff > 0.5) {
     problems.push({
       level: "high",
@@ -417,12 +333,11 @@ const diagnosePHProblem = (currentPH, targetPH, waterType, osmosisMix, phHistory
     });
   }
   
-  // 2. Diagnóstico específico para agua dura en Castellón
   if (waterChar.finalHardness > 200) {
     problems.push({
       level: "medium",
       title: "Agua dura + clima cálido",
-      description: "El agua dura tiene alto poder tampón. En clima cálido de Castellón, el pH tiende a subir más rápido."
+      description: "El agua dura tiene alto poder tampón. En clima cálido, el pH tiende a subir más rápido."
     });
     
     solutions.push({
@@ -431,16 +346,8 @@ const diagnosePHProblem = (currentPH, targetPH, waterType, osmosisMix, phHistory
       details: "Bajar pH a 5.0 antes de añadir nutrientes. Esperar 30 minutos.",
       dosage: `Usar ${HARD_WATER_PRETREATMENT.phDownForHardWater}x más pH- de lo normal`
     });
-    
-    solutions.push({
-      priority: 2,
-      action: "Considerar mezcla con ósmosis",
-      details: `Mezclar con ${Math.min(50, osmosisMix + 30)}% agua de ósmosis para reducir dureza.`,
-      immediate: false
-    });
   }
   
-  // 3. Diagnóstico para agua de ósmosis
   if (waterType === "osmosis" || osmosisMix > 50) {
     problems.push({
       level: "low",
@@ -454,55 +361,13 @@ const diagnosePHProblem = (currentPH, targetPH, waterType, osmosisMix, phHistory
       details: "Estabiliza el agua y proporciona calcio/magnesio.",
       immediate: true
     });
-    
-    solutions.push({
-      priority: 2,
-      action: "Monitorizar pH cada 12 horas",
-      details: "El pH puede cambiar rápidamente. Medir con frecuencia.",
-      immediate: false
-    });
   }
   
-  // 4. Análisis de tendencia del historial
-  if (phHistory.length >= 3) {
-    const recentChanges = [];
-    for (let i = 1; i < Math.min(4, phHistory.length); i++) {
-      recentChanges.push(phHistory[i-1].ph - phHistory[i].ph);
-    }
-    
-    const averageChange = recentChanges.reduce((a, b) => a + b, 0) / recentChanges.length;
-    const maxChange = Math.max(...recentChanges.map(c => Math.abs(c)));
-    
-    if (maxChange > 0.3) {
-      warnings.push({
-        type: "volatile",
-        message: "Cambios bruscos de pH detectados",
-        details: `Cambio máximo de ${maxChange.toFixed(1)} en 24h. Posible problema de estabilidad.`
-      });
-    }
-    
-    if (averageChange > 0.1) {
-      problems.push({
-        level: "medium",
-        title: "pH subiendo consistentemente",
-        description: "Tendencia alcista detectada. Común en agua dura o con alta temperatura."
-      });
-      
-      solutions.push({
-        priority: 1,
-        action: "Revisar temperatura del agua",
-        details: "Temperaturas >25°C aceleran el aumento de pH.",
-        check: `Temperatura actual: ${temperature}°C`
-      });
-    }
-  }
-  
-  // 5. Efecto de temperatura (específico Castellón)
   if (temperature > 28) {
     problems.push({
       level: "high",
       title: "Temperatura alta afectando pH",
-      description: "En verano Castellón, el agua caliente pierde CO2 más rápido, subiendo el pH."
+      description: "El agua caliente pierde CO2 más rápido, subiendo el pH."
     });
     
     solutions.push({
@@ -513,36 +378,23 @@ const diagnosePHProblem = (currentPH, targetPH, waterType, osmosisMix, phHistory
     });
   }
   
-  // 6. Recomendaciones específicas para lana de roca
-  problems.push({
-    level: "info",
-    title: "Consideración para lana de roca",
-    description: "La lana de roca tiene pH alcalino natural. Puede elevar el pH los primeros días."
-  });
-  
-  // Ordenar soluciones por prioridad
   solutions.sort((a, b) => a.priority - b.priority);
   
   return {
     problems,
     solutions,
-    warnings,
     summary: problems.length > 0 ? "Se requieren ajustes" : "pH estable",
     riskLevel: problems.some(p => p.level === "high") ? "high" : 
                problems.some(p => p.level === "medium") ? "medium" : "low"
   };
 };
 
-/**
- * Calcula ajuste de pH considerando pretratamiento para agua dura
- */
 const calculatePHAdjustmentWithPretreatment = (currentPH, targetPH, waterType, osmosisMix, volume) => {
   const waterChar = getWaterCharacteristics(waterType, osmosisMix);
   const phDiff = currentPH - targetPH;
   
   let adjustmentFactor = 1.0;
   
-  // Ajuste por dureza del agua
   if (waterChar.finalHardness > 200) {
     adjustmentFactor = HARD_WATER_PRETREATMENT.phDownForHardWater;
   } else if (waterChar.finalHardness > 100) {
@@ -560,14 +412,13 @@ const calculatePHAdjustmentWithPretreatment = (currentPH, targetPH, waterType, o
     phPlus = adjustment;
   }
   
-  // Recomendaciones de pretratamiento para agua dura
   let pretreatment = null;
   if (waterChar.finalHardness > 200 && phDiff > 0) {
     pretreatment = {
       recommended: true,
       preAdjustmentPH: HARD_WATER_PRETREATMENT.preAdjustmentPH,
       waitingTime: HARD_WATER_PRETREATMENT.waitingTime,
-      dosage: (phMinus * 1.5).toFixed(1), // Dosis mayor para pretratamiento
+      dosage: (phMinus * 1.5).toFixed(1),
       instructions: "Bajar pH a 5.0 primero, esperar 30 min, luego añadir nutrientes y ajustar a pH final."
     };
   }
@@ -580,9 +431,6 @@ const calculatePHAdjustmentWithPretreatment = (currentPH, targetPH, waterType, o
   };
 };
 
-/**
- * Detecta cambios bruscos en el historial de pH
- */
 const detectPHSpikes = (phHistory, hours = 24) => {
   if (phHistory.length < 2) return null;
   
@@ -752,24 +600,7 @@ const calculateIrrigationForRockwool = (plants, irrigationConfig, currentTime = 
   });
   
   const totalWaterPerDay = Math.round((waterPerCycle * cyclesPerDay) / 1000);
-  const energyConsumption = Math.round((pumpTime * cyclesPerDay / 3600) * PUMP_CONFIG.power * 100) / 100;
-  
   const rockwoolMoisture = calculateRockwoolMoisture(plants, irrigationConfig, currentTime);
-  
-  const stageTimes = {
-    seedling: {
-      pumpTime: PUMP_CONFIG.pumpTimes.seedling[season][isDaytime ? "day" : "night"],
-      interval: PUMP_CONFIG.intervals.seedling[season][isDaytime ? "day" : "night"]
-    },
-    growth: {
-      pumpTime: PUMP_CONFIG.pumpTimes.growth[season][isDaytime ? "day" : "night"],
-      interval: PUMP_CONFIG.intervals.growth[season][isDaytime ? "day" : "night"]
-    },
-    mature: {
-      pumpTime: PUMP_CONFIG.pumpTimes.mature[season][isDaytime ? "day" : "night"],
-      interval: PUMP_CONFIG.intervals.mature[season][isDaytime ? "day" : "night"]
-    }
-  };
   
   return {
     pumpTime,
@@ -784,132 +615,11 @@ const calculateIrrigationForRockwool = (plants, irrigationConfig, currentTime = 
     dayHours,
     nightHours,
     totalWaterPerDay,
-    energyConsumption,
     waterPerCycle: Math.round(waterPerCycle),
     rockwoolMoisture,
     dominantStage,
-    stats,
-    stageTimes,
-    recommendations: getRockwoolRecommendations(stats, temp, interval, pumpTime, isDaytime, season, hour)
+    stats
   };
-};
-
-const getRockwoolRecommendations = (stats, temperature, interval, pumpTime, isDaytime, season, hour) => {
-  const recs = [];
-  
-  recs.push({
-    icon: "🎯",
-    text: `Sistema: <strong>Dados pequeños 2.5x2.5cm</strong> - Riegos CORTOS (${pumpTime}s) y FRECUENTES`
-  });
-  
-  recs.push({
-    icon: "⏱️",
-    text: `Ciclo: ${pumpTime} segundos cada ${Math.round(interval)} minutos (${Math.round(60/interval)}x/hora)`
-  });
-  
-  if (isDaytime) {
-    recs.push({
-      icon: "☀️",
-      text: `Modo <strong>DÍA</strong>: Máxima frecuencia por evaporación`
-    });
-  } else {
-    recs.push({
-      icon: "🌙",
-      text: `Modo <strong>NOCHE</strong>: Reducir frecuencia 40-50%`
-    });
-  }
-  
-  if (season === "summer") {
-    recs.push({
-      icon: "🔥",
-      text: `<strong>VERANO Castellón</strong>: Máxima atención al riego`
-    });
-    
-    if (temperature > 30) {
-      recs.push({
-        icon: "⚠️",
-        text: `¡OLA DE CALOR! ${temperature}°C → Aumentar frecuencia +50%`
-      });
-    }
-    
-    if (hour >= 12 && hour <= 20) {
-      recs.push({
-        icon: "💨",
-        text: `<strong>Viento PONIENTE activo</strong> (12:00-20:00) → +30% frecuencia`
-      });
-    }
-    
-    recs.push({
-      icon: "⏰",
-      text: `Horario óptimo: <strong>06:00-10:00</strong> y <strong>18:00-21:00</strong>`
-    });
-    
-    recs.push({
-      icon: "🚫",
-      text: `Evitar riego: <strong>12:00-16:00</strong> (máxima evaporación)`
-    });
-    
-  } else if (season === "winter") {
-    recs.push({
-      icon: "⛄",
-      text: `<strong>INVIERNO</strong>: Riegos más espaciados, al mediodía`
-    });
-    
-    recs.push({
-      icon: "💧",
-      text: `Precaución: Humedad alta → Reducir frecuencia 30%`
-    });
-    
-    recs.push({
-      icon: "⏰",
-      text: `Horario ideal: <strong>11:00-14:00</strong> (horas más cálidas)`
-    });
-    
-    if (temperature < 15) {
-      recs.push({
-        icon: "❄️",
-        text: `Temperatura baja (${temperature}°C) → Reducir frecuencia 40%`
-      });
-    }
-  } else {
-    recs.push({
-      icon: "🌱",
-      text: `<strong>PRIMAVERA/OTOÑO</strong>: Ajustar según temperatura diaria`
-    });
-  }
-  
-  if (stats.seedlingCount > 0) {
-    recs.push({
-      icon: "🌱",
-      text: `Nivel 1 (Plántulas): <strong>8-10 segundos</strong> → 40-80min intervalo`
-    });
-  }
-  
-  if (stats.growthCount > 0) {
-    recs.push({
-      icon: "🌿",
-      text: `Nivel 2 (Crecimiento): <strong>10-12 segundos</strong> → 30-60min intervalo`
-    });
-  }
-  
-  if (stats.matureCount > 0) {
-    recs.push({
-      icon: "🥬",
-      text: `Nivel 3 (Maduras): <strong>12-15 segundos</strong> → 20-45min intervalo`
-    });
-  }
-  
-  recs.push({
-    icon: "💎",
-    text: `<strong>CLAVE DADOS PEQUEÑOS:</strong> Riego corto → Secado rápido → Repetir`
-  });
-  
-  recs.push({
-    icon: "👆",
-    text: `Verifica: Dado debe estar húmedo uniformemente, no encharcado`
-  });
-  
-  return recs;
 };
 
 const getRockwoolSchedule = (plants, season) => {
@@ -1126,7 +836,7 @@ const generateCalendar = (plants, lastRot, lastClean) => {
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL - CORREGIDO
+// COMPONENTE PRINCIPAL
 // ============================================================================
 
 export default function HydroAppFinal() {
@@ -1138,9 +848,7 @@ export default function HydroAppFinal() {
   const [lastClean, setLastClean] = useState(new Date().toISOString());
   const [tab, setTab] = useState("dashboard");
   const [selPos, setSelPos] = useState({ l: null, v: null, p: null });
-  const [showWaterSelector, setShowWaterSelector] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  const [expandedTips, setExpandedTips] = useState({});
   const [showAddForm, setShowAddForm] = useState(false);
   
   // Configuración del sistema
@@ -1233,14 +941,23 @@ export default function HydroAppFinal() {
     }
   };
 
-  const toggleTip = (tipId) => {
-    setExpandedTips(prev => ({
-      ...prev,
-      [tipId]: !prev[tipId]
-    }));
+  const verificarDisponibilidadPosicion = (posicion, nivel) => {
+    // Verificar si la posición ya está ocupada
+    const posicionOcupada = plants.some(p => p.p === posicion);
+    if (posicionOcupada) {
+      return { disponible: false, motivo: `Posición ${posicion} ya ocupada` };
+    }
+    
+    // Verificar límite por nivel
+    const plantasEnNivel = plants.filter(p => p.l === nivel).length;
+    if (plantasEnNivel >= 5) {
+      return { disponible: false, motivo: `Nivel ${nivel} completo (5/5)` };
+    }
+    
+    return { disponible: true };
   };
 
-  // =================== CÁLCULOS CON NUEVAS FUNCIONES ===================
+  // =================== CÁLCULOS ===================
 
   const irrigationData = useMemo(() => {
     return calculateIrrigationForRockwool(plants, irrigationConfig, new Date());
@@ -1254,7 +971,6 @@ export default function HydroAppFinal() {
     return generateCalendar(plants, lastRot, lastClean);
   }, [plants, lastRot, lastClean]);
 
-  // Obtener características del agua actual
   const waterCharacteristics = useMemo(() => {
     return getWaterCharacteristics(
       config.waterType, 
@@ -1262,7 +978,6 @@ export default function HydroAppFinal() {
     );
   }, [config.waterType, config.useOsmosisMix, config.osmosisMixPercentage]);
 
-  // Calcular necesidad de CalMag
   const calmagNeeded = useMemo(() => {
     return calculateCalMagNeeded(
       config.waterType,
@@ -1271,7 +986,6 @@ export default function HydroAppFinal() {
     );
   }, [config.waterType, config.useOsmosisMix, config.osmosisMixPercentage, config.currentVol]);
 
-  // Diagnóstico de pH
   const phDiagnosis = useMemo(() => {
     const phHistory = history
       .filter(record => record.ph)
@@ -1292,7 +1006,6 @@ export default function HydroAppFinal() {
     );
   }, [config.ph, config.targetPH, config.waterType, config.useOsmosisMix, config.osmosisMixPercentage, config.temp, history]);
 
-  // Detección de cambios bruscos de pH
   const phSpikes = useMemo(() => {
     const phHistory = history
       .filter(record => record.ph)
@@ -1304,7 +1017,6 @@ export default function HydroAppFinal() {
     return detectPHSpikes(phHistory, 24);
   }, [history]);
 
-  // Ajuste de pH con pretratamiento
   const phAdjustmentWithPretreatment = useMemo(() => {
     return calculatePHAdjustmentWithPretreatment(
       parseFloat(config.ph),
@@ -1315,7 +1027,7 @@ export default function HydroAppFinal() {
     );
   }, [config.ph, config.targetPH, config.waterType, config.useOsmosisMix, config.osmosisMixPercentage, config.currentVol]);
 
-  // =================== CÁLCULO DE ALERTAS - CORREGIDO ===================
+  // =================== CÁLCULO DE ALERTAS ===================
 
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
@@ -1328,7 +1040,6 @@ export default function HydroAppFinal() {
     const waterType = config.waterType || "bajo_mineral";
     const res = [];
 
-    // Alerta para agua dura no tratada
     if (waterCharacteristics.finalHardness > 200 && !config.useOsmosisMix) {
       res.push({ 
         title: "AGUA DURA NO TRATADA", 
@@ -1340,7 +1051,6 @@ export default function HydroAppFinal() {
       });
     }
 
-    // Alerta para agua de ósmosis sin CalMag
     if (calmagNeeded.required && calmagNeeded.dosage > 0) {
       res.push({ 
         title: "FALTA CALMAG", 
@@ -1352,7 +1062,6 @@ export default function HydroAppFinal() {
       });
     }
 
-    // Alertas de pH inteligentes
     if (phSpikes && phSpikes.isSpiking) {
       res.push({ 
         title: "CAMBIO BRUSCO DE pH", 
@@ -1364,7 +1073,6 @@ export default function HydroAppFinal() {
       });
     }
 
-    // Alertas de diagnóstico de pH
     if (phDiagnosis.riskLevel === "high") {
       res.push({ 
         title: "PROBLEMA GRAVE DE pH", 
@@ -1376,7 +1084,6 @@ export default function HydroAppFinal() {
       });
     }
 
-    // Alertas existentes
     if (waterType === "alta_mineral") {
       res.push({ 
         title: "AGUA DURA DETECTADA", 
@@ -1531,55 +1238,8 @@ export default function HydroAppFinal() {
       });
     }
 
-    // Alertas específicas para dados pequeños de lana de roca
-    if (irrigationData.rockwoolMoisture > 80) {
-      res.push({
-        title: "¡DADO DEMASIADO HÚMEDO!",
-        value: `${irrigationData.rockwoolMoisture}% humedad`,
-        description: "Riesgo de asfixia radicular en dados pequeños. Aumentar intervalo.",
-        color: "bg-gradient-to-r from-blue-700 to-cyan-800",
-        icon: <Droplets className="text-white" size={28} />,
-        priority: 1
-      });
-    }
-    
-    if (irrigationData.rockwoolMoisture < 50) {
-      res.push({
-        title: "DADO DEMASIADO SECO",
-        value: `${irrigationData.rockwoolMoisture}% humedad`,
-        description: "Dados pequeños secan rápido. Reducir intervalo entre riegos.",
-        color: "bg-gradient-to-r from-amber-600 to-orange-700",
-        icon: <Cloud className="text-white" size={28} />,
-        priority: 2
-      });
-    }
-
-    // Alerta específica para viento poniente en Castellón
-    const horaActual = new Date().getHours();
-    if (horaActual >= 12 && horaActual <= 20 && irrigationData.season === "summer") {
-      res.push({
-        title: "VIENTO PONIENTE ACTIVO",
-        value: "Aumentar frecuencia",
-        description: "Vientos secos de tarde en Castellón. Aumenta frecuencia de riego 30%.",
-        color: "bg-gradient-to-r from-yellow-600 to-amber-700",
-        icon: <Wind className="text-white" size={28} />,
-        priority: 2
-      });
-    }
-
-    if (config.hasHeater) {
-      res.push({
-        title: "🔥 CALENTADOR ACTIVO",
-        value: `${config.temp}°C estable`,
-        description: "Temperatura controlada por calentador - Ideal para raíces en dados pequeños",
-        color: "bg-gradient-to-r from-rose-600 to-pink-700",
-        icon: <ThermometerSnowflake className="text-white" size={28} />,
-        priority: 3
-      });
-    }
-
     return res.sort((a, b) => a.priority - b.priority);
-  }, [config, lastClean, plants, irrigationData, waterCharacteristics, calmagNeeded, phSpikes, phDiagnosis]);
+  }, [config, lastClean, plants, waterCharacteristics, calmagNeeded, phSpikes, phDiagnosis]);
 
   // =================== FLUJO DE CONFIGURACIÓN ===================
 
@@ -1607,7 +1267,7 @@ export default function HydroAppFinal() {
             </h1>
             
             <p className="text-xl text-slate-600 max-w-lg mx-auto">
-              Sistema experto para cultivo hidropónico con <span className="font-bold text-blue-600">CANNA Aqua Vega</span> y <span className="font-bold text-emerald-600">lana de roca Grodan</span>
+              Sistema experto para cultivo hidropónico
             </p>
             
             <div className="space-y-4 max-w-md mx-auto">
@@ -1617,7 +1277,7 @@ export default function HydroAppFinal() {
                 </div>
                 <div className="text-left">
                   <h3 className="font-bold text-slate-800">Diagnóstico Inteligente de pH</h3>
-                  <p className="text-sm text-slate-600">Nuevo: análisis avanzado para Castellón</p>
+                  <p className="text-sm text-slate-600">Análisis avanzado para hidroponía</p>
                 </div>
               </div>
               
@@ -1627,7 +1287,7 @@ export default function HydroAppFinal() {
                 </div>
                 <div className="text-left">
                   <h3 className="font-bold text-slate-800">Gestión de Agua Completa</h3>
-                  <p className="text-sm text-slate-600">Ósmosis, CalMag y pretratamiento para agua dura</p>
+                  <p className="text-sm text-slate-600">Ósmosis, CalMag y pretratamiento</p>
                 </div>
               </div>
               
@@ -1711,12 +1371,6 @@ export default function HydroAppFinal() {
                       <span className="font-bold text-blue-600">{config.currentVol}L</span>
                       <span>{config.totalVol}L</span>
                     </div>
-                    <div className="mt-2">
-                      <Progress 
-                        value={(config.currentVol / config.totalVol) * 100} 
-                        className="h-2"
-                      />
-                    </div>
                   </div>
                 </div>
               </Card>
@@ -1760,22 +1414,6 @@ export default function HydroAppFinal() {
                         {config.temp}°C
                       </span>
                       <span>35°C</span>
-                    </div>
-                    
-                    <div className="mt-4 p-3 rounded-lg bg-slate-50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Estado:</span>
-                        <span className={`font-bold ${
-                          parseFloat(config.temp) > 28 ? 'text-red-600' : 
-                          parseFloat(config.temp) < 18 ? 'text-blue-600' : 
-                          'text-green-600'
-                        }`}>
-                          {parseFloat(config.temp) > 28 ? '¡PELIGRO! Muy caliente' :
-                           parseFloat(config.temp) > 25 ? 'Alerta: Caliente' :
-                           parseFloat(config.temp) < 18 ? 'Muy frío' :
-                           'Óptimo'}
-                        </span>
-                      </div>
                     </div>
                   </div>
                   
@@ -1830,10 +1468,6 @@ export default function HydroAppFinal() {
                           <span>Dureza:</span>
                           <span className="font-medium">{water.hardness} ppm</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>pH base:</span>
-                          <span className="font-medium">{water.phBase}</span>
-                        </div>
                       </div>
                     </div>
                   ))}
@@ -1875,37 +1509,8 @@ export default function HydroAppFinal() {
                           <span>100% (solo ósmosis)</span>
                         </div>
                       </div>
-                      
-                      <div className="p-3 bg-white rounded-lg">
-                        <div className="flex justify-between mb-2">
-                          <span className="text-slate-700">Dureza resultante:</span>
-                          <span className="font-bold text-blue-600">{waterCharacteristics.finalHardness} ppm</span>
-                        </div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-slate-700">EC base resultante:</span>
-                          <span className="font-bold text-blue-600">{waterCharacteristics.finalECBase} µS/cm</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-700">Necesita CalMag:</span>
-                          <span className={`font-bold ${calmagNeeded.required ? 'text-amber-600' : 'text-green-600'}`}>
-                            {calmagNeeded.required ? 'SÍ' : 'NO'}
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   )}
-                </div>
-                
-                <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="text-emerald-600 mt-1" size={20} />
-                    <div>
-                      <p className="font-medium text-emerald-800">
-                        {waterCharacteristics.recommendation}
-                        {calmagNeeded.required && ` ${calmagNeeded.reason}`}
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </Card>
             </div>
@@ -1978,21 +1583,6 @@ export default function HydroAppFinal() {
                           className="w-full text-center text-lg"
                           placeholder="Ej: 6.0"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Valor actual: {config.ph}</p>
-                      </div>
-                      <div className="w-32">
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => {
-                            const newValue = prompt("Introduce el valor de pH medido:", config.ph);
-                            if (newValue !== null && !isNaN(parseFloat(newValue))) {
-                              setConfig({...config, ph: newValue});
-                            }
-                          }}
-                        >
-                          Editar
-                        </Button>
                       </div>
                     </div>
                     
@@ -2010,26 +1600,6 @@ export default function HydroAppFinal() {
                       <span>4.0</span>
                       <span className="font-bold text-green-600">5.5-6.5</span>
                       <span>9.0</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-                    <h4 className="font-bold text-blue-700 mb-2">📊 Diagnóstico Rápido</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-700">Estado:</span>
-                        <span className={`font-bold ${
-                          phDiagnosis.riskLevel === 'high' ? 'text-red-600' :
-                          phDiagnosis.riskLevel === 'medium' ? 'text-amber-600' :
-                          'text-green-600'
-                        }`}>
-                          {phDiagnosis.summary}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-700">Problemas detectados:</span>
-                        <span className="font-bold text-slate-800">{phDiagnosis.problems.length}</span>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -2076,21 +1646,6 @@ export default function HydroAppFinal() {
                           className="w-full text-center text-lg"
                           placeholder="Ej: 1200"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Valor actual: {config.ec} µS/cm</p>
-                      </div>
-                      <div className="w-32">
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => {
-                            const newValue = prompt("Introduce el valor de EC medido (µS/cm):", config.ec);
-                            if (newValue !== null && !isNaN(parseFloat(newValue))) {
-                              setConfig({...config, ec: newValue});
-                            }
-                          }}
-                        >
-                          Editar
-                        </Button>
                       </div>
                     </div>
                     
@@ -2110,27 +1665,6 @@ export default function HydroAppFinal() {
                       <span>3000</span>
                     </div>
                   </div>
-                  
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FlaskConical className="text-blue-600" size={18} />
-                      <h4 className="font-bold text-blue-700">Guía rápida de EC</h4>
-                    </div>
-                    <div className="text-sm text-slate-700 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Plántulas:</span>
-                        <span className="font-medium">800-1000 µS/cm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Crecimiento:</span>
-                        <span className="font-medium">1200-1500 µS/cm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Maduras:</span>
-                        <span className="font-medium">1500-1800 µS/cm</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </Card>
               
@@ -2141,7 +1675,7 @@ export default function HydroAppFinal() {
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800">Objetivos del Sistema</h3>
-                    <p className="text-sm text-slate-600">Define los valores objetivo</p>
+                    <p className="text-slate-600">Define los valores objetivo</p>
                   </div>
                 </div>
                 
@@ -2180,11 +1714,6 @@ export default function HydroAppFinal() {
                       <span className="font-bold text-blue-600">{config.targetEC} µS/cm</span>
                       <span>1900</span>
                     </div>
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-800">
-                        Las plántulas necesitan EC baja (800-1000). Las plantas maduras toleran EC más alta (1500-1800).
-                      </p>
-                    </div>
                   </div>
                   
                   <div>
@@ -2220,11 +1749,6 @@ export default function HydroAppFinal() {
                       <span>5.5</span>
                       <span className="font-bold text-purple-600">{config.targetPH}</span>
                       <span>6.5</span>
-                    </div>
-                    <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-purple-800">
-                        Para lechugas en hidroponía, el pH ideal es 6.0. Permite máxima absorción de nutrientes.
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -2306,17 +1830,6 @@ export default function HydroAppFinal() {
                     </p>
                   </div>
                 </div>
-                
-                <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 mb-6">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="text-amber-600 mt-1" size={20} />
-                    <div>
-                      <p className="font-medium text-amber-800">
-                        Sistema 5-5-5: Siempre tendrás plantas en todas las etapas. Cada semana rotas niveles y cosechas 5 lechugas.
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
               
               <div className="space-y-6">
@@ -2388,15 +1901,21 @@ export default function HydroAppFinal() {
                       <div className="grid grid-cols-5 gap-2">
                         {Array.from({length: 15}, (_, i) => i + 1).map(pos => {
                           const ocupada = plants.find(p => p.p === pos);
+                          const esSeleccionada = selPos?.p === pos;
+                          
                           return (
                             <button
                               key={pos}
                               type="button"
-                              onClick={() => !ocupada && setSelPos({...selPos, p: pos})}
+                              onClick={() => {
+                                if (!ocupada) {
+                                  setSelPos({...selPos, p: pos});
+                                }
+                              }}
                               className={`aspect-square rounded-lg flex items-center justify-center font-medium transition-all ${
                                 ocupada 
-                                  ? 'bg-red-100 text-red-700'
-                                  : selPos?.p === pos
+                                  ? 'bg-red-100 text-red-700 cursor-not-allowed'
+                                  : esSeleccionada
                                   ? 'bg-blue-500 text-white'
                                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                               }`}
@@ -2405,7 +1924,7 @@ export default function HydroAppFinal() {
                             >
                               {ocupada ? (
                                 <X className="text-red-500" size={16} />
-                              ) : selPos?.p === pos ? (
+                              ) : esSeleccionada ? (
                                 <Check className="text-white" size={16} />
                               ) : (
                                 pos
@@ -2420,13 +1939,22 @@ export default function HydroAppFinal() {
                   <Button
                     onClick={() => {
                       if (selPos?.l && selPos?.v && selPos?.p) {
-                        // Verificar si la posición ya está ocupada
-                        const isPositionOccupied = plants.some(p => p.p === selPos.p);
-                        if (isPositionOccupied) {
-                          alert(`La posición ${selPos.p} ya está ocupada. Por favor selecciona otra posición.`);
+                        // VERIFICACIÓN MEJORADA
+                        const posicionOcupada = plants.some(p => p.p === selPos.p);
+                        if (posicionOcupada) {
+                          alert(`❌ Error: La posición ${selPos.p} ya está ocupada. Por favor selecciona otra posición.`);
+                          setSelPos({...selPos, p: null});
                           return;
                         }
                         
+                        // Verificar si el nivel tiene espacio
+                        const plantasEnNivel = plants.filter(p => p.l === selPos.l).length;
+                        if (plantasEnNivel >= 5) {
+                          alert(`❌ Error: El Nivel ${selPos.l} ya está completo (5/5 plantas).`);
+                          return;
+                        }
+                        
+                        // Añadir la planta
                         setPlants([...plants, {
                           id: generatePlantId(),
                           l: selPos.l,
@@ -2434,7 +1962,12 @@ export default function HydroAppFinal() {
                           p: selPos.p,
                           date: new Date().toISOString()
                         }]);
-                        setSelPos({ l: null, v: null, p: null }); // Reiniciar selección
+                        
+                        // Limpiar selección
+                        setSelPos({ l: null, v: null, p: null });
+                        
+                        // Mensaje de confirmación
+                        alert(`✅ Planta "${selPos.v}" añadida en Nivel ${selPos.l}, Posición ${selPos.p}`);
                       }
                     }}
                     disabled={!(selPos?.l && selPos?.v && selPos?.p)}
@@ -2534,18 +2067,9 @@ export default function HydroAppFinal() {
             irrigationData.season === "winter" ? "bg-blue-100 text-blue-800" :
             "bg-green-100 text-green-800"
           }>
-            {irrigationData.season === "summer" ? "Verano Castellón" :
-             irrigationData.season === "winter" ? "Invierno Castellón" :
-             "Primavera/Otoño Castellón"}
-          </Badge>
-          
-          <Badge className={
-            phDiagnosis.riskLevel === "high" ? "bg-red-100 text-red-800" :
-            phDiagnosis.riskLevel === "medium" ? "bg-amber-100 text-amber-800" :
-            "bg-green-100 text-green-800"
-          }>
-            pH: {phDiagnosis.riskLevel === "high" ? "ALTO RIESGO" : 
-                  phDiagnosis.riskLevel === "medium" ? "PRECAUCIÓN" : "ESTABLE"}
+            {irrigationData.season === "summer" ? "Verano" :
+             irrigationData.season === "winter" ? "Invierno" :
+             "Primavera/Otoño"}
           </Badge>
         </div>
       </div>
@@ -2581,7 +2105,7 @@ export default function HydroAppFinal() {
             </div>
             <div>
               <h2 className="font-bold text-slate-800 text-xl">Sistema de Riego Automático</h2>
-              <p className="text-slate-600">Dados de lana 2.5x2.5cm - Castellón</p>
+              <p className="text-slate-600">Dados de lana 2.5x2.5cm</p>
             </div>
           </div>
           
@@ -2714,205 +2238,11 @@ export default function HydroAppFinal() {
                   </Button>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <Lightbulb className="text-amber-600" size={18} />
-                <p className="text-sm text-amber-800">
-                  {irrigationConfig.mode === "auto" 
-                    ? `Modo automático: ${irrigationData.pumpTime}s cada ${Math.round(irrigationData.interval)}min (${irrigationData.season})`
-                    : 'Modo manual: Tú controlas los tiempos'}
-                </p>
-              </div>
             </div>
-          </div>
-          
-          {irrigationConfig.showAdvanced && (
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <h4 className="font-bold text-slate-800 mb-3">Configuración Avanzada</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Temperatura referencia (°C)
-                  </label>
-                  <Input
-                    type="number"
-                    value={irrigationConfig.temperature}
-                    onChange={(e) => setIrrigationConfig({...irrigationConfig, temperature: e.target.value})}
-                    className="w-full"
-                    min="10"
-                    max="35"
-                    step="0.5"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Estación actual
-                  </label>
-                  <div className="px-3 py-2 bg-white border border-slate-300 rounded-lg">
-                    <span className={
-                      irrigationData.season === "summer" ? "text-amber-600 font-medium" :
-                      irrigationData.season === "winter" ? "text-blue-600 font-medium" :
-                      "text-green-600 font-medium"
-                    }>
-                      {irrigationData.season === "summer" ? "Verano" :
-                       irrigationData.season === "winter" ? "Invierno" :
-                       "Primavera/Otoño"}
-                    </span>
-                    <span className="text-slate-500 text-sm ml-2">(detectada automáticamente)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-8 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-          <h3 className="font-bold text-blue-800 mb-3">💡 Recomendaciones de Riego</h3>
-          <div className="space-y-3">
-            {irrigationData.recommendations?.map((rec, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <span className="text-xl">{rec.icon}</span>
-                <p className="text-sm text-slate-700" dangerouslySetInnerHTML={{__html: rec.text}} />
-              </div>
-            ))}
           </div>
         </div>
       </Card>
       
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-              <Brain className="text-white" size={24} />
-            </div>
-            <div>
-              <h2 className="font-bold text-slate-800 text-xl">Diagnóstico Avanzado de pH</h2>
-              <p className="text-slate-600">Análisis específico para Castellón</p>
-            </div>
-          </div>
-          
-          <Badge className={
-            phDiagnosis.riskLevel === "high" ? "bg-red-100 text-red-800" :
-            phDiagnosis.riskLevel === "medium" ? "bg-amber-100 text-amber-800" :
-            "bg-green-100 text-green-800"
-          }>
-            {phDiagnosis.riskLevel === "high" ? "ALTO RIESGO" : 
-             phDiagnosis.riskLevel === "medium" ? "PRECAUCIÓN" : "ESTABLE"}
-          </Badge>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-bold text-slate-800 mb-4">Problemas Detectados</h3>
-            <div className="space-y-3">
-              {phDiagnosis.problems.length > 0 ? (
-                phDiagnosis.problems.map((problem, index) => (
-                  <div 
-                    key={index} 
-                    className={`p-4 rounded-xl border-l-4 ${
-                      problem.level === "high" ? "border-red-500 bg-red-50" :
-                      problem.level === "medium" ? "border-amber-500 bg-amber-50" :
-                      "border-blue-500 bg-blue-50"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        problem.level === "high" ? "bg-red-100 text-red-700" :
-                        problem.level === "medium" ? "bg-amber-100 text-amber-700" :
-                        "bg-blue-100 text-blue-700"
-                      }`}>
-                        {problem.level === "high" ? "!" : problem.level === "medium" ? "⚠" : "i"}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800">{problem.title}</h4>
-                        <p className="text-sm text-slate-600 mt-1">{problem.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
-                  <div className="flex items-center gap-3">
-                    <Check className="text-green-600" size={24} />
-                    <div>
-                      <h4 className="font-bold text-green-700">pH Estable</h4>
-                      <p className="text-sm text-green-600">No se detectaron problemas críticos de pH</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="font-bold text-slate-800 mb-4">Soluciones Recomendadas</h3>
-            <div className="space-y-3">
-              {phDiagnosis.solutions.length > 0 ? (
-                phDiagnosis.solutions.slice(0, 3).map((solution, index) => (
-                  <div 
-                    key={index} 
-                    className="p-4 bg-white rounded-xl border border-slate-200"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
-                        {solution.priority}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800">{solution.action}</h4>
-                        <p className="text-sm text-slate-600 mt-1">{solution.details}</p>
-                        {solution.dosage && (
-                          <p className="text-sm font-medium text-blue-700 mt-2">{solution.dosage}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-slate-600 text-center">No se requieren acciones inmediatas</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-white rounded-xl border border-slate-200">
-            <div className="flex items-center gap-2 mb-2">
-              <GitCompare className="text-purple-600" size={18} />
-              <h4 className="font-bold text-slate-800">Cambios Bruscos</h4>
-            </div>
-            <p className="text-sm text-slate-600">
-              {phSpikes && phSpikes.isSpiking 
-                ? `Se detectó cambio de ${phSpikes.maxChange.toFixed(1)} en 24h`
-                : "Sin cambios bruscos detectados"}
-            </p>
-          </div>
-          
-          <div className="p-4 bg-white rounded-xl border border-slate-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Droplets className="text-blue-600" size={18} />
-              <h4 className="font-bold text-slate-800">CalMag</h4>
-            </div>
-            <p className="text-sm text-slate-600">
-              {calmagNeeded.required ? `Se requiere ${calmagNeeded.dosage}ml` : "No se requiere"}
-            </p>
-          </div>
-          
-          <div className="p-4 bg-white rounded-xl border border-slate-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Thermometer className="text-amber-600" size={18} />
-              <h4 className="font-bold text-slate-800">Temperatura</h4>
-            </div>
-            <p className="text-sm text-slate-600">
-              {parseFloat(config.temp) > 28 ? "Demasiado alta" : 
-               parseFloat(config.temp) < 18 ? "Demasiado baja" : "Óptima"}
-            </p>
-          </div>
-        </div>
-      </Card>
-      
-      {/* Sección para editar parámetros manualmente */}
       <Card className="p-6 rounded-2xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
@@ -3060,8 +2390,8 @@ export default function HydroAppFinal() {
       <div className="space-y-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">Nutrición CANNA</h1>
-            <p className="text-slate-600">Cálculo preciso de nutrientes para Aqua Vega</p>
+            <h1 className="text-3xl font-bold text-slate-800">Nutrición</h1>
+            <p className="text-slate-600">Cálculo preciso de nutrientes</p>
           </div>
           
           <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
@@ -3132,7 +2462,7 @@ export default function HydroAppFinal() {
                 <FlaskConical className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">Dosis CANNA Aqua Vega</h3>
+                <h3 className="font-bold text-slate-800">Dosis de Nutrientes</h3>
                 <p className="text-sm text-slate-600">Para {config.currentVol}L de agua</p>
               </div>
             </div>
@@ -3141,22 +2471,16 @@ export default function HydroAppFinal() {
               <div className="text-center">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="p-4 bg-gradient-to-b from-blue-50 to-white rounded-xl border-2 border-blue-200">
-                    <p className="text-sm text-blue-600 font-medium">CANNA A</p>
+                    <p className="text-sm text-blue-600 font-medium">Nutriente A</p>
                     <p className="text-3xl font-bold text-blue-700">{cannaDosage.a}ml</p>
                     <p className="text-xs text-slate-500 mt-1">{cannaDosage.per10L.a}ml/10L</p>
                   </div>
                   
                   <div className="p-4 bg-gradient-to-b from-green-50 to-white rounded-xl border-2 border-green-200">
-                    <p className="text-sm text-green-600 font-medium">CANNA B</p>
+                    <p className="text-sm text-green-600 font-medium">Nutriente B</p>
                     <p className="text-3xl font-bold text-green-700">{cannaDosage.b}ml</p>
                     <p className="text-xs text-slate-500 mt-1">{cannaDosage.per10L.b}ml/10L</p>
                   </div>
-                </div>
-                
-                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                  <p className="text-sm text-amber-800">
-                    {cannaDosage.note || "Dosis estándar para agua blanda"}
-                  </p>
                 </div>
               </div>
               
@@ -3174,26 +2498,19 @@ export default function HydroAppFinal() {
                     <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
                       2
                     </div>
-                    <p className="text-sm text-slate-700">Añadir CalMag si es necesario: {calmagNeeded.required ? `${calmagNeeded.dosage}ml` : "0ml (no necesario)"}</p>
+                    <p className="text-sm text-slate-700">Añadir {cannaDosage.a}ml de Nutriente A, mezclar bien</p>
                   </div>
                   
                   <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt=0.5">
+                    <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
                       3
                     </div>
-                    <p className="text-sm text-slate-700">Añadir {cannaDosage.a}ml de CANNA A, mezclar bien</p>
+                    <p className="text-sm text-slate-700">Añadir {cannaDosage.b}ml de Nutriente B, mezclar bien</p>
                   </div>
                   
                   <div className="flex items-start gap-2">
                     <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
                       4
-                    </div>
-                    <p className="text-sm text-slate-700">Añadir {cannaDosage.b}ml de CANNA B, mezclar bien</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                      5
                     </div>
                     <p className="text-sm text-slate-700">Medir y ajustar pH si es necesario</p>
                   </div>
@@ -3235,44 +2552,6 @@ export default function HydroAppFinal() {
                   </div>
                 )}
               </div>
-              
-              <div className="space-y-3">
-                <h4 className="font-bold text-slate-800">Instrucciones de Ajuste</h4>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs mt-0.5">
-                      ⚠
-                    </div>
-                    <p className="text-sm text-slate-700">Añadir gota a gota, mezclando entre cada adición</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs mt-0.5">
-                      ⏱
-                    </div>
-                    <p className="text-sm text-slate-700">Esperar 15 minutos antes de medir nuevamente</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs mt-0.5">
-                      🔄
-                    </div>
-                    <p className="text-sm text-slate-700">Repetir si es necesario hasta alcanzar el objetivo</p>
-                  </div>
-                </div>
-              </div>
-              
-              {phAdjustmentWithPretreatment.pretreatment && (
-                <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
-                  <h4 className="font-bold text-amber-800 mb-2">⚠️ Pretratamiento para Agua Dura</h4>
-                  <p className="text-sm text-amber-700">
-                    Se recomienda pretratamiento: {phAdjustmentWithPretreatment.pretreatment.instructions}
-                  </p>
-                  <p className="text-sm font-medium text-amber-800 mt-2">
-                    Dosis pretratamiento: {phAdjustmentWithPretreatment.pretreatment.dosage}ml pH-
-                  </p>
-                </div>
-              )}
             </div>
           </Card>
         </div>
@@ -3301,14 +2580,6 @@ export default function HydroAppFinal() {
                   <span className="font-bold text-blue-600">{waterCharacteristics.finalHardness} ppm</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-700">EC base del agua:</span>
-                  <span className="font-bold text-blue-600">{waterCharacteristics.finalECBase} µS/cm</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-700">pH base del agua:</span>
-                  <span className="font-bold text-blue-600">{waterCharacteristics.finalPhBase.toFixed(1)}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-slate-700">Necesita CalMag:</span>
                   <span className={`font-bold ${calmagNeeded.required ? 'text-amber-600' : 'text-green-600'}`}>
                     {calmagNeeded.required ? 'SÍ' : 'NO'}
@@ -3324,11 +2595,10 @@ export default function HydroAppFinal() {
                   <>
                     <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
                       <p className="text-sm text-blue-800">
-                        <span className="font-bold">Añadir {calmagNeeded.dosage}ml de CalMag</span> antes de los nutrientes CANNA
+                        <span className="font-bold">Añadir {calmagNeeded.dosage}ml de CalMag</span> antes de los nutrientes principales
                       </p>
                     </div>
                     <p className="text-sm text-slate-700">{calmagNeeded.reason}</p>
-                    <p className="text-sm text-slate-700">{calmagNeeded.instructions}</p>
                   </>
                 ) : (
                   <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
@@ -3337,95 +2607,8 @@ export default function HydroAppFinal() {
                     </p>
                   </div>
                 )}
-                
-                {waterCharacteristics.finalHardness > 200 && (
-                  <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
-                    <p className="text-sm text-amber-800">
-                      <span className="font-bold">Agua dura detectada.</span> Considera mezclar con ósmosis o usar pretratamiento.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        </Card>
-        
-        {/* Sección para editar parámetros manualmente en la pestaña de Nutrición */}
-        <Card className="p-6 rounded-2xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-              <Settings className="text-white" size={24} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Editar Parámetros Manualmente</h3>
-              <p className="text-slate-600">Actualiza los valores medidos</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                pH Actual
-              </label>
-              <Input
-                type="number"
-                min="4.0"
-                max="9.0"
-                step="0.1"
-                value={config.ph}
-                onChange={(e) => setConfig({...config, ph: e.target.value})}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                EC Actual (µS/cm)
-              </label>
-              <Input
-                type="number"
-                min="0"
-                max="3000"
-                step="50"
-                value={config.ec}
-                onChange={(e) => setConfig({...config, ec: e.target.value})}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Temperatura (°C)
-              </label>
-              <Input
-                type="number"
-                min="10"
-                max="35"
-                step="0.5"
-                value={config.temp}
-                onChange={(e) => setConfig({...config, temp: e.target.value})}
-                className="w-full"
-              />
-            </div>
-          </div>
-          
-          <div className="mt-4 flex justify-end">
-            <Button
-              onClick={() => {
-                // Añadir al historial
-                const newRecord = {
-                  id: generatePlantId(),
-                  date: new Date().toISOString(),
-                  ph: config.ph,
-                  ec: config.ec,
-                  notes: "Medición actualizada desde Nutrición"
-                };
-                setHistory([...history, newRecord]);
-                alert("✅ Parámetros actualizados y guardados en historial");
-              }}
-            >
-              Guardar Cambios
-            </Button>
           </div>
         </Card>
       </div>
@@ -3451,7 +2634,10 @@ export default function HydroAppFinal() {
           </Button>
           
           <Button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              setSelPos({ l: null, v: null, p: null });
+            }}
             className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
           >
             <Plus className="mr-2" size={16} />
@@ -3524,15 +2710,21 @@ export default function HydroAppFinal() {
               <div className="grid grid-cols-5 gap-2">
                 {Array.from({length: 15}, (_, i) => i + 1).map(pos => {
                   const ocupada = plants.find(p => p.p === pos);
+                  const esSeleccionada = selPos?.p === pos;
+                  
                   return (
                     <button
                       key={pos}
                       type="button"
-                      onClick={() => !ocupada && setSelPos({...selPos, p: pos})}
+                      onClick={() => {
+                        if (!ocupada) {
+                          setSelPos({...selPos, p: pos});
+                        }
+                      }}
                       className={`aspect-square rounded-lg flex items-center justify-center font-medium transition-all ${
                         ocupada 
-                          ? 'bg-red-100 text-red-700'
-                          : selPos?.p === pos
+                          ? 'bg-red-100 text-red-700 cursor-not-allowed'
+                          : esSeleccionada
                           ? 'bg-blue-500 text-white'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
@@ -3541,7 +2733,7 @@ export default function HydroAppFinal() {
                     >
                       {ocupada ? (
                         <X className="text-red-500" size={16} />
-                      ) : selPos?.p === pos ? (
+                      ) : esSeleccionada ? (
                         <Check className="text-white" size={16} />
                       ) : (
                         pos
@@ -3556,13 +2748,22 @@ export default function HydroAppFinal() {
           <Button
             onClick={() => {
               if (selPos?.l && selPos?.v && selPos?.p) {
-                // Verificar si la posición ya está ocupada
-                const isPositionOccupied = plants.some(p => p.p === selPos.p);
-                if (isPositionOccupied) {
-                  alert(`La posición ${selPos.p} ya está ocupada. Por favor selecciona otra posición.`);
+                // VERIFICACIÓN MEJORADA
+                const posicionOcupada = plants.some(p => p.p === selPos.p);
+                if (posicionOcupada) {
+                  alert(`❌ Error: La posición ${selPos.p} ya está ocupada. Por favor selecciona otra posición.`);
+                  setSelPos({...selPos, p: null});
                   return;
                 }
                 
+                // Verificar si el nivel tiene espacio
+                const plantasEnNivel = plants.filter(p => p.l === selPos.l).length;
+                if (plantasEnNivel >= 5) {
+                  alert(`❌ Error: El Nivel ${selPos.l} ya está completo (5/5 plantas).`);
+                  return;
+                }
+                
+                // Añadir la planta
                 setPlants([...plants, {
                   id: generatePlantId(),
                   l: selPos.l,
@@ -3570,7 +2771,12 @@ export default function HydroAppFinal() {
                   p: selPos.p,
                   date: new Date().toISOString()
                 }]);
+                
+                // Limpiar selección
                 setSelPos({ l: null, v: null, p: null });
+                
+                // Mensaje de confirmación
+                alert(`✅ Planta "${selPos.v}" añadida en Nivel ${selPos.l}, Posición ${selPos.p}`);
               }
             }}
             disabled={!(selPos?.l && selPos?.v && selPos?.p)}
@@ -4193,30 +3399,6 @@ export default function HydroAppFinal() {
                 <span>35°C</span>
               </div>
             </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label htmlFor="hasHeater" className="text-slate-700">
-                  Calentador de acuario instalado
-                </label>
-                <Switch
-                  id="hasHeater"
-                  checked={config.hasHeater}
-                  onCheckedChange={(checked) => setConfig({...config, hasHeater: checked})}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <label htmlFor="useOsmosisMix" className="text-slate-700">
-                  Mezcla con agua de ósmosis
-                </label>
-                <Switch
-                  id="useOsmosisMix"
-                  checked={config.useOsmosisMix}
-                  onCheckedChange={(checked) => setConfig({...config, useOsmosisMix: checked})}
-                />
-              </div>
-            </div>
           </div>
         </Card>
         
@@ -4280,18 +3462,6 @@ export default function HydroAppFinal() {
                 </div>
               </div>
             )}
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Notas sobre el agua
-              </label>
-              <Textarea
-                value={config.waterNotes}
-                onChange={(e) => setConfig({...config, waterNotes: e.target.value})}
-                placeholder="Ej: Agua de grifo de Castellón, tratada con filtro..."
-                className="min-h-[100px]"
-              />
-            </div>
           </div>
         </Card>
         
@@ -4401,40 +3571,6 @@ export default function HydroAppFinal() {
                 className="mt-2"
               >
                 Registrar Limpieza
-              </Button>
-            </div>
-            
-            <div className="pt-4 border-t border-slate-200">
-              <Button
-                variant="outline"
-                className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={() => {
-                  if (confirm("¿Restablecer todos los datos?\n\nEsta acción eliminará todas las plantas, historial y configuraciones. No se puede deshacer.")) {
-                    localStorage.removeItem("hydro_master_canna");
-                    setPlants([]);
-                    setHistory([]);
-                    setConfig({ 
-                      totalVol: "20", 
-                      currentVol: "20", 
-                      ph: "6.0", 
-                      ec: "1200",
-                      temp: "22", 
-                      targetEC: "1400",
-                      targetPH: "6.0",
-                      waterType: "bajo_mineral",
-                      hasHeater: true,
-                      useOsmosisMix: false,
-                      osmosisMixPercentage: 0,
-                      waterNotes: ""
-                    });
-                    setStep(0);
-                    setTab("dashboard");
-                    alert("✅ Sistema restablecido");
-                  }
-                }}
-              >
-                <RotateCcw className="mr-2" size={16} />
-                Restablecer Sistema
               </Button>
             </div>
           </div>
