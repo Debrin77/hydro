@@ -1527,7 +1527,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture > 80) {
       res.push({
         title: "¡DADO DEMASIADO HÚMEDO!",
-        value: `${irrigationData.rockwoolMoisture}% humedad",
+        value: `${irrigationData.rockwoolMoisture}% humedad`,
         description: "Riesgo de asfixia radicular en dados pequeños. Aumentar intervalo.",
         color: "bg-gradient-to-r from-blue-700 to-cyan-800",
         icon: <Droplets className="text-white" size={28} />,
@@ -1538,7 +1538,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture < 50) {
       res.push({
         title: "DADO DEMASIADO SECO",
-        value: `${irrigationData.rockwoolMoisture}% humedad",
+        value: `${irrigationData.rockwoolMoisture}% humedad`,
         description: "Dados pequeños secan rápido. Reducir intervalo entre riegos.",
         color: "bg-gradient-to-r from-amber-600 to-orange-700",
         icon: <Cloud className="text-white" size={28} />,
@@ -3406,10 +3406,536 @@ export default function HydroAppFinal() {
     );
   };
 
-  // =================== COMPONENTES RESTANTES (sin cambios) ===================
+  // =================== TOWER TAB ===================
 
-  // TowerTab, CalendarTab, HistoryTab se mantienen igual que en el código original
-  // Solo se muestran las actualizaciones principales
+  const TowerTab = () => (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre</h2>
+        <p className="text-slate-600">Sistema escalonado 5-5-5</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <Sprout className="text-white" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Nivel 1 - Plántulas</h3>
+              <p className="text-sm text-slate-600">Plantas jóvenes</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {plants.filter(p => p.l === 1).map(plant => (
+              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                    <span className="text-white text-xs font-bold">{plant.p}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">{plant.v}</p>
+                    <p className="text-xs text-slate-500">Posición {plant.p}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(plant.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+            
+            {plants.filter(p => p.l === 1).length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-slate-500">No hay plántulas</p>
+              </div>
+            )}
+          </div>
+        </Card>
+        
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+              <Activity className="text-white" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Nivel 2 - Crecimiento</h3>
+              <p className="text-sm text-slate-600">Plantas en desarrollo</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {plants.filter(p => p.l === 2).map(plant => (
+              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                    <span className="text-white text-xs font-bold">{plant.p}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">{plant.v}</p>
+                    <p className="text-xs text-slate-500">Posición {plant.p}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(plant.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+            
+            {plants.filter(p => p.l === 2).length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-slate-500">No hay plantas en crecimiento</p>
+              </div>
+            )}
+          </div>
+        </Card>
+        
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+              <Leaf className="text-white" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Nivel 3 - Maduración</h3>
+              <p className="text-sm text-slate-600">Plantas listas para cosechar</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {plants.filter(p => p.l === 3).map(plant => (
+              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                    <span className="text-white text-xs font-bold">{plant.p}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">{plant.v}</p>
+                    <p className="text-xs text-slate-500">Posición {plant.p}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(plant.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+            
+            {plants.filter(p => p.l === 3).length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-slate-500">No hay plantas maduras</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+      
+      <div className="flex justify-between">
+        <Button
+          onClick={handleRotation}
+          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+        >
+          <RotateCcw className="mr-2" />
+          Rotar Niveles
+        </Button>
+        
+        <Button
+          onClick={() => {
+            if (plants.length >= 15) {
+              alert("La torre está llena (15/15 plantas)");
+              return;
+            }
+            setSelPos({ l: 1, v: "Iceberg", p: 1 });
+            // Scroll to top to see the add plant form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        >
+          <Plus className="mr-2" />
+          Añadir Planta
+        </Button>
+      </div>
+    </div>
+  );
+
+  // =================== CALENDAR TAB ===================
+
+  const CalendarTab = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    const monthNames = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+    
+    const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Calendario de Mantenimiento</h2>
+          <p className="text-slate-600">Planificación de tareas del sistema</p>
+        </div>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+                <Calendar className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">{monthNames[currentMonth]} {currentYear}</h3>
+                <p className="text-sm text-slate-600">Tareas programadas automáticamente</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLastClean(new Date().toISOString())}
+              >
+                <ShieldAlert className="mr-2" size={16} />
+                Limpieza Hecha
+              </Button>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <div className="grid grid-cols-7 gap-2 mb-4">
+              {dayNames.map(day => (
+                <div key={day} className="text-center font-bold text-slate-700 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-2">
+              {calendarDays.map((day, index) => (
+                <div
+                  key={index}
+                  className={`min-h-24 p-2 rounded-lg border ${
+                    day.isCurrentMonth
+                      ? 'bg-white border-slate-200'
+                      : 'bg-slate-50 border-slate-100'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`font-medium ${
+                      day.isCurrentMonth ? 'text-slate-800' : 'text-slate-400'
+                    }`}>
+                      {day.dayOfMonth}
+                    </span>
+                    
+                    {day.date.toDateString() === now.toDateString() && (
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-1">
+                    {day.events.includes('measure') && (
+                      <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        📊 Medir
+                      </div>
+                    )}
+                    
+                    {day.events.includes('rotation') && (
+                      <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                        🔄 Rotar
+                      </div>
+                    )}
+                    
+                    {day.events.includes('clean') && (
+                      <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                        🧼 Limpiar
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+            <h4 className="font-bold text-blue-800 mb-3">📅 Próximas tareas</h4>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-700">Última rotación:</span>
+                <span className="font-bold text-slate-800">
+                  {new Date(lastRot).toLocaleDateString()}
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-slate-700">Última limpieza:</span>
+                <span className="font-bold text-slate-800">
+                  {new Date(lastClean).toLocaleDateString()}
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-slate-700">Próxima medición:</span>
+                <span className="font-bold text-slate-800">
+                  {(() => {
+                    const nextMeasure = calendarDays.find(day => 
+                      day.isCurrentMonth && 
+                      day.events.includes('measure') && 
+                      day.date > now
+                    );
+                    return nextMeasure ? nextMeasure.date.toLocaleDateString() : 'Hoy';
+                  })()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
+  // =================== HISTORY TAB ===================
+
+  const HistoryTab = () => (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Historial del Sistema</h2>
+        <p className="text-slate-600">Registro de mediciones y eventos</p>
+      </div>
+      
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+            <BarChart className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Registro Histórico</h3>
+            <p className="text-sm text-slate-600">Todas las mediciones guardadas</p>
+          </div>
+        </div>
+        
+        {history.length > 0 ? (
+          <div className="space-y-4">
+            {history.slice(0, 10).map((record, index) => (
+              <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center">
+                      <Clipboard className="text-blue-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800">
+                        {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
+                      <p className="text-sm text-slate-600">{record.notes || "Medición manual"}</p>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteHistoryRecord(record.id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">pH</span>
+                      <span className="font-bold text-purple-600">{record.ph}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">EC</span>
+                      <span className="font-bold text-blue-600">{record.ec} µS/cm</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-amber-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Temperatura</span>
+                      <span className="font-bold text-amber-600">{record.temp}°C</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {history.length > 10 && (
+              <div className="text-center py-4">
+                <p className="text-slate-600">
+                  Mostrando las 10 mediciones más recientes de {history.length} totales
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <BarChart className="mx-auto text-slate-300 mb-3" size={48} />
+            <p className="text-slate-500">No hay historial de mediciones</p>
+            <p className="text-sm text-slate-400 mt-2">
+              Guarda mediciones desde el panel principal para verlas aquí
+            </p>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+
+  // =================== TIPS TAB ===================
+
+  const TipsSection = () => (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Consejos y Mejores Prácticas</h2>
+        <p className="text-slate-600">Aprende a optimizar tu sistema hidropónico</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+              <FlaskConical className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">CANNA Aqua Vega</h3>
+              <p className="text-sm text-slate-600">Mejores prácticas</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-emerald-50 rounded-lg">
+              <p className="text-sm text-emerald-800">
+                <strong>CANNA A y B siempre por separado:</strong> Nunca mezclar directamente. Primero A, mezclar, luego B.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Orden correcto:</strong> Agua → CalMag (si es necesario) → CANNA A → Mezclar → CANNA B → Mezclar → pH- → Mezclar.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <strong>Para agua dura:</strong> Considerar CANNA Aqua Flores o CANNA Hydro en lugar de Aqua Vega.
+              </p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <Droplets className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Gestión del Agua</h3>
+              <p className="text-sm text-slate-600">Ósmosis y CalMag</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-cyan-50 rounded-lg">
+              <p className="text-sm text-cyan-800">
+                <strong>Agua de ósmosis:</strong> Siempre añadir CalMag antes que los nutrientes principales.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-amber-50 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Agua dura:</strong> Considerar mezclar con ósmosis para reducir la dureza.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Temperatura ideal:</strong> Mantener entre 18-25°C. Por encima de 28°C es peligroso.
+              </p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <TreePine className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Lana de Roca Grodan</h3>
+              <p className="text-sm text-slate-600">Dados pequeños 2.5x2.5cm</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-cyan-50 rounded-lg">
+              <p className="text-sm text-cyan-800">
+                <strong>Preparación inicial:</strong> Remojar en agua con pH 5.5 y EC 0.6 durante 24h.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-800">
+                <strong>Riegos:</strong> Cortos y frecuentes. Los dados pequeños secan rápido.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-amber-50 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Humedad ideal:</strong> Mantener entre 60-80% de humedad en el dado.
+              </p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center">
+              <ThermometerSun className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Clima Castellón</h3>
+              <p className="text-sm text-slate-600">Consideraciones locales</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-red-50 rounded-lg">
+              <p className="text-sm text-red-800">
+                <strong>Verano:</strong> Viento poniente (12:00-20:00) reduce humedad 30%. Aumentar frecuencia de riego.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Invierno:</strong> Humedad alta reduce necesidades de riego. Espaciar riegos.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-amber-50 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Temperatura:</strong> En verano, sombrear el depósito para evitar sobrecalentamiento.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
 
   // =================== RENDER PRINCIPAL ===================
 
@@ -3543,7 +4069,7 @@ export default function HydroAppFinal() {
             </TabsContent>
             
             <TabsContent value="tower" className="mt-6">
-              {/* TowerTab (sin cambios del original) */}
+              <TowerTab />
             </TabsContent>
             
             <TabsContent value="calculator" className="mt-6">
@@ -3551,21 +4077,86 @@ export default function HydroAppFinal() {
             </TabsContent>
             
             <TabsContent value="calendar" className="mt-6">
-              {/* CalendarTab (sin cambios del original) */}
+              <CalendarTab />
             </TabsContent>
             
             <TabsContent value="history" className="mt-6">
-              {/* HistoryTab (sin cambios del original) */}
+              <HistoryTab />
             </TabsContent>
             
             <TabsContent value="tips" className="mt-6">
-              {/* TipsSection (actualizado para incluir nuevas características) */}
+              <TipsSection />
             </TabsContent>
           </Tabs>
         )}
       </main>
 
       {/* Modales y footer (sin cambios) */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="p-6 rounded-2xl max-w-md w-full">
+            <h3 className="font-bold text-slate-800 text-lg mb-3">Eliminar Planta</h3>
+            <p className="text-slate-600 mb-6">¿Estás seguro de que quieres eliminar esta planta? Esta acción no se puede deshacer.</p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setPlants(plants.filter(p => p.id !== showDeleteConfirm));
+                  setShowDeleteConfirm(null);
+                }}
+              >
+                Eliminar
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {showWaterSelector && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="p-6 rounded-2xl max-w-md w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-slate-800 text-lg">Cambiar Tipo de Agua</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowWaterSelector(false)}
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {Object.entries(WATER_TYPES).map(([key, water]) => (
+                <div
+                  key={key}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    config.waterType === key 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                  onClick={() => {
+                    setConfig({...config, waterType: key});
+                    setShowWaterSelector(false);
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    {water.icon}
+                    <span className="font-bold text-slate-800">{water.name}</span>
+                  </div>
+                  <p className="text-sm text-slate-600">{water.description}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Footer actualizado */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 py-3">
