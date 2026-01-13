@@ -1533,7 +1533,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture > 80) {
       res.push({
         title: "¡DADO DEMASIADO HÚMEDO!",
-        value: `${irrigationData.rockwoolMoisture}% humedad",
+        value: `${irrigationData.rockwoolMoisture}% humedad`,
         description: "Riesgo de asfixia radicular en dados pequeños. Aumentar intervalo.",
         color: "bg-gradient-to-r from-blue-700 to-cyan-800",
         icon: <Droplets className="text-white" size={28} />,
@@ -1544,7 +1544,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture < 50) {
       res.push({
         title: "DADO DEMASIADO SECO",
-        value: `${irrigationData.rockwoolMoisture}% humedad",
+        value: `${irrigationData.rockwoolMoisture}% humedad`,
         description: "Dados pequeños secan rápido. Reducir intervalo entre riegos.",
         color: "bg-gradient-to-r from-amber-600 to-orange-700",
         icon: <Cloud className="text-white" size={28} />,
