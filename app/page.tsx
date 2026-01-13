@@ -14,7 +14,8 @@ import {
   Home, BarChart3, X, RotateCcw, AlertCircle,
   Droplet, Leaf, TimerReset,
   ChevronDown, ChevronUp, Eye, EyeOff,
-  Target, Brain, AlertOctagon, GitCompare, BarChart
+  Target, Brain, AlertOctagon, GitCompare, BarChart,
+  History
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -24,6 +25,7 @@ import { Progress } from "@/components/ui/progress"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 
 // ============================================================================
 // CONFIGURACIÓN BASE - ACTUALIZADA
@@ -1544,7 +1546,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture < 50) {
       res.push({
         title: "DADO DEMASIADO SECO",
-        value: `${irrigationData.rockwoolMoisture}% humedad`,
+        value: `${irrigationData.rockwoolMoisture}% humedad",
         description: "Dados pequeños secan rápido. Reducir intervalo entre riegos.",
         color: "bg-gradient-to-r from-amber-600 to-orange-700",
         icon: <Cloud className="text-white" size={28} />,
@@ -1601,7 +1603,7 @@ export default function HydroAppFinal() {
             </div>
             
             <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
-              HydroMaster CANNA
+              HYDROCARU
             </h1>
             
             <p className="text-xl text-slate-600 max-w-lg mx-auto">
@@ -1953,7 +1955,7 @@ export default function HydroAppFinal() {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-sm font-medium text-slate-700">
-                        Valor de pH: <span className="font-bold text-purple-600">{config.ph}</span>
+                        Valor de pH
                       </label>
                       <span className={`px-2 py-1 rounded text-xs font-bold ${
                         parseFloat(config.ph) >= 5.5 && parseFloat(config.ph) <= 6.5 
@@ -1962,6 +1964,36 @@ export default function HydroAppFinal() {
                       }`}>
                         {parseFloat(config.ph) >= 5.5 && parseFloat(config.ph) <= 6.5 ? 'ÓPTIMO' : 'FUERA DE RANGO'}
                       </span>
+                    </div>
+                    
+                    <div className="flex gap-3 mb-4">
+                      <div className="flex-1">
+                        <Input
+                          type="number"
+                          min="4.0"
+                          max="9.0"
+                          step="0.1"
+                          value={config.ph}
+                          onChange={(e) => setConfig({...config, ph: e.target.value})}
+                          className="w-full text-center text-lg"
+                          placeholder="Ej: 6.0"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Valor actual: {config.ph}</p>
+                      </div>
+                      <div className="w-32">
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => {
+                            const newValue = prompt("Introduce el valor de pH medido:", config.ph);
+                            if (newValue !== null && !isNaN(parseFloat(newValue))) {
+                              setConfig({...config, ph: newValue});
+                            }
+                          }}
+                        >
+                          Editar
+                        </Button>
+                      </div>
                     </div>
                     
                     <input
@@ -2018,7 +2050,7 @@ export default function HydroAppFinal() {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-sm font-medium text-slate-700">
-                        Valor de EC: <span className="font-bold text-blue-600">{config.ec} µS/cm</span>
+                        Valor de EC (µS/cm)
                       </label>
                       <span className={`px-2 py-1 rounded text-xs font-bold ${
                         parseFloat(config.ec) >= 800 && parseFloat(config.ec) <= 1800 
@@ -2030,6 +2062,36 @@ export default function HydroAppFinal() {
                         {parseFloat(config.ec) > 1800 ? 'DEMASIADO ALTA' : 
                          parseFloat(config.ec) < 800 ? 'DEMASIADO BAJA' : 'ADEQUADA'}
                       </span>
+                    </div>
+                    
+                    <div className="flex gap-3 mb-4">
+                      <div className="flex-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="3000"
+                          step="50"
+                          value={config.ec}
+                          onChange={(e) => setConfig({...config, ec: e.target.value})}
+                          className="w-full text-center text-lg"
+                          placeholder="Ej: 1200"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Valor actual: {config.ec} µS/cm</p>
+                      </div>
+                      <div className="w-32">
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => {
+                            const newValue = prompt("Introduce el valor de EC medido (µS/cm):", config.ec);
+                            if (newValue !== null && !isNaN(parseFloat(newValue))) {
+                              setConfig({...config, ec: newValue});
+                            }
+                          }}
+                        >
+                          Editar
+                        </Button>
+                      </div>
                     </div>
                     
                     <input
@@ -2088,6 +2150,20 @@ export default function HydroAppFinal() {
                     <label className="block text-sm font-medium text-slate-700 mb-3">
                       EC Objetivo (µS/cm)
                     </label>
+                    <div className="flex gap-3 mb-4">
+                      <div className="flex-1">
+                        <Input
+                          type="number"
+                          min="800"
+                          max="1900"
+                          step="100"
+                          value={config.targetEC}
+                          onChange={(e) => setConfig({...config, targetEC: e.target.value})}
+                          className="w-full text-center text-lg"
+                          placeholder="Ej: 1400"
+                        />
+                      </div>
+                    </div>
                     <div className="flex items-center gap-4">
                       <input
                         type="range"
@@ -2115,6 +2191,20 @@ export default function HydroAppFinal() {
                     <label className="block text-sm font-medium text-slate-700 mb-3">
                       pH Objetivo
                     </label>
+                    <div className="flex gap-3 mb-4">
+                      <div className="flex-1">
+                        <Input
+                          type="number"
+                          min="5.5"
+                          max="6.5"
+                          step="0.1"
+                          value={config.targetPH}
+                          onChange={(e) => setConfig({...config, targetPH: e.target.value})}
+                          className="w-full text-center text-lg"
+                          placeholder="Ej: 6.0"
+                        />
+                      </div>
+                    </div>
                     <div className="flex items-center gap-4">
                       <input
                         type="range"
@@ -2644,11 +2734,11 @@ export default function HydroAppFinal() {
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Temperatura referencia (°C)
                   </label>
-                  <input
+                  <Input
                     type="number"
                     value={irrigationConfig.temperature}
                     onChange={(e) => setIrrigationConfig({...irrigationConfig, temperature: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    className="w-full"
                     min="10"
                     max="35"
                     step="0.5"
@@ -2819,6 +2909,143 @@ export default function HydroAppFinal() {
                parseFloat(config.temp) < 18 ? "Demasiado baja" : "Óptima"}
             </p>
           </div>
+        </div>
+      </Card>
+      
+      {/* Sección para editar parámetros manualmente */}
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+            <Activity className="text-white" size={24} />
+          </div>
+          <div>
+            <h2 className="font-bold text-slate-800 text-xl">Parámetros Actuales del Sistema</h2>
+            <p className="text-slate-600">Edita manualmente los valores medidos</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              pH Actual
+            </label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min="4.0"
+                max="9.0"
+                step="0.1"
+                value={config.ph}
+                onChange={(e) => setConfig({...config, ph: e.target.value})}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const value = prompt("Introduce el nuevo valor de pH:", config.ph);
+                  if (value !== null && !isNaN(parseFloat(value))) {
+                    setConfig({...config, ph: value});
+                  }
+                }}
+              >
+                Editar
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Rango ideal: 5.5 - 6.5</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              EC Actual (µS/cm)
+            </label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min="0"
+                max="3000"
+                step="50"
+                value={config.ec}
+                onChange={(e) => setConfig({...config, ec: e.target.value})}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const value = prompt("Introduce el nuevo valor de EC (µS/cm):", config.ec);
+                  if (value !== null && !isNaN(parseFloat(value))) {
+                    setConfig({...config, ec: value});
+                  }
+                }}
+              >
+                Editar
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Rango ideal: 800 - 1800</p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Temperatura (°C)
+            </label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min="10"
+                max="35"
+                step="0.5"
+                value={config.temp}
+                onChange={(e) => setConfig({...config, temp: e.target.value})}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const value = prompt("Introduce la nueva temperatura (°C):", config.temp);
+                  if (value !== null && !isNaN(parseFloat(value))) {
+                    setConfig({...config, temp: value});
+                  }
+                }}
+              >
+                Editar
+              </Button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Rango ideal: 18 - 25°C</p>
+          </div>
+        </div>
+        
+        <div className="mt-6">
+          <Button
+            className="w-full"
+            onClick={() => {
+              const ph = prompt("pH medido:", config.ph);
+              const ec = prompt("EC medido (µS/cm):", config.ec);
+              const temp = prompt("Temperatura (°C):", config.temp);
+              
+              if (ph !== null && ec !== null && temp !== null) {
+                setConfig({
+                  ...config,
+                  ph: ph,
+                  ec: ec,
+                  temp: temp
+                });
+                
+                // Añadir al historial
+                const newRecord = {
+                  id: generatePlantId(),
+                  date: new Date().toISOString(),
+                  ph,
+                  ec,
+                  notes: "Medición manual actualizada"
+                };
+                setHistory([...history, newRecord]);
+                
+                alert("✅ Parámetros actualizados y guardados en historial");
+              }
+            }}
+          >
+            <RefreshCw className="mr-2" size={16} />
+            Actualizar Todos los Parámetros
+          </Button>
         </div>
       </Card>
     </div>
@@ -3120,6 +3347,85 @@ export default function HydroAppFinal() {
                 )}
               </div>
             </div>
+          </div>
+        </Card>
+        
+        {/* Sección para editar parámetros manualmente en la pestaña de Nutrición */}
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+              <Settings className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Editar Parámetros Manualmente</h3>
+              <p className="text-slate-600">Actualiza los valores medidos</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                pH Actual
+              </label>
+              <Input
+                type="number"
+                min="4.0"
+                max="9.0"
+                step="0.1"
+                value={config.ph}
+                onChange={(e) => setConfig({...config, ph: e.target.value})}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                EC Actual (µS/cm)
+              </label>
+              <Input
+                type="number"
+                min="0"
+                max="3000"
+                step="50"
+                value={config.ec}
+                onChange={(e) => setConfig({...config, ec: e.target.value})}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Temperatura (°C)
+              </label>
+              <Input
+                type="number"
+                min="10"
+                max="35"
+                step="0.5"
+                value={config.temp}
+                onChange={(e) => setConfig({...config, temp: e.target.value})}
+                className="w-full"
+              />
+            </div>
+          </div>
+          
+          <div className="mt-4 flex justify-end">
+            <Button
+              onClick={() => {
+                // Añadir al historial
+                const newRecord = {
+                  id: generatePlantId(),
+                  date: new Date().toISOString(),
+                  ph: config.ph,
+                  ec: config.ec,
+                  notes: "Medición actualizada desde Nutrición"
+                };
+                setHistory([...history, newRecord]);
+                alert("✅ Parámetros actualizados y guardados en historial");
+              }}
+            >
+              Guardar Cambios
+            </Button>
           </div>
         </Card>
       </div>
@@ -4147,47 +4453,49 @@ export default function HydroAppFinal() {
         </div>
       ) : (
         <div className="max-w-6xl mx-auto">
-          <Tabs value={tab} onValueChange={setTab} className="space-y-8">
+          <div className="mb-6">
             <TabsList className="grid grid-cols-5 w-full">
-              <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <TabsTrigger value="dashboard" className="flex items-center justify-center gap-2 px-2 py-3">
                 <Home size={16} />
-                Panel
+                <span className="hidden sm:inline">Panel</span>
               </TabsTrigger>
-              <TabsTrigger value="nutrition" className="flex items-center gap-2">
+              <TabsTrigger value="nutrition" className="flex items-center justify-center gap-2 px-2 py-3">
                 <FlaskConical size={16} />
-                Nutrición
+                <span className="hidden sm:inline">Nutrición</span>
               </TabsTrigger>
-              <TabsTrigger value="tower" className="flex items-center gap-2">
+              <TabsTrigger value="tower" className="flex items-center justify-center gap-2 px-2 py-3">
                 <TreePine size={16} />
-                Torre
+                <span className="hidden sm:inline">Torre</span>
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <TabsTrigger value="calendar" className="flex items-center justify-center gap-2 px-2 py-3">
                 <Calendar size={16} />
-                Calendario
+                <span className="hidden sm:inline">Calendario</span>
               </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2">
+              <TabsTrigger value="settings" className="flex items-center justify-center gap-2 px-2 py-3">
                 <Settings size={16} />
-                Ajustes
+                <span className="hidden sm:inline">Ajustes</span>
               </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="dashboard">
+          </div>
+          
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsContent value="dashboard" className="mt-0">
               <DashboardTab />
             </TabsContent>
             
-            <TabsContent value="nutrition">
+            <TabsContent value="nutrition" className="mt-0">
               <NutritionTab />
             </TabsContent>
             
-            <TabsContent value="tower">
+            <TabsContent value="tower" className="mt-0">
               <TowerTab />
             </TabsContent>
             
-            <TabsContent value="calendar">
+            <TabsContent value="calendar" className="mt-0">
               <CalendarTab />
             </TabsContent>
             
-            <TabsContent value="settings">
+            <TabsContent value="settings" className="mt-0">
               <SettingsTab />
             </TabsContent>
           </Tabs>
