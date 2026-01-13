@@ -10,12 +10,11 @@ import {
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, 
   RefreshCw, Skull, Info, Calculator, Filter, 
   Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun, 
-  WindIcon, Clipboard, ThermometerSnowflake, TreePine, Settings,
+  Clipboard, ThermometerSnowflake, TreePine, Settings,
   Home, BarChart3, X, RotateCcw, AlertCircle,
-  Droplet, Leaf, TimerReset, ThermometerCold,
-  ChevronDown, ChevronUp, Eye, EyeOff, CloudRain as Rain,
-  Thermometer as Temp, Wind as Breeze, Target,
-  Brain, AlertOctagon, Waves, GitCompare, BarChart
+  Droplet, Leaf, TimerReset,
+  ChevronDown, ChevronUp, Eye, EyeOff,
+  Target, Brain, AlertOctagon, GitCompare, BarChart
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -1339,7 +1338,7 @@ export default function HydroAppFinal() {
         value: `${calmagNeeded.dosage}ml`, 
         description: calmagNeeded.reason, 
         color: "bg-gradient-to-r from-blue-700 to-cyan-800",
-        icon: <Waves className="text-white" size={28} />,
+        icon: <Droplets className="text-white" size={28} />,
         priority: 2
       });
     }
@@ -1554,7 +1553,7 @@ export default function HydroAppFinal() {
         value: "Aumentar frecuencia",
         description: "Vientos secos de tarde en Castellón. Aumenta frecuencia de riego 30%.",
         color: "bg-gradient-to-r from-yellow-600 to-amber-700",
-        icon: <Breeze className="text-white" size={28} />,
+        icon: <Wind className="text-white" size={28} />,
         priority: 2
       });
     }
@@ -1732,7 +1731,7 @@ export default function HydroAppFinal() {
                       Temperatura del Agua (°C)
                     </label>
                     <div className="flex items-center gap-4">
-                      <ThermometerCold className="text-blue-500" />
+                      <ThermometerSnowflake className="text-blue-500" />
                       <input
                         type="range"
                         min="10"
@@ -1838,7 +1837,7 @@ export default function HydroAppFinal() {
                 <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <Waves className="text-blue-600" size={20} />
+                      <Droplets className="text-blue-600" size={20} />
                       <div>
                         <h4 className="font-bold text-slate-800">Mezcla con Agua de Ósmosis</h4>
                         <p className="text-sm text-slate-600">Mezclar agua del grifo con ósmosis para controlar dureza</p>
@@ -2797,7 +2796,7 @@ export default function HydroAppFinal() {
           
           <div className="p-4 bg-white rounded-xl border border-slate-200">
             <div className="flex items-center gap-2 mb-2">
-              <Waves className="text-blue-600" size={18} />
+              <Droplets className="text-blue-600" size={18} />
               <h4 className="font-bold text-slate-800">CalMag</h4>
             </div>
             <p className="text-sm text-slate-600">
@@ -3312,7 +3311,7 @@ export default function HydroAppFinal() {
             <Card className="p-6 rounded-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <Waves className="text-white" size={24} />
+                  <Droplets className="text-white" size={24} />
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-800">Calculadora de CalMag</h3>
