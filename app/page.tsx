@@ -1546,7 +1546,7 @@ export default function HydroAppFinal() {
     if (irrigationData.rockwoolMoisture < 50) {
       res.push({
         title: "DADO DEMASIADO SECO",
-        value: `${irrigationData.rockwoolMoisture}% humedad",
+        value: `${irrigationData.rockwoolMoisture}% humedad`,
         description: "Dados pequeños secan rápido. Reducir intervalo entre riegos.",
         color: "bg-gradient-to-r from-amber-600 to-orange-700",
         icon: <Cloud className="text-white" size={28} />,
@@ -3178,7 +3178,7 @@ export default function HydroAppFinal() {
                   </div>
                   
                   <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                    <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt=0.5">
                       3
                     </div>
                     <p className="text-sm text-slate-700">Añadir {cannaDosage.a}ml de CANNA A, mezclar bien</p>
