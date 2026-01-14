@@ -1,261 +1,240 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo } from "react"
 import { 
-  Sprout, Beaker, Plus, Trash2, Lightbulb, Droplets, Thermometer, 
-  Zap, ChevronRight, Home, Settings, Gauge, Sun, Waves, 
-  Wind, Timer, ClipboardList, Activity, FlaskConical, 
-  RefreshCw, Layers, AlertCircle, Info, Check, Filter, Brain,
-  GitCompare, AlertOctagon, ArrowDownCircle, CloudRain
+  Sprout, Beaker, Plus, Trash2, Lightbulb, 
+  Zap, ChevronRight, Home, Settings, Layers, 
+  Wind, Timer, ClipboardList, FlaskConical, 
+  RefreshCw, Check, Brain, ArrowRight, Waves
 } from "lucide-react"
 
-// ============================================================================
-// LÓGICA TÉCNICA AVANZADA (RECUPERADA Y COMPLETA)
-// ============================================================================
-
+// --- CONFIGURACIÓN TÉCNICA RECUPERADA ---
 const WATER_TYPES = {
-  "osmosis": { name: "Ósmosis Inversa", ecBase: 0, hardness: 0, phBase: 7.0, calmag: true, desc: "Requiere estabilización y CalMag." },
-  "blanda": { name: "Mezcla Blanda", ecBase: 350, hardness: 80, phBase: 7.2, calmag: false, desc: "Mezcla óptima zona Levante." },
-  "dura_cs": { name: "Grifo Castellón", ecBase: 950, hardness: 350, phBase: 8.2, calmag: false, desc: "Alto contenido en carbonatos." }
+  "osmosis": { name: "Ósmosis Inversa", ecBase: 0, desc: "Pura. Requiere CalMag y estabilización." },
+  "blanda": { name: "Mezcla Blanda", ecBase: 350, desc: "Óptima para Castellón (Mezcla 50/50)." },
+  "dura": { name: "Grifo Castellón", ecBase: 900, desc: "Muy dura. Alto riesgo de bloqueos." }
 }
 
 const VARIETIES = {
-  "Romana": { name: "L. Romana", ecRange: [0.8, 1.4, 1.7], phIdeal: 6.0, color: "#10b981" },
-  "Hoja Roble": { name: "H. Roble", ecRange: [0.9, 1.4, 1.9], phIdeal: 6.0, color: "#ef4444" },
-  "Lollo Rosso": { name: "L. Rosso", ecRange: [0.8, 1.3, 1.8], phIdeal: 6.0, color: "#a855f7" }
+  "Romana": { name: "Lechuga Romana", ec: [0.8, 1.4, 1.8], color: "bg-emerald-500" },
+  "Hoja Roble": { name: "Hoja de Roble", ec: [0.9, 1.5, 2.0], color: "bg-red-500" },
+  "Lollo Rosso": { name: "Lollo Rosso", ec: [0.8, 1.3, 1.7], color: "bg-purple-500" },
+  "Escarola": { name: "Escarola", ec: [1.0, 1.6, 2.1], color: "bg-green-400" }
 }
 
-// ============================================================================
-// COMPONENTES DE INTERFAZ PROFESIONAL
-// ============================================================================
-
-const StatCard = ({ label, value, unit, icon: Icon, subtext, color = "emerald" }: any) => (
-  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-    <div className="flex justify-between items-start mb-2">
-      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
-      <Icon size={16} className={`text-${color}-500`} />
-    </div>
-    <div className="flex items-baseline gap-1">
-      <span className="text-2xl font-black text-slate-900 tracking-tight">{value}</span>
-      <span className="text-xs font-bold text-slate-400">{unit}</span>
-    </div>
-    {subtext && <p className="text-[10px] text-slate-400 mt-1 font-medium italic leading-tight">{subtext}</p>}
-  </div>
-)
-
-export default function HydroControlPro() {
+export default function HydroMasterSystem() {
+  // ESTADOS DE INICIO Y NAVEGACIÓN
+  const [step, setStep] = useState(0) // 0: Inicio, 1: Agua, 2: Plantas, 3: Dashboard
   const [tab, setTab] = useState("dashboard")
-  const [plants, setPlants] = useState<any[]>([])
-  const [history, setHistory] = useState<any[]>([])
+  
+  // CONFIGURACIÓN DE USUARIO
   const [config, setConfig] = useState({
     waterType: "osmosis",
     vol: 18,
     temp: 24,
-    phActual: 7.0,
-    ecActual: 0,
     isPoniente: false,
-    osmosisMix: 100
+    phActual: 6.0
   })
 
-  // --- MOTOR DE CÁLCULO DE ALTA PRECISIÓN (Recuperado del código original) ---
+  // GESTIÓN DE LAS 15 PLANTAS
+  const [tower, setTower] = useState<any[]>(Array(15).fill(null))
+  const [history, setHistory] = useState<any[]>([])
+
+  // --- MOTOR DE CÁLCULO ---
   const analysis = useMemo(() => {
-    if (plants.length === 0) return null
+    const activePlants = tower.filter(p => p !== null)
+    if (activePlants.length === 0) return null
 
-    // 1. Cálculo de EC Objetivo ponderada
-    let totalTargetEC = 0
-    plants.forEach(p => {
-      const v = VARIETIES[p.variety as keyof typeof VARIETIES]
-      totalTargetEC += v.ecRange[p.level - 1]
+    let totalEC = 0
+    activePlants.forEach(p => {
+      totalEC += p.ec[p.level - 1]
     })
-    let targetEC = (totalTargetEC / plants.length) * 1000
     
-    // 2. Ajuste por Clima de Castellón (Efecto Poniente)
-    const climateFactor = (config.temp > 26 || config.isPoniente) ? 0.82 : 1.0
-    targetEC *= climateFactor
+    let targetEC = (totalEC / activePlants.length) * 1000
+    if (config.isPoniente || config.temp > 26) targetEC *= 0.85 // Factor Castellón
 
-    // 3. Cálculo de Nutrientes (Lógica CANNA A+B)
     const waterBase = WATER_TYPES[config.waterType as keyof typeof WATER_TYPES].ecBase
-    const netECNeeded = Math.max(0, targetEC - waterBase)
-    const dosageTotal = (netECNeeded / 500) * config.vol 
-
-    // 4. Diagnóstico de CalMag (Específico para Ósmosis)
-    const calmagNeeded = config.waterType === "osmosis" ? (config.vol * 0.8).toFixed(1) : "0"
-
-    // 5. Diagnóstico de pH y estabilidad (Poder Tampón)
-    const phStability = config.waterType === "osmosis" ? "CRÍTICA (Bajo Tampón)" : 
-                       config.waterType === "dura_cs" ? "ALTA (Agua Dura)" : "ESTABLE"
+    const netEC = Math.max(0, targetEC - waterBase)
+    const dose = (netEC / 500) * config.vol // Ratio Canna Aqua
 
     return {
       targetEC: Math.round(targetEC),
-      doseA: (dosageTotal / 2).toFixed(1),
-      doseB: (dosageTotal / 2).toFixed(1),
-      calmag: calmagNeeded,
+      doseA: (dose / 2).toFixed(1),
+      doseB: (dose / 2).toFixed(1),
+      calmag: config.waterType === "osmosis" ? (config.vol * 0.8).toFixed(1) : "0",
       irrigation: config.temp > 25 ? "15m ON / 20m OFF" : "15m ON / 45m OFF",
-      phStability,
-      ecAlert: config.ecActual > targetEC + 300 ? "ALTA" : config.ecActual < targetEC - 300 ? "BAJA" : "OK"
+      phRisk: config.waterType === "osmosis" ? "Inestable" : "Estable"
     }
-  }, [plants, config])
+  }, [tower, config])
 
-  const addPlant = (variety: string) => {
-    if (plants.length < 15) setPlants([...plants, { id: Date.now(), variety, level: 1 }])
+  // --- ACCIONES ---
+  const placePlant = (index: number, varietyKey: string) => {
+    const newTower = [...tower]
+    newTower[index] = { ...VARIETIES[varietyKey as keyof typeof VARIETIES], level: 1 }
+    setTower(newTower)
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
-      {/* Header Estilo Industrial */}
-      <header className="bg-slate-900 text-white p-5 sticky top-0 z-50 shadow-lg border-b border-emerald-500/30">
-        <div className="max-w-2xl mx-auto flex justify-between items-center">
-          <div>
-            <div className="flex items-center gap-2">
-              <Activity className="text-emerald-400" size={18} />
-              <h1 className="text-lg font-black tracking-tighter uppercase italic">
-                System<span className="text-emerald-400 text-sm ml-1">V15-PRO</span>
-              </h1>
+  const cycleLevel = (index: number) => {
+    if (!tower[index]) return
+    const newTower = [...tower]
+    newTower[index].level = (newTower[index].level % 3) + 1
+    setTower(newTower)
+  }
+
+  // --- INTERFAZ DE INICIO (SETUP) ---
+  if (step < 3) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+        <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-500">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-emerald-500/20">
+              <Sprout size={40} className="text-white" />
             </div>
-            <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase mt-1">
-              Castellón Tower • Grodan 2.5 Logic
-            </p>
+            <h1 className="text-3xl font-black italic tracking-tighter uppercase">System<span className="text-emerald-500">V15</span></h1>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Configuración Inicial</p>
           </div>
-          <div className="text-right">
-            {config.isPoniente && (
-              <div className="bg-orange-500/20 text-orange-400 text-[8px] px-2 py-0.5 rounded-full font-bold animate-pulse mb-1">
-                PONIENTE ACTIVO: EC -18%
+
+          {step === 0 && (
+            <div className="space-y-4">
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
+                <h3 className="text-sm font-black uppercase mb-4 text-emerald-400">Tipo de Agua Base</h3>
+                <div className="space-y-2">
+                  {Object.entries(WATER_TYPES).map(([key, val]) => (
+                    <button key={key} onClick={() => setConfig({...config, waterType: key})} 
+                      className={`w-full p-4 rounded-2xl text-left border-2 transition-all ${config.waterType === key ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-800 bg-slate-900'}`}>
+                      <p className="font-bold text-sm">{val.name}</p>
+                      <p className="text-[10px] text-slate-500 uppercase">{val.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
-            <p className="text-xs font-mono font-bold text-slate-300 uppercase">Status: <span className="text-emerald-400">Nominal</span></p>
+              <button onClick={() => setStep(1)} className="w-full bg-white text-black font-black py-5 rounded-2xl flex items-center justify-center gap-2">
+                CONTINUAR <ArrowRight size={18}/>
+              </button>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-4">
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
+                <h3 className="text-sm font-black uppercase mb-4 text-emerald-400">Volumen del Depósito</h3>
+                <input type="range" min="5" max="25" value={config.vol} onChange={(e) => setConfig({...config, vol: parseInt(e.target.value)})} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
+                <div className="flex justify-between mt-4 text-2xl font-black">
+                  <span>{config.vol} <small className="text-xs text-slate-500">LITROS</small></span>
+                </div>
+              </div>
+              <button onClick={() => setStep(2)} className="w-full bg-white text-black font-black py-5 rounded-2xl flex items-center justify-center gap-2">
+                CONFIGURAR TORRE <ArrowRight size={18}/>
+              </button>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4 text-center">
+              <p className="text-sm text-slate-400">Has configurado {config.vol}L con agua {config.waterType}.</p>
+              <button onClick={() => setStep(3)} className="w-full bg-emerald-500 text-white font-black py-6 rounded-2xl text-xl shadow-xl shadow-emerald-500/20">
+                INICIAR PANEL DE CONTROL
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // --- PANEL PRINCIPAL (DASHBOARD) ---
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans text-slate-900">
+      {/* HEADER */}
+      <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-50">
+        <div className="max-w-xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white"><Layers size={18}/></div>
+            <span className="font-black text-lg tracking-tighter uppercase italic">Control<span className="text-emerald-600">V15</span></span>
+          </div>
+          <div className="flex gap-2">
+            {config.isPoniente && <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-2 py-1 rounded-full animate-pulse">PONIENTE</span>}
+            <span className="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">{config.vol}L</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto p-4 space-y-6">
+      <main className="max-w-xl mx-auto p-4 space-y-6">
         
-        {/* NAVEGACIÓN POR PESTAÑAS TÉCNICAS */}
-        <div className="flex gap-1 overflow-x-auto pb-2 no-scrollbar">
-          {[
-            { id: "dashboard", icon: Home, label: "Resumen" },
-            { id: "tower", icon: Layers, label: "Matriz V15" },
-            { id: "control", icon: FlaskConical, label: "Química" },
-            { id: "sensors", icon: Gauge, label: "Telemetría" },
-            { id: "tips", icon: Brain, label: "Protocolos" }
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 ${
-                tab === t.id ? "bg-slate-900 text-white shadow-md" : "bg-white text-slate-400 border border-slate-200"
-              }`}
-            >
-              <t.icon size={14} /> {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* CONTENIDO: DASHBOARD / RESUMEN */}
+        {/* PESTAÑA: RESUMEN (DASHBOARD) */}
         {tab === "dashboard" && (
-          <div className="space-y-4 animate-in fade-in duration-300">
+          <div className="space-y-4 animate-in fade-in">
             <div className="grid grid-cols-2 gap-4">
-              <StatCard label="EC Objetivo" value={analysis?.targetEC || "0"} unit="µS/cm" icon={Zap} subtext="Compensado por evaporación" />
-              <StatCard label="pH de Consigna" value="6.0" unit="pH" icon={Activity} subtext="Ideal para Lana de Roca" color="blue" />
-            </div>
-
-            <div className="bg-slate-900 text-white rounded-xl p-5 shadow-xl border border-slate-700">
-              <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-4">Mezcla Requerida (Canna Aqua)</h3>
-              <div className="grid grid-cols-3 gap-4 border-b border-slate-800 pb-4 mb-4">
-                <div className="text-center border-r border-slate-800">
-                  <p className="text-2xl font-black">{analysis?.doseA}<span className="text-[10px] ml-1 text-slate-500">ml</span></p>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase">Parte A</p>
-                </div>
-                <div className="text-center border-r border-slate-800">
-                  <p className="text-2xl font-black">{analysis?.doseB}<span className="text-[10px] ml-1 text-slate-500">ml</span></p>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase">Parte B</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-black text-blue-400">{analysis?.calmag}<span className="text-[10px] ml-1 text-slate-500">ml</span></p>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase">CalMag</p>
-                </div>
+              <div className="bg-slate-900 text-white p-5 rounded-3xl shadow-xl">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">EC Objetivo</p>
+                <p className="text-4xl font-black text-emerald-400">{analysis?.targetEC || 0}</p>
+                <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-tighter">µS/cm Compensada</p>
               </div>
-              <div className="flex justify-between items-center text-[10px] font-bold">
-                <span className="text-slate-500 italic">Pre-tratamiento: Mezclar CalMag 3min antes de A+B</span>
-                <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded">Agua: {WATER_TYPES[config.waterType as keyof typeof WATER_TYPES].name}</span>
+              <div className="bg-white border border-slate-200 p-5 rounded-3xl shadow-sm">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dosis CANNA</p>
+                <p className="text-3xl font-black text-blue-600">{analysis?.doseA || 0} <small className="text-xs">ml</small></p>
+                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">De cada parte (A+B)</p>
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-4 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg"><Timer size={18}/></div>
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Waves size={24}/></div>
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Riego Grodan 2.5</p>
-                  <p className="text-sm font-black text-slate-900">{analysis?.irrigation}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Ciclo de Riego</p>
+                  <p className="text-md font-black italic">{analysis?.irrigation || 'Pendiente de plantas'}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Poder Tampón</p>
-                <p className={`text-[10px] font-black ${config.waterType === 'osmosis' ? 'text-red-500' : 'text-emerald-600'}`}>
-                  {analysis?.phStability}
-                </p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase">pH</p>
+                 <p className="text-sm font-black text-emerald-600 uppercase">{analysis?.phRisk}</p>
               </div>
             </div>
+
+            {analysis?.calmag !== "0" && (
+              <div className="bg-blue-600 text-white p-4 rounded-2xl flex items-center gap-3">
+                <FlaskConical size={20}/>
+                <p className="text-xs font-bold uppercase tracking-tight text-blue-50">Añadir {analysis?.calmag}ml de CalMag antes de los nutrientes</p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* CONTENIDO: MATRIZ V15 (Gestión de Plantas) */}
+        {/* PESTAÑA: TORRE (GESTIÓN DE 15 PLANTAS) */}
         {tab === "tower" && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                  <Layers size={16} className="text-emerald-500"/> Matriz de Ocupación V15
-                </h3>
-                <span className="text-[10px] font-black bg-slate-900 px-2 py-1 rounded text-white uppercase tracking-tighter">
-                  Nodes: {plants.length} / 15
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-5 gap-2 mb-8">
-                {[...Array(15)].map((_, i) => (
-                  <div 
-                    key={i}
-                    onClick={() => {
-                      if (plants[i]) {
-                        const newPlants = [...plants];
-                        newPlants[i].level = (newPlants[i].level % 3) + 1;
-                        setPlants(newPlants);
-                      }
-                    }}
-                    className={`aspect-square rounded border-2 flex flex-col items-center justify-center transition-all cursor-pointer relative ${
-                      plants[i] 
-                      ? 'border-emerald-500 bg-white shadow-sm' 
-                      : 'border-dashed border-slate-200 bg-slate-50'
-                    }`}
-                  >
-                    {plants[i] ? (
+          <div className="space-y-4 animate-in fade-in">
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl">
+              <h3 className="text-xs font-black uppercase mb-4 flex items-center gap-2">
+                <Layers size={16} className="text-emerald-600"/> Matriz de Ocupación
+              </h3>
+              <div className="grid grid-cols-5 gap-3">
+                {tower.map((plant, i) => (
+                  <div key={i} onClick={() => cycleLevel(i)} className={`aspect-square rounded-2xl border-2 transition-all flex flex-col items-center justify-center relative cursor-pointer ${plant ? 'border-emerald-500 bg-emerald-50' : 'border-dashed border-slate-200 bg-slate-50'}`}>
+                    {plant ? (
                       <>
-                        <span className="text-[11px] font-black text-slate-900">{plants[i].variety.substring(0,3).toUpperCase()}</span>
-                        <div className="absolute bottom-0 left-0 right-0 flex gap-0.5 p-0.5">
-                          {[...Array(3)].map((_, l) => (
-                            <div key={l} className={`h-1 flex-1 rounded-full ${plants[i].level > l ? 'bg-emerald-500' : 'bg-slate-100'}`} />
-                          ))}
+                        <span className="text-[10px] font-black">{plant.name[0]}</span>
+                        <div className="absolute bottom-1 w-2/3 h-1 bg-emerald-200 rounded-full overflow-hidden">
+                           <div className="h-full bg-emerald-600" style={{width: `${(plant.level/3)*100}%`}}></div>
                         </div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setPlants(plants.filter((_, idx) => idx !== i)) }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 border border-white"
-                        >
-                          <Trash2 size={8} />
+                        <button onClick={(e) => { e.stopPropagation(); const n = [...tower]; n[i]=null; setTower(n); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md">
+                          <XIcon size={10}/>
                         </button>
                       </>
-                    ) : <Plus size={12} className="text-slate-300" />}
+                    ) : <Plus size={14} className="text-slate-300"/>}
                   </div>
                 ))}
               </div>
+            </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                {Object.keys(VARIETIES).map(v => (
-                  <button 
-                    key={v}
-                    onClick={() => addPlant(v)}
-                    className="py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded text-[9px] font-black uppercase tracking-tighter transition-all"
-                  >
-                    + {v}
+            <div className="bg-white border border-slate-200 p-4 rounded-3xl">
+              <h3 className="text-[10px] font-black uppercase text-slate-400 mb-3">Seleccionar Variedad para Huecos Vacíos</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.keys(VARIETIES).map(key => (
+                  <button key={key} onClick={() => {
+                    const firstEmpty = tower.findIndex(p => p === null);
+                    if (firstEmpty !== -1) placePlant(firstEmpty, key);
+                  }} className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">
+                    + {VARIETIES[key as keyof typeof VARIETIES].name}
                   </button>
                 ))}
               </div>
@@ -263,116 +242,76 @@ export default function HydroControlPro() {
           </div>
         )}
 
-        {/* CONTENIDO: TELEMETRÍA (Sensores y Historial) */}
-        {tab === "sensors" && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-8 shadow-sm">
-              <div className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sonda pH (Lectura Real)</label>
-                  <span className="text-3xl font-black text-emerald-600 font-mono tracking-tighter leading-none">{config.phActual.toFixed(1)}</span>
-                </div>
-                <input type="range" min="4" max="8.5" step="0.1" value={config.phActual} onChange={(e) => setConfig({...config, phActual: parseFloat(e.target.value)})} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sonda EC (µS/cm)</label>
-                  <span className="text-3xl font-black text-blue-600 font-mono tracking-tighter leading-none">{config.ecActual}</span>
-                </div>
-                <input type="range" min="0" max="2500" step="10" value={config.ecActual} onChange={(e) => setConfig({...config, ecActual: parseInt(e.target.value)})} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-              </div>
-
-              <button 
-                onClick={() => {
-                  const log = { id: Date.now(), t: new Date().toLocaleTimeString(), ph: config.phActual, ec: config.ecActual };
-                  setHistory([log, ...history]);
-                }}
-                className="w-full bg-slate-900 text-white py-4 rounded-lg font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-800 transition-all flex items-center justify-center gap-3"
-              >
-                <ClipboardList size={18} className="text-emerald-400" /> Registrar en Base de Datos
-              </button>
-            </div>
-
-            {/* LOGS HISTÓRICOS */}
-            <div className="space-y-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Historial de Calibración</p>
-              {history.length === 0 && <div className="text-center py-8 text-slate-300 text-[10px] uppercase font-bold border-2 border-dashed border-slate-100 rounded-xl">Sin datos registrados</div>}
-              {history.map(h => (
-                <div key={h.id} className="bg-white border border-slate-100 p-3 rounded-lg flex justify-between items-center text-[10px] font-bold">
-                  <span className="text-slate-400 font-mono">{h.t}</span>
-                  <div className="flex gap-6 uppercase">
-                    <span className="text-emerald-600">pH {h.ph}</span>
-                    <span className="text-blue-600">EC {h.ec} µS</span>
-                  </div>
-                  <button onClick={() => setHistory(history.filter(x => x.id !== h.id))} className="text-slate-300 hover:text-red-500 transition-colors">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* PROTOCOLOS TÉCNICOS (Recuperado el contenido de Castellón y Lana de Roca) */}
+        {/* PESTAÑA: PROTOCOLOS */}
         {tab === "tips" && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-            <div className="bg-white border-l-4 border-emerald-500 p-5 rounded-r-xl shadow-sm">
-              <h4 className="text-[11px] font-black uppercase text-emerald-600 mb-2 flex items-center gap-2">
-                <RefreshCw size={14}/> Protocolo Grodan 2.5x2.5
-              </h4>
-              <p className="text-[10px] text-slate-600 leading-relaxed font-bold italic">
-                - Hidratar dados a pH 5.5 durante 24h antes del uso.<br/>
-                - Mantener saturación al 75% para evitar hipoxia.<br/>
-                - En niveles 2 y 3, aumentar frecuencia de riego ante el aumento de transpiración foliar.
+          <div className="space-y-4 animate-in fade-in">
+            <div className="bg-white border-l-4 border-emerald-500 p-5 rounded-r-3xl shadow-sm">
+              <h4 className="text-[11px] font-black uppercase text-emerald-600 mb-2">Protocolo Lana de Roca</h4>
+              <p className="text-[11px] text-slate-600 leading-relaxed italic">
+                Lavar raíces con agua a 22°C. Insertar en dado Grodan 2.5cm pre-estabilizado a pH 5.5. No sumergir la corona de la raíz.
               </p>
             </div>
+            <div className="bg-slate-900 border-l-4 border-orange-500 p-5 rounded-r-3xl shadow-sm">
+              <h4 className="text-[11px] font-black uppercase text-orange-400 mb-2 flex items-center gap-1"><Wind size={12}/> Castellón: Poniente</h4>
+              <p className="text-[11px] text-slate-400 leading-relaxed italic font-medium">
+                En días de Poniente, la planta transpira más. El sistema baja la EC automáticamente para evitar quemar las puntas por exceso de sales.
+              </p>
+            </div>
+          </div>
+        )}
 
-            <div className="bg-slate-900 text-white border-l-4 border-orange-500 p-5 rounded-r-xl shadow-sm">
-              <h4 className="text-[11px] font-black uppercase text-orange-400 mb-2 flex items-center gap-2">
-                <Wind size={14}/> Alerta Climatológica: Castellón
-              </h4>
-              <p className="text-[10px] text-slate-400 leading-relaxed font-bold italic">
-                Vientos de Poniente: La humedad cae drásticamente. El sistema activa reducción de EC automática para evitar quemaduras por exceso de sales al transpirar más agua.
-              </p>
-            </div>
+        {/* PESTAÑA: AJUSTES */}
+        {tab === "settings" && (
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 animate-in fade-in">
+             <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-black uppercase">Modo Poniente</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Compensación por viento seco</p>
+                </div>
+                <button onClick={() => setConfig({...config, isPoniente: !config.isPoniente})} className={`w-12 h-6 rounded-full transition-all relative ${config.isPoniente ? 'bg-orange-500' : 'bg-slate-200'}`}>
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${config.isPoniente ? 'right-1' : 'left-1'}`} />
+                </button>
+             </div>
+             
+             <div className="space-y-2 pt-4 border-t border-slate-100">
+                <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
+                  <span>Temperatura Agua</span>
+                  <span className="text-slate-900">{config.temp}°C</span>
+                </div>
+                <input type="range" min="15" max="32" value={config.temp} onChange={(e) => setConfig({...config, temp: parseInt(e.target.value)})} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900" />
+             </div>
 
-            <div className="bg-white border-l-4 border-blue-500 p-5 rounded-r-xl shadow-sm">
-              <h4 className="text-[11px] font-black uppercase text-blue-600 mb-2 flex items-center gap-2">
-                <Filter size={14}/> Manejo de Ósmosis Inversa
-              </h4>
-              <p className="text-[10px] text-slate-600 leading-relaxed font-bold italic">
-                Sin minerales base, el pH es extremadamente volátil. No aplicar ácidos hasta haber estabilizado la mezcla con CalMag y nutrientes CANNA.
-              </p>
-            </div>
+             <button onClick={() => setStep(0)} className="w-full py-4 text-red-500 text-[10px] font-black uppercase border border-red-100 rounded-2xl hover:bg-red-50 transition-all mt-4">
+                Reiniciar Configuración Inicial
+             </button>
           </div>
         )}
 
       </main>
 
-      {/* NAVBAR INFERIOR DASHBOARD */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-2 z-50">
-        <div className="max-w-2xl mx-auto grid grid-cols-5 gap-1">
-          {[
-            { id: "dashboard", icon: Home },
-            { id: "tower", icon: Layers },
-            { id: "sensors", icon: Gauge },
-            { id: "tips", icon: Brain },
-            { id: "settings", icon: Settings }
-          ].map((btn) => (
-            <button
-              key={btn.id}
-              onClick={() => setTab(btn.id)}
-              className={`flex flex-col items-center py-2 rounded-lg transition-all ${
-                tab === btn.id ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              <btn.icon size={20} />
-              <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">{btn.id}</span>
-            </button>
-          ))}
+      {/* NAVBAR INFERIOR */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-2 z-50">
+        <div className="max-w-xl mx-auto grid grid-cols-4 gap-1">
+          <NavBtn id="dashboard" icon={<Home size={20}/>} label="Panel" active={tab} set={setTab} />
+          <NavBtn id="tower" icon={<Layers size={20}/>} label="Torre" active={tab} set={setTab} />
+          <NavBtn id="tips" icon={<Brain size={20}/>} label="Manual" active={tab} set={setTab} />
+          <NavBtn id="settings" icon={<Settings size={20}/>} label="Ajustes" active={tab} set={setTab} />
         </div>
       </footer>
     </div>
   )
+}
+
+function NavBtn({id, icon, label, active, set}: any) {
+  const isActive = active === id
+  return (
+    <button onClick={() => set(id)} className={`flex flex-col items-center py-2 rounded-xl transition-all ${isActive ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 hover:text-slate-600'}`}>
+      {icon}
+      <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">{label}</span>
+    </button>
+  )
+}
+
+function XIcon({size}: {size: number}) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
 }
