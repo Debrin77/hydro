@@ -1,47 +1,45 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { 
   Sprout, Beaker, Plus, Trash2, Lightbulb, Droplets, Thermometer, 
   Zap, ChevronRight, Home, Settings, Gauge, Sun, Waves, 
-  Wind, Timer, ClipboardList, Power, Droplet, 
-  RefreshCcw, Layers, Info, Check, Activity, Search
+  Wind, Timer, ClipboardList, Activity, FlaskConical, 
+  RefreshCw, Layers, AlertCircle, Info, Check, Filter, Brain
 } from "lucide-react"
 
-// --- COMPONENTES UI PARA VERCEL ---
-const Card = ({ children, className = "" }: any) => (
-  <div className={`bg-white rounded-3xl shadow-sm border border-slate-100 p-5 ${className}`}>{children}</div>
-)
-
-const Badge = ({ children, variant = "default" }: any) => {
-  const styles: any = {
-    default: "bg-emerald-100 text-emerald-700",
-    outline: "border border-slate-200 text-slate-600",
-    destructive: "bg-red-100 text-red-700",
-    warning: "bg-orange-100 text-orange-700",
-  }
-  return <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${styles[variant]}`}>{children}</span>
-}
-
-// --- CONFIGURACIÓN TÉCNICA (Basada en Canna Aqua Vega) ---
+// --- CONSTANTES TÉCNICAS (Lógica Original) ---
 const WATER_TYPES = {
-  "osmosis": { name: "Ósmosis Inversa", ecBase: 0, desc: "Pureza total. Requiere CalMag." },
-  "blanda": { name: "Mezcla (Blanda)", ecBase: 350, desc: "Mezcla 50/50. Ideal para Canna." },
-  "dura_cs": { name: "Grifo Castellón", ecBase: 900, desc: "Agua muy dura. Cuidado con bloqueos." }
+  "osmosis": { name: "Ósmosis Inversa", ecBase: 0, phBase: 7.0, calmag: true, desc: "Requiere estabilización de pH y CalMag." },
+  "blanda": { name: "Mezcla Blanda", ecBase: 350, phBase: 7.2, calmag: false, desc: "Mezcla óptima para zona levante." },
+  "dura_cs": { name: "Grifo Castellón", ecBase: 950, phBase: 8.2, calmag: false, desc: "Alto contenido en carbonatos y cal." }
 }
 
 const VARIETIES = {
-  "Romana": { name: "Lechuga Romana", ec: [0.8, 1.4, 1.7], color: "bg-green-500" },
-  "Hoja Roble": { name: "Hoja de Roble", ec: [0.9, 1.4, 1.9], color: "bg-red-500" },
-  "Lollo Rosso": { name: "Lollo Rosso", ec: [0.8, 1.3, 1.8], color: "bg-purple-500" }
+  "Romana": { name: "L. Romana", ecRange: [0.8, 1.4, 1.7], color: "#10b981" },
+  "Hoja Roble": { name: "H. Roble", ecRange: [0.9, 1.4, 1.9], color: "#ef4444" },
+  "Lollo Rosso": { name: "L. Rosso", ecRange: [0.8, 1.3, 1.8], color: "#a855f7" }
 }
 
-export default function HydroMasterPro() {
-  const [isStarted, setIsStarted] = useState(false)
+// --- COMPONENTES DE INTERFAZ PROFESIONAL ---
+const StatCard = ({ label, value, unit, icon: Icon, subtext, color = "emerald" }: any) => (
+  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+    <div className="flex justify-between items-start mb-2">
+      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
+      <Icon size={16} className={`text-${color}-500`} />
+    </div>
+    <div className="flex items-baseline gap-1">
+      <span className="text-2xl font-black text-slate-900 tracking-tight">{value}</span>
+      <span className="text-xs font-bold text-slate-400">{unit}</span>
+    </div>
+    {subtext && <p className="text-[10px] text-slate-400 mt-1 font-medium italic">{subtext}</p>}
+  </div>
+)
+
+export default function HydroControlPro() {
   const [tab, setTab] = useState("dashboard")
   const [plants, setPlants] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
-  
   const [config, setConfig] = useState({
     waterType: "osmosis",
     vol: 18,
@@ -51,339 +49,376 @@ export default function HydroMasterPro() {
     isPoniente: false
   })
 
-  // --- MOTOR DE CÁLCULO DINÁMICO ---
+  // --- MOTOR DE CÁLCULO DE PRECISIÓN ---
   const analysis = useMemo(() => {
     if (plants.length === 0) return null
 
-    // 1. Cálculo de EC Objetivo según plantas en la torre
     let totalTargetEC = 0
     plants.forEach(p => {
-      const varietyData = VARIETIES[p.variety as keyof typeof VARIETIES]
-      totalTargetEC += varietyData.ec[p.level - 1]
+      const v = VARIETIES[p.variety as keyof typeof VARIETIES]
+      totalTargetEC += v.ecRange[p.level - 1]
     })
+
     let targetEC = (totalTargetEC / plants.length) * 1000
+    
+    // Ajuste por Clima de Castellón (Poniente/Calor)
+    const climateFactor = (config.temp > 26 || config.isPoniente) ? 0.82 : 1.0
+    targetEC *= climateFactor
 
-    // 2. Ajustes Climatológicos de Castellón
-    if (config.temp > 26 || config.isPoniente) targetEC *= 0.85 // Bajamos EC porque beben más agua
-
-    // 3. Dosificación Aqua Vega A+B
     const waterBase = WATER_TYPES[config.waterType as keyof typeof WATER_TYPES].ecBase
-    const ecNeeded = Math.max(0, targetEC - waterBase)
-    const mlTotal = (ecNeeded / 500) * config.vol // Ratio estándar 2ml/L para subir 1000uS
+    const netECNeeded = Math.max(0, targetEC - waterBase)
+    
+    // Dosificación CANNA Aqua Vega (Basado en 2ml/L para 1000µS)
+    const dosageMl = (netECNeeded / 500) * config.vol 
 
     return {
       targetEC: Math.round(targetEC),
-      mlPart: (mlTotal / 2).toFixed(1),
+      doseA: (dosageMl / 2).toFixed(1),
+      doseB: (dosageMl / 2).toFixed(1),
+      calmag: config.waterType === "osmosis" ? (config.vol * 0.8).toFixed(1) : "0",
       irrigation: config.temp > 25 ? "15m ON / 15m OFF" : "15m ON / 45m OFF",
-      phRisk: config.temp > 27 ? "Alto (Riesgo Algas)" : "Normal"
+      phStability: config.waterType === "osmosis" ? "CRÍTICA" : config.temp > 27 ? "BAJA" : "ALTA"
     }
   }, [plants, config])
 
-  // --- FUNCIONES ---
-  const addPlant = (v: string) => {
-    if (plants.length < 15) setPlants([...plants, { id: Date.now(), variety: v, level: 1 }])
-  }
-
-  const saveLog = () => {
-    const log = {
-      id: Date.now(),
-      date: new Date().toLocaleString('es-ES', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }),
-      ph: config.phActual,
-      ec: config.ecActual
-    }
-    setHistory([log, ...history])
-  }
-
-  const deleteLog = (id: number) => setHistory(history.filter(h => h.id !== id))
-
-  if (!isStarted) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-white font-sans">
-        <div className="max-w-md w-full text-center space-y-8">
-          <div className="relative inline-block">
-            <div className="absolute inset-0 bg-emerald-500 blur-3xl opacity-20 animate-pulse"></div>
-            <div className="relative bg-slate-900 border border-slate-800 p-8 rounded-[3rem] shadow-2xl">
-              <Sprout size={64} className="text-emerald-500 mx-auto mb-4" />
-              <h1 className="text-4xl font-black tracking-tighter italic">HYDRO<span className="text-emerald-500">MASTER</span></h1>
-              <p className="text-slate-400 text-sm mt-2 uppercase tracking-widest font-bold font-mono text-[10px]">Tower V15 • Castellón de la Plana</p>
-            </div>
-          </div>
-          <button onClick={() => setIsStarted(true)} className="w-full bg-emerald-600 hover:bg-emerald-500 transition-all text-white font-black py-6 rounded-2xl shadow-xl shadow-emerald-900/20 text-xl">
-            INICIAR SISTEMA
-          </button>
-        </div>
-      </div>
-    )
+  const addPlant = (variety: string) => {
+    if (plants.length < 15) setPlants([...plants, { id: Date.now(), variety, level: 1 }])
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-32">
-      {/* HEADER NAVBAR */}
-      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 p-4">
-        <div className="max-w-xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg"><Layers size={18} className="text-white" /></div>
-            <span className="font-black text-xl tracking-tighter italic">HM<span className="text-emerald-600">V15</span></span>
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
+      {/* Header Técnico */}
+      <header className="bg-slate-900 text-white p-5 sticky top-0 z-50 shadow-lg border-b border-emerald-500/30">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <Activity className="text-emerald-400" size={18} />
+              <h1 className="text-lg font-black tracking-tighter uppercase italic">
+                System<span className="text-emerald-400 text-sm ml-1">V15-CS</span>
+              </h1>
+            </div>
+            <p className="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase mt-1">
+              Castellón Tower • Hydroponic Control
+            </p>
           </div>
-          <div className="flex gap-2">
-            <Badge variant={config.temp > 25 ? "warning" : "default"}>{config.temp}°C</Badge>
-            <Badge variant="outline">{config.vol}L</Badge>
+          <div className="text-right">
+            <div className="flex gap-2 justify-end mb-1">
+              {config.isPoniente && <span className="bg-orange-500/20 text-orange-400 text-[8px] px-2 py-0.5 rounded-full font-bold animate-pulse">ALERTA PONIENTE</span>}
+              <span className="bg-emerald-500/20 text-emerald-400 text-[8px] px-2 py-0.5 rounded-full font-bold">ACTIVO</span>
+            </div>
+            <p className="text-xs font-mono font-bold text-slate-300">T: {config.temp}°C | V: {config.vol}L</p>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <main className="max-w-xl mx-auto p-4 space-y-6">
+      <main className="max-w-2xl mx-auto p-4 space-y-6">
         
-        {/* 1. PESTAÑA: PARÁMETROS ACTUALES (DASHBOARD) */}
+        {/* NAVEGACIÓN TÉCNICA */}
+        <div className="flex gap-1 overflow-x-auto pb-2 no-scrollbar">
+          {[
+            { id: "dashboard", icon: Home, label: "Resumen" },
+            { id: "tower", icon: Layers, label: "Torre" },
+            { id: "control", icon: FlaskConical, label: "Nutrientes" },
+            { id: "sensors", icon: Gauge, label: "Sensores" },
+            { id: "tips", icon: Brain, label: "Protocolos" }
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 ${
+                tab === t.id ? "bg-slate-900 text-white shadow-md" : "bg-white text-slate-400 border border-slate-200"
+              }`}
+            >
+              <t.icon size={14} /> {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* CONTENIDO: DASHBOARD */}
         {tab === "dashboard" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-slate-900 text-white border-none shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><Zap size={48}/></div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">EC Objetivo</p>
-                <p className="text-4xl font-black mt-1 text-emerald-400">{analysis?.targetEC || 0}</p>
-                <p className="text-[10px] text-slate-500 font-bold mt-1">µS/cm (Ajustado)</p>
-              </Card>
-              <Card className="bg-white border-none shadow-sm flex flex-col justify-center">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Dosificación A+B</p>
-                <p className="text-3xl font-black mt-1 text-blue-600 text-center">{analysis?.mlPart || 0} <span className="text-sm">ml</span></p>
-                <p className="text-[9px] text-slate-400 font-medium mt-1 uppercase italic text-center">Por cada botella</p>
-              </Card>
-            </div>
-
-            <Card className="flex items-center justify-between p-5 bg-white border-none shadow-sm">
+          <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
+            <StatCard 
+              label="EC Objetivo" 
+              value={analysis?.targetEC || "0"} 
+              unit="µS/cm" 
+              icon={Zap} 
+              subtext="Compensado por clima"
+            />
+            <StatCard 
+              label="Dosificación A+B" 
+              value={analysis?.doseA || "0"} 
+              unit="ml" 
+              icon={FlaskConical} 
+              subtext="Canna Aqua Vega (c/u)"
+              color="blue"
+            />
+            <div className="col-span-2 bg-slate-900 text-white rounded-xl p-5 flex justify-between items-center shadow-inner">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Timer size={24} /></div>
+                <div className="p-3 bg-emerald-500/20 rounded-lg text-emerald-400">
+                  <Timer size={24} />
+                </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Estado de Riego</p>
-                  <p className="text-md font-black text-slate-800">{analysis?.irrigation}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Frecuencia Riego</p>
+                  <p className="text-xl font-black">{analysis?.irrigation || "No definido"}</p>
                 </div>
               </div>
-              <Badge variant="outline">Automático</Badge>
-            </Card>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-3 bg-emerald-50 rounded-2xl">
-                <p className="text-[10px] font-bold text-emerald-600">pH IDEAL</p>
-                <p className="text-lg font-black text-emerald-800">5.8 - 6.2</p>
-              </div>
-              <div className="text-center p-3 bg-blue-50 rounded-2xl">
-                <p className="text-[10px] font-bold text-blue-600">TEMP AGUA</p>
-                <p className="text-lg font-black text-blue-800">{config.temp}°C</p>
-              </div>
-              <div className="text-center p-3 bg-slate-50 rounded-2xl">
-                <p className="text-[10px] font-bold text-slate-400">PLANTAS</p>
-                <p className="text-lg font-black text-slate-800">{plants.length}/15</p>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estabilidad pH</p>
+                <p className={`text-sm font-black ${analysis?.phStability === "ALTA" ? "text-emerald-400" : "text-orange-400"}`}>
+                  {analysis?.phStability || "---"}
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* 2. PESTAÑA: MEDICIONES (CALIBRACIÓN) */}
-        {tab === "measure" && (
-          <div className="space-y-4 animate-in fade-in">
-            <Card className="p-6 space-y-6 border-none shadow-sm">
-              <h3 className="font-black text-slate-800 flex items-center gap-2"><Beaker size={18} className="text-blue-500"/> Lectura de Sensores</h3>
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between font-bold text-xs text-slate-500 uppercase"><span>pH Medido</span><span className="text-emerald-600 text-xl">{config.phActual}</span></div>
-                  <input type="range" min="4" max="8" step="0.1" value={config.phActual} onChange={(e) => setConfig({...config, phActual: parseFloat(e.target.value)})} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between font-bold text-xs text-slate-500 uppercase"><span>EC Medida (µS)</span><span className="text-blue-600 text-xl">{config.ecActual}</span></div>
-                  <input type="range" min="0" max="2500" step="10" value={config.ecActual} onChange={(e) => setConfig({...config, ecActual: parseInt(e.target.value)})} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                </div>
-                <button onClick={saveLog} className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
-                  <ClipboardList size={18}/> REGISTRAR LECTURA
-                </button>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* 3. PESTAÑA: TORRE (15 PLANTAS) */}
+        {/* CONTENIDO: TORRE (15 PLANTAS) */}
         {tab === "tower" && (
-          <div className="space-y-4 animate-in fade-in">
-            <div className="flex justify-between items-center px-2">
-              <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Estado de la Torre</h3>
-              <div className="flex gap-1">
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="bg-white border border-slate-200 rounded-xl p-5">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                  <Layers size={16} className="text-emerald-500"/> Matriz de Cultivo (V15)
+                </h3>
+                <span className="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">
+                  Ocupación: {plants.length} / 15
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-5 gap-3 mb-6">
+                {[...Array(15)].map((_, i) => (
+                  <div 
+                    key={i}
+                    onClick={() => {
+                      if (plants[i]) {
+                        const newPlants = [...plants];
+                        newPlants[i].level = (newPlants[i].level % 3) + 1;
+                        setPlants(newPlants);
+                      }
+                    }}
+                    className={`aspect-square rounded-lg border-2 flex flex-col items-center justify-center transition-all cursor-pointer relative ${
+                      plants[i] 
+                      ? 'border-emerald-500 bg-emerald-50' 
+                      : 'border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100'
+                    }`}
+                  >
+                    {plants[i] ? (
+                      <>
+                        <span className="text-[10px] font-black text-emerald-700">{plants[i].variety[0]}</span>
+                        <div className="w-full absolute bottom-0 h-1 bg-emerald-500 rounded-b-sm" 
+                             style={{ opacity: plants[i].level / 3 }} />
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setPlants(plants.filter((_, idx) => idx !== i)) }}
+                          className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full shadow-sm p-0.5 border border-slate-100"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </>
+                    ) : <Plus size={14} className="text-slate-300" />}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
                 {Object.keys(VARIETIES).map(v => (
-                  <button key={v} onClick={() => addPlant(v)} className="bg-white border border-slate-100 p-2 rounded-xl text-[9px] font-black uppercase hover:bg-slate-50">
+                  <button 
+                    key={v}
+                    onClick={() => addPlant(v)}
+                    className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[9px] font-black uppercase tracking-tighter"
+                  >
                     + {v}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-5 gap-3">
-              {[...Array(15)].map((_, i) => (
-                <div key={i} onClick={() => {
-                  if (plants[i]) {
-                    const newPlants = [...plants];
-                    newPlants[i].level = (newPlants[i].level % 3) + 1;
-                    setPlants(newPlants);
-                  }
-                }} className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer shadow-sm relative ${plants[i] ? VARIETIES[plants[i].variety as keyof typeof VARIETIES].color + " text-white" : 'bg-white border-2 border-dashed border-slate-200 text-slate-300'}`}>
-                  {plants[i] ? (
-                    <>
-                      <span className="text-[10px] font-black uppercase">{plants[i].level === 1 ? 'P' : plants[i].level === 2 ? 'C' : 'M'}</span>
-                      <button onClick={(e) => { e.stopPropagation(); setPlants(plants.filter((_, idx) => idx !== i)) }} className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full p-1 shadow-md">
-                        <Trash2 size={8} />
-                      </button>
-                    </>
-                  ) : <Plus size={16}/>}
+          </div>
+        )}
+
+        {/* CONTENIDO: SENSORES */}
+        {tab === "sensors" && (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-8">
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lectura pH Actual</label>
+                  <span className="text-3xl font-black text-emerald-600 font-mono leading-none">{config.phActual.toFixed(1)}</span>
+                </div>
+                <input 
+                  type="range" min="4" max="8.5" step="0.1" 
+                  value={config.phActual} 
+                  onChange={(e) => setConfig({...config, phActual: parseFloat(e.target.value)})}
+                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lectura EC Real (µS/cm)</label>
+                  <span className="text-3xl font-black text-blue-600 font-mono leading-none">{config.ecActual}</span>
+                </div>
+                <input 
+                  type="range" min="0" max="2500" step="10" 
+                  value={config.ecActual} 
+                  onChange={(e) => setConfig({...config, ecActual: parseInt(e.target.value)})}
+                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+
+              <button 
+                onClick={() => {
+                  const log = { id: Date.now(), t: new Date().toLocaleTimeString(), ph: config.phActual, ec: config.ecActual };
+                  setHistory([log, ...history]);
+                }}
+                className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-800 transition-all flex items-center justify-center gap-3"
+              >
+                <ClipboardList size={18} className="text-emerald-400" /> Registrar en Log de Sistema
+              </button>
+            </div>
+
+            {/* LOGS HISTÓRICOS */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Historial de Calibración</p>
+              {history.map(h => (
+                <div key={h.id} className="bg-white border border-slate-100 p-3 rounded-lg flex justify-between items-center text-[11px] font-bold">
+                  <span className="text-slate-400 font-mono">{h.t}</span>
+                  <div className="flex gap-4 uppercase tracking-tighter">
+                    <span className="text-emerald-600">pH {h.ph}</span>
+                    <span className="text-blue-600">EC {h.ec}</span>
+                  </div>
+                  <button onClick={() => setHistory(history.filter(x => x.id !== h.id))} className="text-slate-200 hover:text-red-500">
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest italic pt-2">P: Plántula | C: Crecimiento | M: Madura</p>
           </div>
         )}
 
-        {/* 4. PESTAÑA: RIEGO */}
-        {tab === "irrigation" && (
-          <div className="space-y-4 animate-in fade-in">
-            <Card className="p-10 text-center space-y-6">
-              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto">
-                <Waves size={40} className="animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Configuración de Bomba (7W)</h3>
-                <p className="text-3xl font-black text-slate-800 mt-2">{analysis?.irrigation}</p>
-                <p className="text-[11px] text-slate-500 mt-4 leading-relaxed italic border-t pt-4">
-                  "En Castellón, con altas temperaturas, el riego frecuente oxigena la raíz y evita el calentamiento del agua en la torre."
-                </p>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {/* 5. PESTAÑA: CALENDARIO / REGISTROS */}
-        {tab === "history" && (
-          <div className="space-y-4 animate-in fade-in">
-             <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest px-2">Registro Histórico</h3>
-             {history.length === 0 ? (
-               <Card className="p-10 text-center opacity-30 italic text-sm">No hay registros guardados hoy.</Card>
-             ) : (
-               history.map(h => (
-                 <Card key={h.id} className="flex justify-between items-center py-4 px-6">
-                    <div className="flex items-center gap-4">
-                      <div className="text-center bg-slate-50 p-2 rounded-xl border border-slate-100"><p className="text-[9px] font-black text-slate-400 uppercase leading-none">{h.date}</p></div>
-                      <div className="flex gap-2 font-bold text-xs uppercase">
-                        <span className="text-emerald-600">pH {h.ph}</span>
-                        <span className="text-blue-600">{h.ec} µS</span>
-                      </div>
-                    </div>
-                    <button onClick={() => deleteLog(h.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">
-                      <Trash2 size={18} />
-                    </button>
-                 </Card>
-               ))
-             )}
-          </div>
-        )}
-
-        {/* 6. PESTAÑA: CONSEJOS MAESTROS */}
+        {/* CONTENIDO: PROTOCOLOS (Tips avanzados) */}
         {tab === "tips" && (
-          <div className="space-y-4 animate-in fade-in">
-            <Card className="border-l-4 border-l-emerald-500 bg-emerald-50/10">
-              <div className="flex gap-4 p-2">
-                <div className="bg-emerald-100 p-3 rounded-2xl h-fit text-emerald-600"><RefreshCcw size={24}/></div>
-                <div>
-                  <h4 className="font-black text-slate-800 text-xs uppercase">Transplante de Suelo a Lana</h4>
-                  <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                    1. Lava la raíz en agua tibia para eliminar toda la tierra.<br/>
-                    2. Introduce con cuidado en el dado de 2.5cm.<br/>
-                    3. <strong>IMPORTANTE:</strong> Coloca el dado a media altura en la cesta; si toca el fondo de la torre, la raíz puede pudrirse por falta de oxígeno.
-                  </p>
-                </div>
-              </div>
-            </Card>
-            <Card className="border-l-4 border-l-orange-500 bg-orange-50/10">
-              <div className="flex gap-4 p-2">
-                <div className="bg-orange-100 p-3 rounded-2xl h-fit text-orange-600"><Wind size={24}/></div>
-                <div>
-                  <h4 className="font-black text-slate-800 text-xs uppercase">Efecto Poniente (Castellón)</h4>
-                  <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                    Cuando sople viento seco (Poniente), la lechuga evapora agua mucho más rápido. <strong>Baja la EC a 0.8 - 1.0</strong> para evitar que las hojas se quemen por acumulación de sales.
-                  </p>
-                </div>
-              </div>
-            </Card>
-            <Card className="border-l-4 border-l-blue-500 bg-blue-50/10">
-              <div className="flex gap-4 p-2">
-                <div className="bg-blue-100 p-3 rounded-2xl h-fit text-blue-600"><Droplets size={24}/></div>
-                <div>
-                  <h4 className="font-black text-slate-800 text-xs uppercase">Estabilización de Lana</h4>
-                  <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                    Sumerge siempre tus dados nuevos 24h en agua con <strong>pH 5.2</strong>. La lana de roca es alcalina por defecto y disparará tu pH si no la preparas.
-                  </p>
-                </div>
-              </div>
-            </Card>
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="bg-white border-l-4 border-emerald-500 p-5 rounded-r-xl shadow-sm">
+              <h4 className="text-[11px] font-black uppercase text-emerald-600 mb-2 flex items-center gap-2">
+                <RefreshCw size={14}/> Protocolo Transplante Suelo-Lana
+              </h4>
+              <p className="text-[11px] text-slate-600 leading-relaxed font-medium italic">
+                1. Lavado exhaustivo de raíces en agua templada (22°C).<br/>
+                2. Poda de raíz excedente si supera los 15cm.<br/>
+                3. Inserción en dado de 2.5cm estabilizado (pH 5.2).<br/>
+                4. Colocación en cesta técnica a media altura (No inmersión total).
+              </p>
+            </div>
+
+            <div className="bg-white border-l-4 border-blue-500 p-5 rounded-r-xl shadow-sm">
+              <h4 className="text-[11px] font-black uppercase text-blue-600 mb-2 flex items-center gap-2">
+                <Filter size={14}/> Estabilización de Ósmosis
+              </h4>
+              <p className="text-[11px] text-slate-600 leading-relaxed font-medium italic">
+                El agua de ósmosis no tiene tampón (KH 0). Añadir siempre CalMag hasta alcanzar EC 200µS antes de incorporar Aqua Vega A+B para evitar oscilaciones de pH letales.
+              </p>
+            </div>
+
+            <div className="bg-slate-900 border-l-4 border-orange-500 p-5 rounded-r-xl shadow-sm">
+              <h4 className="text-[11px] font-black uppercase text-orange-400 mb-2 flex items-center gap-2">
+                <Wind size={14}/> Incidencia Poniente Castellón
+              </h4>
+              <p className="text-[11px] text-slate-400 leading-relaxed font-medium italic">
+                En eventos de viento seco del interior, la planta transpira un 40% más. El sistema reduce la EC automáticamente para prevenir la necrosis de puntas por acumulación de sales.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* 7. PESTAÑA: CONFIGURACIÓN / INICIAR SISTEMA */}
+        {/* PESTAÑA: AJUSTES */}
         {tab === "settings" && (
-          <div className="space-y-4 animate-in fade-in">
-            <Card className="p-6 space-y-6 border-none shadow-sm">
-              <div className="space-y-4">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Fuente de Agua</label>
-                <div className="grid grid-cols-1 gap-2">
-                  {Object.entries(WATER_TYPES).map(([key, val]) => (
-                    <button key={key} onClick={() => setConfig({...config, waterType: key})} className={`p-4 rounded-2xl text-left border-2 transition-all flex justify-between items-center ${config.waterType === key ? 'border-emerald-500 bg-emerald-50' : 'border-slate-50 bg-slate-50/50'}`}>
-                      <div>
-                        <p className="font-bold text-sm text-slate-800">{val.name}</p>
-                        <p className="text-[10px] text-slate-500 italic">{val.desc}</p>
-                      </div>
-                      {config.waterType === key && <Check size={16} className="text-emerald-500"/>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-slate-100 space-y-4">
-                <div className="flex justify-between font-bold text-xs text-slate-500 uppercase"><span>Temperatura Agua</span><span className="text-blue-600">{config.temp}°C</span></div>
-                <input type="range" min="10" max="30" value={config.temp} onChange={(e) => setConfig({...config, temp: parseInt(e.target.value)})} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900" />
-                
-                <div className="flex justify-between font-bold text-xs text-slate-500 uppercase"><span>Volumen Depósito</span><span className="text-slate-900">{config.vol}L</span></div>
-                <input type="range" min="5" max="20" value={config.vol} onChange={(e) => setConfig({...config, vol: parseInt(e.target.value)})} className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900" />
-                
-                <div className="flex items-center justify-between p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                  <div className="flex items-center gap-3">
-                    <div className={config.isPoniente ? 'text-orange-600' : 'text-slate-300'}><Wind size={24}/></div>
-                    <div><p className="text-xs font-bold text-orange-900">Alerta Poniente</p><p className="text-[9px] text-orange-600 uppercase">Ajuste automático de EC</p></div>
-                  </div>
-                  <button onClick={() => setConfig({...config, isPoniente: !config.isPoniente})} className={`w-12 h-6 rounded-full transition-all relative ${config.isPoniente ? 'bg-orange-500' : 'bg-slate-300'}`}>
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${config.isPoniente ? 'right-1' : 'left-1'}`} />
+          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block mb-4">Configuración de Agua Base</label>
+              <div className="space-y-2">
+                {Object.entries(WATER_TYPES).map(([key, val]) => (
+                  <button 
+                    key={key} 
+                    onClick={() => setConfig({...config, waterType: key})}
+                    className={`w-full p-4 rounded-xl border-2 text-left transition-all flex justify-between items-center ${
+                      config.waterType === key ? "border-emerald-500 bg-emerald-50" : "border-slate-50"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-tight">{val.name}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{val.desc}</p>
+                    </div>
+                    <Badge variant="outline" className="text-slate-500">{val.ecBase} µS</Badge>
                   </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${config.isPoniente ? "bg-orange-100 text-orange-600" : "bg-slate-100"}`}>
+                  <Wind size={20} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black uppercase italic">Modo Poniente</p>
+                  <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Compensación Climática</p>
                 </div>
               </div>
-            </Card>
-            <button onClick={() => { setPlants([]); setHistory([]); setIsStarted(false); }} className="w-full py-4 text-red-500 text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Reiniciar Sistema Completo</button>
+              <button 
+                onClick={() => setConfig({...config, isPoniente: !config.isPoniente})}
+                className={`w-14 h-7 rounded-full transition-all relative ${config.isPoniente ? "bg-orange-500" : "bg-slate-200"}`}
+              >
+                <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-all ${config.isPoniente ? "right-1" : "left-1"}`} />
+              </button>
+            </div>
+
+            <div className="space-y-4 pt-4">
+              <div className="flex justify-between font-bold text-[10px] text-slate-500 uppercase tracking-widest">
+                <span>Temp. Depósito</span>
+                <span className="text-slate-900">{config.temp}°C</span>
+              </div>
+              <input 
+                type="range" min="15" max="32" 
+                value={config.temp} 
+                onChange={(e) => setConfig({...config, temp: parseInt(e.target.value)})}
+                className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900"
+              />
+            </div>
           </div>
         )}
 
       </main>
 
-      {/* NAVBAR INFERIOR (ESTILO iOS) */}
-      <nav className="fixed bottom-6 left-4 right-4 bg-white/90 backdrop-blur-xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-3 flex justify-around items-center z-50 max-w-xl mx-auto">
-        <NavBtn id="dashboard" icon={<Home size={20}/>} active={tab} set={setTab} />
-        <NavBtn id="measure" icon={<Beaker size={20}/>} active={tab} set={setTab} />
-        <NavBtn id="tower" icon={<Layers size={20}/>} active={tab} set={setTab} />
-        <NavBtn id="irrigation" icon={<Waves size={20}/>} active={tab} set={setTab} />
-        <NavBtn id="history" icon={<ClipboardList size={20}/>} active={tab} set={setTab} />
-        <NavBtn id="tips" icon={<Lightbulb size={20}/>} active={tab} set={setTab} />
-        <NavBtn id="settings" icon={<Settings size={20}/>} active={tab} set={setTab} />
-      </nav>
+      {/* NAVBAR INFERIOR ESTILO DASHBOARD PROFESIONAL */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-2 z-50">
+        <div className="max-w-2xl mx-auto grid grid-cols-5 gap-1">
+          {[
+            { id: "dashboard", icon: Home },
+            { id: "tower", icon: Layers },
+            { id: "sensors", icon: Gauge },
+            { id: "tips", icon: Brain },
+            { id: "settings", icon: Settings }
+          ].map((btn) => (
+            <button
+              key={btn.id}
+              onClick={() => setTab(btn.id)}
+              className={`flex flex-col items-center py-2 rounded-lg transition-all ${
+                tab === btn.id ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              <btn.icon size={20} />
+              <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">{btn.id}</span>
+            </button>
+          ))}
+        </div>
+      </footer>
     </div>
   )
 }
 
-function NavBtn({id, icon, active, set}: any) {
-  const isActive = active === id
-  return (
-    <button onClick={() => set(id)} className={`p-3 rounded-2xl transition-all duration-300 ${isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 -translate-y-3' : 'text-slate-300 hover:text-slate-500'}`}>
-      {icon}
-    </button>
-  )
+function Badge({ children, variant = "default", className = "" }: any) {
+  const styles: any = {
+    default: "bg-emerald-100 text-emerald-700",
+    outline: "border border-slate-200 text-slate-600",
+  }
+  return <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${styles[variant]} ${className}`}>{children}</span>
 }
