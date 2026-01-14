@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// ICONOS SIMPLIFICADOS - Solo los que realmente existen
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
@@ -14,13 +15,18 @@ import {
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, 
   RefreshCw, Skull, Info, Calculator, Filter, 
   Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun, 
-  WindIcon, Clipboard, ThermometerSnowflake, TreePine, Settings,
+  Clipboard, ThermometerSnowflake, TreePine, Settings,
   Home, BarChart3, X, RotateCcw, AlertCircle,
-  Droplet, Leaf, TimerReset, ThermometerCold,
-  ChevronDown, ChevronUp, Eye, EyeOff, CloudRain as Rain,
-  Thermometer as Temp, Wind as Breeze, Target,
-  Brain, AlertOctagon, Waves, GitCompare, BarChart,
-  Ruler, Droplets as Water, Edit3, Save
+  Droplet, Leaf, TimerReset,
+  ChevronDown, ChevronUp, Eye, EyeOff, 
+  Brain, AlertOctagon, GitCompare, BarChart,
+  Ruler, Edit3, Save,
+  // Iconos con alias
+  Thermometer as TempIcon,
+  Wind as WindIcon,
+  Target,
+  Waves,
+  Droplets as WaterIcon
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -36,7 +42,7 @@ import { Input } from "@/components/ui/input"
 const WATER_TYPES = {
   bajo_mineral: { name: "Baja Mineralización", ec: 150, ph: 7.5, calcio: 20, magnesio: 5 },
   osmosis: { name: "Ósmosis", ec: 0, ph: 7.0, calcio: 0, magnesio: 0 },
-  mixta: { name: "Mixta (50/50)", ec: 75, ph: 7.25, calcio: 10, magnesio: 2.5 },
+  mixta: { name: "Mezcla (50/50)", ec: 75, ph: 7.25, calcio: 10, magnesio: 2.5 },
   grifo: { name: "Grifo Castellón", ec: 850, ph: 7.8, calcio: 80, magnesio: 20 }
 };
 
@@ -263,7 +269,7 @@ export default function HydroAppFinal() {
     else if (month >= 11 || month <= 2) season = "winter"; // dic-feb
     
     // Tiempos de secado según estación
-    const dryingTimes = ROCKWOOL_CHARACTERISTICS.dryingTimeSpring;
+    const dryingTimes = {...ROCKWOOL_CHARACTERISTICS.dryingTimeSpring};
     if (season === "summer") {
       dryingTimes.day = ROCKWOOL_CHARACTERISTICS.dryingTimeSummer.day;
       dryingTimes.night = ROCKWOOL_CHARACTERISTICS.dryingTimeSummer.night;
@@ -395,7 +401,7 @@ export default function HydroAppFinal() {
         description: `Temperatura del agua: ${config.temp}°C (ideal: 18-25°C)`,
         value: `${config.temp}°C`,
         color: "bg-gradient-to-r from-blue-500 to-cyan-600",
-        icon: <ThermometerCold />,
+        icon: <ThermometerSnowflake />,
         priority: 1
       });
     }
@@ -786,7 +792,7 @@ export default function HydroAppFinal() {
             <div className="p-4 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-xl border border-cyan-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Water className="text-cyan-600" size={20} />
+                  <WaterIcon className="text-cyan-600" size={20} />
                   <span className="font-bold text-slate-800">Volumen de Agua</span>
                 </div>
                 <Button
