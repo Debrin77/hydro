@@ -302,4 +302,12 @@ export default function HydroAppFinal() {
             </div>
           </div>
           
-          <div
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-700">pH actual</span>
+              <span className={`font-bold ${
+                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5 ? 'text-red-600' :
+                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.2 ? 'text-amber-600' :
+                'text-green-600'
+              }`}>
+                {config.ph}
