@@ -4,42 +4,87 @@
 
 "use client"
 
-import React, { useState, useEffect, useMemo } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-// ICONOS NECESARIOS
+import React, { useState, useMemo } from "react"
+// NOTA: Asegúrate de que estos componentes existen en tu proyecto
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// Por ahora los simularemos con divs para que funcione
+
+// ICONOS - Corregidos para evitar duplicados
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
   Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, 
   Thermometer, Zap, ShieldAlert, ChevronRight, Anchor, 
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, 
-  RefreshCw, Skull, Info, Calculator, Filter, 
-  Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun, 
+  RefreshCw, Info, Calculator, Filter, 
+  Power, Timer, Gauge, Cloud, Sun, Moon,
   Clipboard, ThermometerSnowflake, TreePine, Settings,
   Home, BarChart3, X, RotateCcw, AlertCircle,
   Droplet, Leaf, TimerReset,
   ChevronDown, ChevronUp, Eye, EyeOff, 
   Brain, AlertOctagon, GitCompare, BarChart,
-  Ruler, Edit3, Save, CalendarDays, CloudRain as RainIcon,
-  Wind as WindIcon, Thermometer as ThermometerIcon,
-  Droplets as WaterIcon, Sprout as SeedlingIcon,
-  Shield, BookOpen, CloudSun as CloudSunIcon,
-  ThermometerSun as ThermometerSunIcon,
-  Waves, Target, RefreshCw as RotateIcon,
-  Thermometer as ThermometerIcon2,
-  Droplet as DropletIcon
+  Ruler, Edit3, Save, CalendarDays,
+  Shield, BookOpen,
+  Waves, Target
 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+
+// Simulamos los componentes de UI que podrían no existir
+const Tabs = ({ children, value, onValueChange }) => (
+  <div className="tabs">{children}</div>
+)
+const TabsList = ({ children, className }) => (
+  <div className={`tabs-list ${className}`}>{children}</div>
+)
+const TabsTrigger = ({ children, value, className }) => (
+  <button className={`tab-trigger ${className}`} data-value={value}>
+    {children}
+  </button>
+)
+const TabsContent = ({ children, value }) => (
+  <div className="tab-content" data-value={value}>
+    {children}
+  </div>
+)
+const Slider = ({ value, min, max, step, onValueChange, className }) => (
+  <input 
+    type="range" 
+    min={min} 
+    max={max} 
+    step={step}
+    value={value?.[0] || 0}
+    onChange={(e) => onValueChange?.([parseFloat(e.target.value)])}
+    className={`slider ${className}`}
+  />
+)
+const Select = ({ children, value, onValueChange }) => (
+  <select value={value} onChange={(e) => onValueChange?.(e.target.value)}>
+    {children}
+  </select>
+)
+const SelectTrigger = ({ children }) => <div>{children}</div>
+const SelectValue = ({ placeholder }) => <span>{placeholder}</span>
+const SelectContent = ({ children }) => <div>{children}</div>
+const SelectItem = ({ children, value }) => <option value={value}>{children}</option>
+const Dialog = ({ children, open, onOpenChange }) => open ? <div className="dialog">{children}</div> : null
+const DialogContent = ({ children, className }) => <div className={`dialog-content ${className}`}>{children}</div>
+const DialogHeader = ({ children }) => <div className="dialog-header">{children}</div>
+const DialogTitle = ({ children }) => <h2 className="dialog-title">{children}</h2>
+const DialogFooter = ({ children }) => <div className="dialog-footer">{children}</div>
+const Textarea = ({ value, onChange, placeholder, className }) => (
+  <textarea 
+    value={value} 
+    onChange={onChange} 
+    placeholder={placeholder} 
+    className={`textarea ${className}`}
+  />
+)
+const Switch = ({ checked, onCheckedChange }) => (
+  <input 
+    type="checkbox" 
+    checked={checked} 
+    onChange={(e) => onCheckedChange?.(e.target.checked)} 
+  />
+)
 
 // CONFIGURACIONES BASE
 const WATER_TYPES = {
@@ -233,9 +278,7 @@ export default function HydroCaruApp() {
   const [plants, setPlants] = useState([]);
   const [history, setHistory] = useState([]);
   const [lastRotation, setLastRotation] = useState(new Date().toISOString());
-  const [lastCleaning, setLastCleaning] = useState(new Date().toISOString());
   const [tab, setTab] = useState("dashboard");
-  const [selectedPlant, setSelectedPlant] = useState(null);
   const [showAddPlantDialog, setShowAddPlantDialog] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showECCalculator, setShowECCalculator] = useState(false);
@@ -259,27 +302,10 @@ export default function HydroCaruApp() {
     targetEC: "1400",
     targetPH: "6.0",
     waterType: "bajo_mineral",
-    waterNotes: "",
-    hasHeater: true,
-    humidity: "65",
-    lightHours: "14",
-    location: "Castellón",
-    // Nuevos parámetros para cálculo escalonado
-    calculationMode: "average", // average, dominant, weighted
-    dominantStage: "growth" // Para modo dominant
+    calculationMode: "average",
+    dominantStage: "growth"
   });
   
-  // Configuración de riego
-  const [irrigationConfig, setIrrigationConfig] = useState({
-    enabled: true,
-    mode: "auto",
-    pumpTime: 15,
-    interval: 120,
-    showAdvanced: false,
-    notes: "",
-    rockwoolSize: "2.5x2.5cm"
-  });
-
   // Estados para edición
   const [editingPH, setEditingPH] = useState(false);
   const [editingEC, setEditingEC] = useState(false);
@@ -300,7 +326,8 @@ export default function HydroCaruApp() {
         recommendedEC: 1200,
         method: "Sin plantas",
         details: [],
-        adjustment: 0
+        adjustment: 0,
+        levelBreakdown: {1: [], 2: [], 3: []}
       };
     }
     
@@ -376,7 +403,7 @@ export default function HydroCaruApp() {
     
     // Ajustar por nivel (las plantas de arriba necesitan más)
     const levelAdjustment = plants.reduce((adjust, plant) => {
-      return adjust + (plant.level * 25); // Nivel 1: +25, Nivel 2: +50, Nivel 3: +75
+      return adjust + (plant.level * 25);
     }, 0) / plants.length;
     
     recommendedEC = Math.round(recommendedEC + levelAdjustment);
@@ -465,14 +492,6 @@ export default function HydroCaruApp() {
     });
     setShowAddPlantDialog(false);
     
-    // Actualizar EC objetivo si hay plantas
-    if (plants.length > 0) {
-      setConfig({
-        ...config,
-        targetEC: calculateStaggeredEC.recommendedEC.toString()
-      });
-    }
-    
     alert(`✅ ${VARIETIES[newPlant.variety].name} añadida al nivel ${newPlant.level}`);
   };
   
@@ -516,15 +535,6 @@ export default function HydroCaruApp() {
     setPlants(updatedPlants);
     setLastRotation(new Date().toISOString());
     
-    // Recalcular EC objetivo
-    if (updatedPlants.length > 0) {
-      const newEC = calculateStaggeredEC.recommendedEC;
-      setConfig({
-        ...config,
-        targetEC: newEC.toString()
-      });
-    }
-    
     alert("✅ Plantas rotadas y etapas actualizadas");
   };
   
@@ -539,35 +549,6 @@ export default function HydroCaruApp() {
       }
       return plant;
     }));
-  };
-  
-  const handleResetSystem = () => {
-    if (confirm("⚠️ ¿REINICIAR SISTEMA COMPLETO?\n\nSe eliminarán TODAS las plantas y el historial.")) {
-      setIsResetting(true);
-      setPlants([]);
-      setHistory([]);
-      setConfig({
-        ph: "6.0",
-        ec: "1200",
-        temp: "22",
-        currentVol: "20",
-        totalVol: "20",
-        targetEC: "1400",
-        targetPH: "6.0",
-        waterType: "bajo_mineral",
-        waterNotes: "",
-        hasHeater: true,
-        humidity: "65",
-        lightHours: "14",
-        location: "Castellón",
-        calculationMode: "average",
-        dominantStage: "growth"
-      });
-      setStep(0);
-      setTab("dashboard");
-      alert("✅ Sistema reiniciado. Configura de nuevo.");
-      setTimeout(() => setIsResetting(false), 100);
-    }
   };
   
   const handleSaveMeasurement = () => {
@@ -592,7 +573,6 @@ export default function HydroCaruApp() {
   
   const aquaVegaDosage = useMemo(() => {
     const volume = parseFloat(config.currentVol);
-    // Dosificación ajustada por EC objetivo
     const baseEC = 1400;
     const targetEC = parseFloat(config.targetEC);
     const ecFactor = targetEC / baseEC;
@@ -630,122 +610,38 @@ export default function HydroCaruApp() {
     };
   }, [config.ph, config.targetPH, config.currentVol]);
   
-  // =================== CÁLCULO DE RIEGO ===================
+  // =================== RENDER DE PANTALLA INICIAL ===================
   
-  const irrigationData = useMemo(() => {
-    const plantCount = plants.length || 1;
-    const temp = parseFloat(config.temp);
-    
-    // Determinar estación
-    const month = new Date().getMonth();
-    let season = "spring";
-    if (month >= 5 && month <= 8) season = "summer";
-    else if (month >= 11 || month <= 2) season = "winter";
-    else if (month >= 9 && month <= 10) season = "autumn";
-    
-    // Ajustar por etapas de plantas
-    const seedlingCount = plants.filter(p => p.stage === "seedling").length;
-    const matureCount = plants.filter(p => p.stage === "mature").length;
-    
-    let pumpTime = 15;
-    let interval = 120;
-    
-    // Plantas maduras necesitan más agua
-    if (matureCount > seedlingCount) {
-      pumpTime = 18;
-      interval = 110;
-    }
-    
-    // Ajustes por temperatura
-    if (temp > 25) {
-      interval = 90;
-      pumpTime = 20;
-    }
-    if (temp < 18) {
-      interval = 150;
-      pumpTime = 12;
-    }
-    
-    const dayCycles = Math.round((14 * 60) / interval);
-    
-    return {
-      season,
-      pumpTime,
-      interval,
-      dayCycles,
-      waterPerCycle: plantCount * 50,
-      totalWaterPerDay: ((plantCount * 50 * dayCycles) / 1000).toFixed(1),
-      seedlingCount,
-      matureCount
-    };
-  }, [plants, config.temp]);
-  
-  // =================== ALERTAS INTELIGENTES ===================
-  
-  const alerts = useMemo(() => {
-    const alertList = [];
-    
-    // Alerta de pH
-    const phDiff = Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH));
-    if (phDiff > 0.5) {
-      alertList.push({
-        title: "pH fuera de rango",
-        description: `pH actual: ${config.ph} (objetivo: ${config.targetPH})`,
-        value: config.ph,
-        color: "bg-gradient-to-r from-red-500 to-rose-600",
-        icon: <AlertTriangle />,
-        priority: 1
-      });
-    }
-    
-    // Alerta de EC comparada con recomendación escalonada
-    const ecCurrent = parseFloat(config.ec);
-    const ecRecommended = calculateStaggeredEC.recommendedEC;
-    if (Math.abs(ecCurrent - ecRecommended) > 200) {
-      alertList.push({
-        title: "EC necesita ajuste",
-        description: `Actual: ${config.ec}µS (Recomendado: ${ecRecommended}µS)`,
-        value: `${config.ec}µS`,
-        color: "bg-gradient-to-r from-amber-500 to-orange-600",
-        icon: <Zap />,
-        priority: 2
-      });
-    }
-    
-    // Alerta de temperatura
-    const temp = parseFloat(config.temp);
-    if (temp > 28) {
-      alertList.push({
-        title: "Temperatura alta",
-        description: `Temperatura del agua: ${config.temp}°C (ideal: 18-25°C)`,
-        value: `${config.temp}°C`,
-        color: "bg-gradient-to-r from-red-500 to-orange-600",
-        icon: <Thermometer />,
-        priority: 1
-      });
-    }
-    
-    // Alerta de rotación
-    const daysSinceRotation = Math.floor((new Date() - new Date(lastRotation)) / (1000 * 60 * 60 * 24));
-    if (daysSinceRotation >= 7 && plants.length > 0) {
-      alertList.push({
-        title: "Rotación pendiente",
-        description: `Han pasado ${daysSinceRotation} días desde la última rotación`,
-        value: `${daysSinceRotation}d`,
-        color: "bg-gradient-to-r from-blue-500 to-cyan-600",
-        icon: <RotateIcon />,
-        priority: 2
-      });
-    }
-    
-    return alertList;
-  }, [config.ph, config.targetPH, config.ec, config.temp, calculateStaggeredEC.recommendedEC, lastRotation, plants.length]);
+  if (step < 1) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sprout className="text-white" size={32} />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-800 mb-2">HydroCaru</h1>
+            <p className="text-slate-600 mb-6">Sistema de cultivo escalonado de lechugas</p>
+            <Button 
+              onClick={() => {
+                setStep(1);
+                setTab("dashboard");
+              }} 
+              className="bg-gradient-to-r from-emerald-500 to-green-600 w-full h-12 text-white"
+            >
+              Iniciar Sistema <ArrowRight className="ml-2" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   // =================== COMPONENTES DE PESTAÑAS ===================
-
-  // 1. 📊 PANEL PRINCIPAL CON CÁLCULO ESCALONADO
+  
+  // 1. 📊 PANEL PRINCIPAL
   const DashboardTab = () => (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <div className="flex flex-col gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Panel de Control HydroCaru</h1>
@@ -753,18 +649,6 @@ export default function HydroCaruApp() {
         </div>
         
         <div className="flex flex-wrap gap-2">
-          <Badge className={
-            irrigationData.season === "summer" ? "bg-amber-100 text-amber-800" :
-            irrigationData.season === "winter" ? "bg-blue-100 text-blue-800" :
-            irrigationData.season === "autumn" ? "bg-orange-100 text-orange-800" :
-            "bg-green-100 text-green-800"
-          }>
-            {irrigationData.season === "summer" ? "Verano Castellón" :
-             irrigationData.season === "winter" ? "Invierno Castellón" :
-             irrigationData.season === "autumn" ? "Otoño Castellón" :
-             "Primavera Castellón"}
-          </Badge>
-          
           <Badge className="bg-purple-100 text-purple-800">
             {plants.length} plantas • {calculateStaggeredEC.recommendedEC}µS
           </Badge>
@@ -778,7 +662,7 @@ export default function HydroCaruApp() {
       </div>
       
       {/* CÁLCULO ESCALONADO */}
-      <Card className="p-5 rounded-xl">
+      <Card className="p-5 rounded-xl border border-gray-200">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
@@ -790,13 +674,12 @@ export default function HydroCaruApp() {
             </div>
           </div>
           
-          <Button
+          <button
             onClick={() => setShowECCalculator(true)}
-            variant="outline"
-            size="sm"
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
           >
             Configurar
-          </Button>
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -831,19 +714,8 @@ export default function HydroCaruApp() {
           </div>
         </div>
         
-        {calculateStaggeredEC.details.length > 0 && (
-          <div className="p-3 bg-gradient-to-r from-slate-50 to-white rounded-lg border border-slate-200">
-            <h4 className="font-bold text-slate-700 text-sm mb-2">Detalles del cálculo:</h4>
-            <ul className="text-xs text-slate-600 space-y-1">
-              {calculateStaggeredEC.details.map((detail, idx) => (
-                <li key={idx}>• {detail}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        
         <div className="mt-4 pt-4 border-t border-slate-200">
-          <Button
+          <button
             onClick={() => {
               setConfig({
                 ...config,
@@ -851,17 +723,17 @@ export default function HydroCaruApp() {
               });
               alert(`✅ EC objetivo actualizada a ${calculateStaggeredEC.recommendedEC} µS/cm`);
             }}
-            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+            className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg font-medium"
           >
-            <Check className="mr-2" size={16} />
+            <Check className="inline mr-2" size={16} />
             Aplicar EC Recomendada como Objetivo
-          </Button>
+          </button>
         </div>
       </Card>
       
       {/* RESUMEN RÁPIDO */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 rounded-xl">
+        <Card className="p-4 rounded-xl border border-gray-200">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
               <Sprout className="text-white" size={18} />
@@ -898,7 +770,7 @@ export default function HydroCaruApp() {
           )}
         </Card>
         
-        <Card className="p-4 rounded-xl">
+        <Card className="p-4 rounded-xl border border-gray-200">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
               <FlaskConical className="text-white" size={18} />
@@ -929,7 +801,7 @@ export default function HydroCaruApp() {
           </div>
         </Card>
         
-        <Card className="p-4 rounded-xl">
+        <Card className="p-4 rounded-xl border border-gray-200">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
               <CloudRain className="text-white" size={18} />
@@ -980,16 +852,16 @@ export default function HydroCaruApp() {
       </div>
     </div>
   );
-
+  
   // 2. 📝 MEDICIONES MANUALES
   const MeasurementsTab = () => (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">📝 Mediciones Manuales</h2>
         <p className="text-slate-600 text-sm">Control preciso del sistema escalonado</p>
       </div>
       
-      <Card className="p-5 rounded-xl">
+      <Card className="p-5 rounded-xl border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* COLUMNA IZQUIERDA - MEDICIONES */}
           <div className="space-y-4">
@@ -999,26 +871,24 @@ export default function HydroCaruApp() {
                   <Activity className="text-purple-600" size={18} />
                   <span className="font-bold text-slate-800">pH del Agua</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => setEditingPH(!editingPH)}
-                  className="h-8 px-2"
+                  className="px-2 py-1 text-sm"
                 >
                   {editingPH ? <Save size={14} /> : <Edit3 size={14} />}
-                </Button>
+                </button>
               </div>
               
               {editingPH ? (
                 <div className="space-y-3">
-                  <Input
+                  <input
                     type="number"
                     step="0.1"
                     min="4.0"
                     max="9.0"
                     value={config.ph}
                     onChange={(e) => handleManualPHChange(e.target.value)}
-                    className="text-center text-xl font-bold h-10"
+                    className="w-full text-center text-xl font-bold h-10 border rounded"
                   />
                   <Slider
                     value={[parseFloat(config.ph)]}
@@ -1049,26 +919,24 @@ export default function HydroCaruApp() {
                   <Zap className="text-blue-600" size={18} />
                   <span className="font-bold text-slate-800">EC (Conductividad)</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => setEditingEC(!editingEC)}
-                  className="h-8 px-2"
+                  className="px-2 py-1 text-sm"
                 >
                   {editingEC ? <Save size={14} /> : <Edit3 size={14} />}
-                </Button>
+                </button>
               </div>
               
               {editingEC ? (
                 <div className="space-y-3">
-                  <Input
+                  <input
                     type="number"
                     min="0"
                     max="3000"
                     step="50"
                     value={config.ec}
                     onChange={(e) => handleManualECChange(e.target.value)}
-                    className="text-center text-xl font-bold h-10"
+                    className="w-full text-center text-xl font-bold h-10 border rounded"
                   />
                   <Slider
                     value={[parseFloat(config.ec)]}
@@ -1095,29 +963,27 @@ export default function HydroCaruApp() {
             <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <ThermometerIcon2 className="text-amber-600" size={18} />
+                  <Thermometer className="text-amber-600" size={18} />
                   <span className="font-bold text-slate-800">Temperatura</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => setEditingTemp(!editingTemp)}
-                  className="h-8 px-2"
+                  className="px-2 py-1 text-sm"
                 >
                   {editingTemp ? <Save size={14} /> : <Edit3 size={14} />}
-                </Button>
+                </button>
               </div>
               
               {editingTemp ? (
                 <div className="space-y-3">
-                  <Input
+                  <input
                     type="number"
                     min="0"
                     max="40"
                     step="0.5"
                     value={config.temp}
                     onChange={(e) => handleManualTempChange(e.target.value)}
-                    className="text-center text-xl font-bold h-10"
+                    className="w-full text-center text-xl font-bold h-10 border rounded"
                   />
                 </div>
               ) : (
@@ -1140,29 +1006,27 @@ export default function HydroCaruApp() {
             <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <DropletIcon className="text-cyan-600" size={18} />
+                  <Droplet className="text-cyan-600" size={18} />
                   <span className="font-bold text-slate-800">Volumen Depósito</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => setEditingVolume(!editingVolume)}
-                  className="h-8 px-2"
+                  className="px-2 py-1 text-sm"
                 >
                   {editingVolume ? <Save size={14} /> : <Edit3 size={14} />}
-                </Button>
+                </button>
               </div>
               
               {editingVolume ? (
                 <div className="space-y-3">
-                  <Input
+                  <input
                     type="number"
                     min="0"
                     max={parseFloat(config.totalVol)}
                     step="0.5"
                     value={config.currentVol}
                     onChange={(e) => handleManualVolumeChange(e.target.value)}
-                    className="text-center text-xl font-bold h-10"
+                    className="w-full text-center text-xl font-bold h-10 border rounded"
                   />
                 </div>
               ) : (
@@ -1179,13 +1043,13 @@ export default function HydroCaruApp() {
         </div>
         
         <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
-          <Button
+          <button
             onClick={handleSaveMeasurement}
-            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 h-10"
+            className="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg font-medium"
           >
-            <Save className="mr-2" size={16} />
+            <Save className="inline mr-2" size={16} />
             Guardar Medición Actual
-          </Button>
+          </button>
         </div>
       </Card>
     </div>
@@ -1193,14 +1057,14 @@ export default function HydroCaruApp() {
 
   // 3. 🧪 CÁLCULOS Y AJUSTES
   const CalculationsTab = () => (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">🧪 Cálculos para Cultivo Escalonado</h2>
         <p className="text-slate-600 text-sm">Ajustes específicos por variedad y etapa</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 rounded-xl">
+        <Card className="p-4 rounded-xl border border-gray-200">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
               <RefreshCw className="text-white" size={16} />
@@ -1230,7 +1094,7 @@ export default function HydroCaruApp() {
           )}
         </Card>
         
-        <Card className="p-4 rounded-xl">
+        <Card className="p-4 rounded-xl border border-gray-200">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
               <FlaskConical className="text-white" size={16} />
@@ -1259,7 +1123,7 @@ export default function HydroCaruApp() {
           </div>
         </Card>
         
-        <Card className="p-4 rounded-xl">
+        <Card className="p-4 rounded-xl border border-gray-200">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
               <Waves className="text-white" size={16} />
@@ -1285,7 +1149,7 @@ export default function HydroCaruApp() {
       </div>
       
       {/* TABLA DE VARIEDADES */}
-      <Card className="p-5 rounded-xl">
+      <Card className="p-5 rounded-xl border border-gray-200">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
             <Leaf className="text-white" size={20} />
@@ -1343,37 +1207,22 @@ export default function HydroCaruApp() {
       1: { 
         count: plants.filter(p => p.level === 1).length, 
         max: 5,
-        plants: plants.filter(p => p.level === 1),
-        avgEC: calculateAverageECForLevel(1)
+        plants: plants.filter(p => p.level === 1)
       },
       2: { 
         count: plants.filter(p => p.level === 2).length, 
         max: 5,
-        plants: plants.filter(p => p.level === 2),
-        avgEC: calculateAverageECForLevel(2)
+        plants: plants.filter(p => p.level === 2)
       },
       3: { 
         count: plants.filter(p => p.level === 3).length, 
         max: 5,
-        plants: plants.filter(p => p.level === 3),
-        avgEC: calculateAverageECForLevel(3)
+        plants: plants.filter(p => p.level === 3)
       }
     };
     
-    function calculateAverageECForLevel(level) {
-      const levelPlants = plants.filter(p => p.level === level);
-      if (levelPlants.length === 0) return 0;
-      
-      const totalEC = levelPlants.reduce((sum, plant) => {
-        const variety = VARIETIES[plant.variety];
-        return sum + (variety?.stages[plant.stage]?.ec || 1200);
-      }, 0);
-      
-      return Math.round(totalEC / levelPlants.length);
-    }
-    
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-slate-800">🌿 Torre de Cultivo Escalonado</h2>
           <p className="text-slate-600 text-sm">Gestión avanzada por nivel y etapa</p>
@@ -1394,28 +1243,28 @@ export default function HydroCaruApp() {
           </div>
           
           <div className="flex gap-3">
-            <Button
+            <button
               onClick={() => setShowAddPlantDialog(true)}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg font-medium"
             >
-              <Plus className="mr-2" size={16} />
+              <Plus className="inline mr-2" size={16} />
               Añadir Planta
-            </Button>
+            </button>
             
-            <Button
+            <button
               onClick={handleRotatePlants}
-              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg font-medium"
             >
-              <RotateIcon className="mr-2" size={16} />
+              <RefreshCw className="inline mr-2" size={16} />
               Rotar Plantas
-            </Button>
+            </button>
           </div>
         </div>
         
         {/* PANELES POR NIVEL */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map(level => (
-            <Card key={level} className="p-5 rounded-xl">
+            <Card key={level} className="p-5 rounded-xl border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${
@@ -1431,10 +1280,6 @@ export default function HydroCaruApp() {
                   }>
                     {levelStats[level].count}/{levelStats[level].max}
                   </Badge>
-                </div>
-                
-                <div className="text-sm font-bold text-slate-700">
-                  EC: {levelStats[level].avgEC}µS
                 </div>
               </div>
               
@@ -1462,23 +1307,19 @@ export default function HydroCaruApp() {
                           </div>
                           
                           <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <button
                               onClick={() => handleAdvanceStage(plant.id)}
                               className="h-6 w-6 p-0 text-blue-500"
                               title="Avanzar etapa"
                             >
                               <ArrowRight size={12} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            </button>
+                            <button
                               onClick={() => handleRemovePlant(plant.id)}
                               className="h-6 w-6 p-0 text-red-500"
                             >
                               <Trash2 size={12} />
-                            </Button>
+                            </button>
                           </div>
                         </div>
                         
@@ -1507,18 +1348,17 @@ export default function HydroCaruApp() {
               </div>
               
               {/* BOTÓN AÑADIR AL NIVEL */}
-              <Button
+              <button
                 onClick={() => {
                   setNewPlant({...newPlant, level});
                   setShowAddPlantDialog(true);
                 }}
-                variant="outline"
-                className="w-full"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
                 disabled={levelStats[level].count >= levelStats[level].max}
               >
-                <Plus className="mr-2" size={12} />
+                <Plus className="inline mr-2" size={12} />
                 Añadir al Nivel {level}
-              </Button>
+              </button>
             </Card>
           ))}
         </div>
@@ -1528,13 +1368,13 @@ export default function HydroCaruApp() {
 
   // 5. 📈 HISTORIAL
   const HistoryTab = () => (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">📈 Historial de Mediciones</h2>
         <p className="text-slate-600 text-sm">{history.length} registros</p>
       </div>
       
-      <Card className="p-5 rounded-xl">
+      <Card className="p-5 rounded-xl border border-gray-200">
         {history.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-slate-500">No hay mediciones registradas</p>
@@ -1591,11 +1431,11 @@ export default function HydroCaruApp() {
         <div className="space-y-4 py-4">
           <div>
             <Label>Nombre de la Planta</Label>
-            <Input
+            <input
               value={newPlant.name}
               onChange={(e) => setNewPlant({...newPlant, name: e.target.value})}
               placeholder="Ej: Lechuga Romana #1"
-              className="mt-1"
+              className="w-full mt-1 border rounded px-3 py-2"
             />
           </div>
           
@@ -1603,7 +1443,7 @@ export default function HydroCaruApp() {
             <Label>Variedad de Lechuga</Label>
             <Select value={newPlant.variety} onValueChange={(value) => setNewPlant({...newPlant, variety: value})}>
               <SelectTrigger className="mt-1">
-                <SelectValue />
+                <SelectValue placeholder="Selecciona variedad" />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(VARIETIES).map(([key, variety]) => (
@@ -1624,7 +1464,7 @@ export default function HydroCaruApp() {
             <Label>Etapa de Crecimiento</Label>
             <Select value={newPlant.stage} onValueChange={(value) => setNewPlant({...newPlant, stage: value})}>
               <SelectTrigger className="mt-1">
-                <SelectValue />
+                <SelectValue placeholder="Selecciona etapa" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="seedling">
@@ -1659,7 +1499,7 @@ export default function HydroCaruApp() {
             <Label>Nivel en la Torre</Label>
             <Select value={newPlant.level.toString()} onValueChange={(value) => setNewPlant({...newPlant, level: parseInt(value)})}>
               <SelectTrigger className="mt-1">
-                <SelectValue />
+                <SelectValue placeholder="Selecciona nivel" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="1">Nivel 1 (Abajo) - Para plántulas</SelectItem>
@@ -1671,12 +1511,12 @@ export default function HydroCaruApp() {
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowAddPlantDialog(false)}>
+          <button className="px-4 py-2 border rounded" onClick={() => setShowAddPlantDialog(false)}>
             Cancelar
-          </Button>
-          <Button onClick={handleAddPlant} className="bg-gradient-to-r from-emerald-500 to-green-600">
+          </button>
+          <button onClick={handleAddPlant} className="px-4 py-2 bg-emerald-500 text-white rounded">
             Añadir Planta
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1698,7 +1538,7 @@ export default function HydroCaruApp() {
               onValueChange={(value) => setConfig({...config, calculationMode: value})}
             >
               <SelectTrigger className="mt-1">
-                <SelectValue />
+                <SelectValue placeholder="Selecciona método" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="average">
@@ -1731,7 +1571,7 @@ export default function HydroCaruApp() {
                 onValueChange={(value) => setConfig({...config, dominantStage: value})}
               >
                 <SelectTrigger className="mt-1">
-                  <SelectValue />
+                  <SelectValue placeholder="Selecciona etapa" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="seedling">🌱 Plántula</SelectItem>
@@ -1753,10 +1593,10 @@ export default function HydroCaruApp() {
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowECCalculator(false)}>
+          <button className="px-4 py-2 border rounded" onClick={() => setShowECCalculator(false)}>
             Cerrar
-          </Button>
-          <Button 
+          </button>
+          <button 
             onClick={() => {
               setConfig({
                 ...config,
@@ -1765,42 +1605,16 @@ export default function HydroCaruApp() {
               setShowECCalculator(false);
               alert(`✅ EC objetivo actualizada a ${calculateStaggeredEC.recommendedEC} µS/cm`);
             }}
-            className="bg-gradient-to-r from-emerald-500 to-green-600"
+            className="px-4 py-2 bg-emerald-500 text-white rounded"
           >
             Aplicar EC Recomendada
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 
   // =================== RENDER PRINCIPAL ===================
-
-  if (step < 4) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          {/* Configuración inicial simplificada */}
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Sprout className="text-white" size={32} />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">HydroCaru</h1>
-            <p className="text-slate-600 mb-6">Cultivo escalonado de lechugas</p>
-            <Button 
-              onClick={() => {
-                setStep(4);
-                setTab("dashboard");
-              }} 
-              className="bg-gradient-to-r from-emerald-500 to-green-600 w-full h-12"
-            >
-              Iniciar Sistema <ArrowRight className="ml-2" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-20">
@@ -1818,21 +1632,13 @@ export default function HydroCaruApp() {
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <Badge className={`text-xs ${
-                alerts.some(a => a.priority === 1) 
-                  ? "bg-red-100 text-red-800" 
-                  : alerts.some(a => a.priority === 2)
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-green-100 text-green-800"
-              }`}>
-                {alerts.filter(a => a.priority === 1).length > 0 
-                  ? `${alerts.filter(a => a.priority === 1).length}⚠️` 
-                  : alerts.filter(a => a.priority === 2).length > 0
-                  ? `${alerts.filter(a => a.priority === 2).length}📋`
-                  : "OK"}
-              </Badge>
-            </div>
+            <button
+              onClick={() => setStep(0)}
+              className="px-3 py-1 text-sm border rounded"
+            >
+              <ArrowLeft className="inline mr-1" size={14} />
+              Salir
+            </button>
           </div>
         </div>
       </header>
@@ -1899,15 +1705,6 @@ export default function HydroCaruApp() {
           <div className="flex items-center justify-between">
             <div className="text-xs text-slate-600">
               {plants.length} plantas • EC: {calculateStaggeredEC.recommendedEC}µS
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                irrigationConfig.enabled ? 'bg-green-500 animate-pulse' : 'bg-slate-300'
-              }`} />
-              <span className="text-xs text-slate-600">
-                Riego: {irrigationConfig.enabled ? 'ON' : 'OFF'}
-              </span>
             </div>
           </div>
         </div>
