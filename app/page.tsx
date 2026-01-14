@@ -85,7 +85,7 @@ const CASTELLON_CLIMATE = {
     wind: "Poniente frecuente",
     recommendations: [
       "Aumentar frecuencia de riego por evaporación",
-      "Vigilar temperatura del agua (<28°C)",
+      "Vigilar temperatura del agua (&lt;28°C)",
       "Reducir EC si temperatura supera 30°C"
     ]
   },
@@ -1085,7 +1085,7 @@ export default function HydroCaruApp() {
         <div className="space-y-3">
           {parseFloat(config.temp) > 28 ? (
             <div className="p-3 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-200">
-              <h4 className="font-bold text-red-700 text-sm mb-1">Temperatura ALTA (>28°C)</h4>
+              <h4 className="font-bold text-red-700 text-sm mb-1">Temperatura ALTA (&gt;28°C)</h4>
               <ul className="text-xs text-slate-700 space-y-1 ml-4 list-disc">
                 <li>Reducir EC en 200-300 µS/cm</li>
                 <li>Aumentar oxigenación del agua</li>
@@ -1095,7 +1095,7 @@ export default function HydroCaruApp() {
             </div>
           ) : parseFloat(config.temp) < 18 ? (
             <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
-              <h4 className="font-bold text-blue-700 text-sm mb-1">Temperatura BAJA (<18°C)</h4>
+              <h4 className="font-bold text-blue-700 text-sm mb-1">Temperatura BAJA (&lt;18°C)</h4>
               <ul className="text-xs text-slate-700 space-y-1 ml-4 list-disc">
                 <li>Aumentar EC en 100-200 µS/cm</li>
                 <li>Usar calentador de agua</li>
@@ -1925,7 +1925,7 @@ export default function HydroCaruApp() {
           <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
             <h4 className="font-bold text-amber-700 text-sm mb-1">Verano (Jun-Sep)</h4>
             <p className="text-xs text-slate-700">Temp: 22-32°C • Humedad: 60-70% • Viento: Poniente</p>
-            <p className="text-xs text-slate-600 mt-1">📌 Aumentar riego 20% • Controlar temperatura agua • Reducir EC si mayor a 30°C</p>
+            <p className="text-xs text-slate-600 mt-1">📌 Aumentar riego 20% • Controlar temperatura agua • Reducir EC si &gt;30°C</p>
           </div>
           
           <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
