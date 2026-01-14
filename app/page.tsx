@@ -279,4 +279,27 @@ export default function HydroAppFinal() {
               
               <div className="flex justify-between items-center">
                 <span className="text-slate-700">CANNA A</span>
-                <span className="font-bold text-emerald-600">{cannaDosage.a}
+                <span className="font-bold text-emerald-600">{cannaDosage.a} ml</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">CANNA B</span>
+                <span className="font-bold text-emerald-600">{cannaDosage.b} ml</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-slate-500 text-center py-4">Añade plantas para ver dosificación</p>
+          )}
+        </Card>
+        
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <CloudRain className="text-white" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Condiciones Actuales</h3>
+              <p className="text-sm text-slate-600">Mediciones</p>
+            </div>
+          </div>
+          
+          <div
