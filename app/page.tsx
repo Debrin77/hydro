@@ -1,317 +1,188 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
-  Sprout, Beaker, Plus, Trash2, Lightbulb, 
-  Zap, ChevronRight, Home, Settings, Layers, 
-  Wind, Timer, ClipboardList, FlaskConical, 
-  RefreshCw, Check, Brain, ArrowRight, Waves
+  Sprout, Beaker, Plus, Trash2, FlaskConical, 
+  AlertTriangle, Droplets, Thermometer, Zap, 
+  ChevronRight, Home, Settings, Layers, 
+  Timer, ClipboardList, RefreshCw, Check, 
+  Brain, ArrowRight, Waves, RotateCw, Info, 
+  Leaf, Sun, Wind, BarChart3, Calendar
 } from "lucide-react"
 
-// --- CONFIGURACIÓN TÉCNICA RECUPERADA ---
-const WATER_TYPES = {
-  "osmosis": { name: "Ósmosis Inversa", ecBase: 0, desc: "Pura. Requiere CalMag y estabilización." },
-  "blanda": { name: "Mezcla Blanda", ecBase: 350, desc: "Óptima para Castellón (Mezcla 50/50)." },
-  "dura": { name: "Grifo Castellón", ecBase: 900, desc: "Muy dura. Alto riesgo de bloqueos." }
-}
-
+// --- CONFIGURACIÓN TÉCNICA (Basada en lógica CANNA/Castellón) ---
 const VARIETIES = {
-  "Romana": { name: "Lechuga Romana", ec: [0.8, 1.4, 1.8], color: "bg-emerald-500" },
-  "Hoja Roble": { name: "Hoja de Roble", ec: [0.9, 1.5, 2.0], color: "bg-red-500" },
-  "Lollo Rosso": { name: "Lollo Rosso", ec: [0.8, 1.3, 1.7], color: "bg-purple-500" },
-  "Escarola": { name: "Escarola", ec: [1.0, 1.6, 2.1], color: "bg-green-400" }
+  "romana": { name: "Romana", ec: [1.0, 1.4, 1.8], color: "text-emerald-500", icon: <Leaf size={20}/>, bg: "bg-emerald-50" },
+  "roble": { name: "H. Roble", ec: [0.9, 1.3, 1.7], color: "text-red-500", icon: <Sprout size={20}/>, bg: "bg-red-50" },
+  "lollo": { name: "Lollo Rosso", ec: [1.1, 1.5, 1.9], color: "text-purple-500", icon: <Waves size={20}/>, bg: "bg-purple-50" },
+  "maravilla": { name: "Maravilla", ec: [1.0, 1.5, 2.0], color: "text-green-600", icon: <Sun size={20}/>, bg: "bg-green-50" },
+  "iceberg": { name: "Iceberg", ec: [0.8, 1.2, 1.6], color: "text-cyan-400", icon: <Thermometer size={20}/>, bg: "bg-cyan-50" },
+  "trocadero": { name: "Trocadero", ec: [0.8, 1.3, 1.7], color: "text-lime-500", icon: <Droplets size={20}/>, bg: "bg-lime-50" }
 }
 
-export default function HydroMasterSystem() {
-  // ESTADOS DE INICIO Y NAVEGACIÓN
-  const [step, setStep] = useState(0) // 0: Inicio, 1: Agua, 2: Plantas, 3: Dashboard
+export default function HydroMasterUltimate() {
   const [tab, setTab] = useState("dashboard")
-  
-  // CONFIGURACIÓN DE USUARIO
   const [config, setConfig] = useState({
-    waterType: "osmosis",
     vol: 18,
     temp: 24,
+    ph: 6.0,
     isPoniente: false,
-    phActual: 6.0
+    waterType: "osmosis"
   })
-
-  // GESTIÓN DE LAS 15 PLANTAS
   const [tower, setTower] = useState<any[]>(Array(15).fill(null))
-  const [history, setHistory] = useState<any[]>([])
 
-  // --- MOTOR DE CÁLCULO ---
-  const analysis = useMemo(() => {
-    const activePlants = tower.filter(p => p !== null)
-    if (activePlants.length === 0) return null
-
-    let totalEC = 0
-    activePlants.forEach(p => {
-      totalEC += p.ec[p.level - 1]
-    })
+  // --- MOTOR DE DIAGNÓSTICO Y CÁLCULO ---
+  const diagnosis = useMemo(() => {
+    const alerts = []
+    let phCorrection = { ml: 0, type: "" }
     
-    let targetEC = (totalEC / activePlants.length) * 1000
-    if (config.isPoniente || config.temp > 26) targetEC *= 0.85 // Factor Castellón
-
-    const waterBase = WATER_TYPES[config.waterType as keyof typeof WATER_TYPES].ecBase
-    const netEC = Math.max(0, targetEC - waterBase)
-    const dose = (netEC / 500) * config.vol // Ratio Canna Aqua
-
-    return {
-      targetEC: Math.round(targetEC),
-      doseA: (dose / 2).toFixed(1),
-      doseB: (dose / 2).toFixed(1),
-      calmag: config.waterType === "osmosis" ? (config.vol * 0.8).toFixed(1) : "0",
-      irrigation: config.temp > 25 ? "15m ON / 20m OFF" : "15m ON / 45m OFF",
-      phRisk: config.waterType === "osmosis" ? "Inestable" : "Estable"
+    if (config.temp > 28) alerts.push({ msg: "TEMP ALTA: Riesgo de Pythium. Añadir agua fría o hielo.", type: "error" })
+    
+    if (config.ph > 6.2) {
+      const diff = config.ph - 5.8
+      phCorrection = { ml: parseFloat((diff * config.vol * 0.15).toFixed(1)), type: "pH- (Ácido Fosfórico)" }
+      alerts.push({ msg: `pH ALTO: Bloqueo de Hierro. Añadir ${phCorrection.ml}ml de pH-`, type: "warning" })
     }
-  }, [tower, config])
 
-  // --- ACCIONES ---
-  const placePlant = (index: number, varietyKey: string) => {
+    const active = tower.filter(p => p !== null)
+    let targetEC = active.length > 0 
+      ? (active.reduce((acc, p) => acc + p.ec[1], 0) / active.length) * 1000 
+      : 1200
+    
+    if (config.isPoniente) targetEC *= 0.8 // Compensación por transpiración excesiva en Castellón
+
+    return { alerts, phCorrection, targetEC: Math.round(targetEC), cannaDose: ((targetEC / 500 * config.vol) / 2).toFixed(1) }
+  }, [config, tower])
+
+  // --- FUNCIONES ---
+  const rotateTower = () => {
     const newTower = [...tower]
-    newTower[index] = { ...VARIETIES[varietyKey as keyof typeof VARIETIES], level: 1 }
+    const last = newTower.pop()
+    newTower.unshift(last)
     setTower(newTower)
   }
 
-  const cycleLevel = (index: number) => {
-    if (!tower[index]) return
-    const newTower = [...tower]
-    newTower[index].level = (newTower[index].level % 3) + 1
-    setTower(newTower)
-  }
-
-  // --- INTERFAZ DE INICIO (SETUP) ---
-  if (step < 3) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-500">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-emerald-500/20">
-              <Sprout size={40} className="text-white" />
-            </div>
-            <h1 className="text-3xl font-black italic tracking-tighter uppercase">System<span className="text-emerald-500">V15</span></h1>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Configuración Inicial</p>
-          </div>
-
-          {step === 0 && (
-            <div className="space-y-4">
-              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <h3 className="text-sm font-black uppercase mb-4 text-emerald-400">Tipo de Agua Base</h3>
-                <div className="space-y-2">
-                  {Object.entries(WATER_TYPES).map(([key, val]) => (
-                    <button key={key} onClick={() => setConfig({...config, waterType: key})} 
-                      className={`w-full p-4 rounded-2xl text-left border-2 transition-all ${config.waterType === key ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-800 bg-slate-900'}`}>
-                      <p className="font-bold text-sm">{val.name}</p>
-                      <p className="text-[10px] text-slate-500 uppercase">{val.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={() => setStep(1)} className="w-full bg-white text-black font-black py-5 rounded-2xl flex items-center justify-center gap-2">
-                CONTINUAR <ArrowRight size={18}/>
-              </button>
-            </div>
-          )}
-
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <h3 className="text-sm font-black uppercase mb-4 text-emerald-400">Volumen del Depósito</h3>
-                <input type="range" min="5" max="25" value={config.vol} onChange={(e) => setConfig({...config, vol: parseInt(e.target.value)})} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
-                <div className="flex justify-between mt-4 text-2xl font-black">
-                  <span>{config.vol} <small className="text-xs text-slate-500">LITROS</small></span>
-                </div>
-              </div>
-              <button onClick={() => setStep(2)} className="w-full bg-white text-black font-black py-5 rounded-2xl flex items-center justify-center gap-2">
-                CONFIGURAR TORRE <ArrowRight size={18}/>
-              </button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4 text-center">
-              <p className="text-sm text-slate-400">Has configurado {config.vol}L con agua {config.waterType}.</p>
-              <button onClick={() => setStep(3)} className="w-full bg-emerald-500 text-white font-black py-6 rounded-2xl text-xl shadow-xl shadow-emerald-500/20">
-                INICIAR PANEL DE CONTROL
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // --- PANEL PRINCIPAL (DASHBOARD) ---
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans text-slate-900">
       {/* HEADER */}
-      <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-50">
+      <header className="bg-slate-950 text-white p-6 sticky top-0 z-50 shadow-xl">
         <div className="max-w-xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white"><Layers size={18}/></div>
-            <span className="font-black text-lg tracking-tighter uppercase italic">Control<span className="text-emerald-600">V15</span></span>
+          <div>
+            <h1 className="text-2xl font-black italic tracking-tighter">HYDRO<span className="text-emerald-500">PRO</span> V15</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Castellón Edition</p>
           </div>
-          <div className="flex gap-2">
-            {config.isPoniente && <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-2 py-1 rounded-full animate-pulse">PONIENTE</span>}
-            <span className="bg-slate-100 text-slate-600 text-[10px] font-black px-2 py-1 rounded-full uppercase">{config.vol}L</span>
-          </div>
+          {config.isPoniente && <div className="bg-orange-600 px-3 py-1 rounded-full text-[10px] font-black animate-pulse uppercase">Poniente Activo</div>}
         </div>
       </header>
 
-      <main className="max-w-xl mx-auto p-4 space-y-6">
+      <main className="max-w-xl mx-auto p-4 space-y-4">
         
-        {/* PESTAÑA: RESUMEN (DASHBOARD) */}
-        {tab === "dashboard" && (
-          <div className="space-y-4 animate-in fade-in">
+        <Tabs defaultValue="dashboard" onValueChange={setTab} className="w-full">
+          <TabsList className="grid grid-cols-5 bg-white border border-slate-200 rounded-2xl h-14 mb-6 p-1">
+            <TabsTrigger value="dashboard" className="rounded-xl"><Home size={18}/></TabsTrigger>
+            <TabsTrigger value="tower" className="rounded-xl"><Layers size={18}/></TabsTrigger>
+            <TabsTrigger value="history" className="rounded-xl"><BarChart3 size={18}/></TabsTrigger>
+            <TabsTrigger value="manual" className="rounded-xl"><ClipboardList size={18}/></TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-xl"><Settings size={18}/></TabsTrigger>
+          </TabsList>
+
+          {/* PANEL: SENSORES Y ALERTAS */}
+          <TabsContent value="dashboard" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-900 text-white p-5 rounded-3xl shadow-xl">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">EC Objetivo</p>
-                <p className="text-4xl font-black text-emerald-400">{analysis?.targetEC || 0}</p>
-                <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-tighter">µS/cm Compensada</p>
+              <div className={`p-5 rounded-[2rem] border-2 transition-all ${config.temp > 28 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100'}`}>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="p-2 bg-slate-100 rounded-lg"><Thermometer size={20} className="text-slate-600"/></div>
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Temperatura</span>
+                </div>
+                <input type="number" value={config.temp} onChange={(e) => setConfig({...config, temp: parseFloat(e.target.value)})} className="bg-transparent text-3xl font-black w-full outline-none"/>
+                <p className="text-[10px] font-bold text-slate-400 mt-1">ÓPTIMO: 20-24°C</p>
               </div>
-              <div className="bg-white border border-slate-200 p-5 rounded-3xl shadow-sm">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dosis CANNA</p>
-                <p className="text-3xl font-black text-blue-600">{analysis?.doseA || 0} <small className="text-xs">ml</small></p>
-                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">De cada parte (A+B)</p>
+
+              <div className={`p-5 rounded-[2rem] border-2 transition-all ${config.ph > 6.2 ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-100'}`}>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="p-2 bg-slate-100 rounded-lg"><Droplets size={20} className="text-slate-600"/></div>
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Nivel pH</span>
+                </div>
+                <input type="number" step="0.1" value={config.ph} onChange={(e) => setConfig({...config, ph: parseFloat(e.target.value)})} className="bg-transparent text-3xl font-black w-full outline-none"/>
+                <p className="text-[10px] font-bold text-slate-400 mt-1">ÓPTIMO: 5.8-6.0</p>
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 p-6 rounded-3xl flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Waves size={24}/></div>
+            <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-8 opacity-10"><Beaker size={140}/></div>
+               <div className="relative z-10 space-y-6">
+                 <div>
+                   <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Dosis CANNA Aqua Vega ({config.vol}L)</p>
+                   <div className="flex items-baseline gap-2">
+                     <span className="text-5xl font-black italic tracking-tighter">{diagnosis.cannaDose}</span>
+                     <span className="text-xl font-bold text-emerald-500">ml (A+B)</span>
+                   </div>
+                 </div>
+                 <div className="flex gap-4 pt-4 border-t border-slate-800">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">EC Objetivo</p>
+                      <p className="text-xl font-black tracking-tighter">{diagnosis.targetEC} µS</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">Agua Base</p>
+                      <p className="text-xl font-black tracking-tighter capitalize text-emerald-400">{config.waterType}</p>
+                    </div>
+                 </div>
+               </div>
+            </div>
+
+            {diagnosis.alerts.map((a, i) => (
+              <div key={i} className={`flex items-center gap-4 p-5 rounded-[1.5rem] border-2 animate-in slide-in-from-left-4 ${a.type === 'error' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
+                <AlertTriangle className="shrink-0" size={24}/>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Ciclo de Riego</p>
-                  <p className="text-md font-black italic">{analysis?.irrigation || 'Pendiente de plantas'}</p>
+                  <p className="text-xs font-black uppercase tracking-tighter leading-none mb-1">Alerta del Sistema</p>
+                  <p className="text-sm font-bold">{a.msg}</p>
                 </div>
               </div>
-              <div className="text-right">
-                 <p className="text-[10px] font-bold text-slate-400 uppercase">pH</p>
-                 <p className="text-sm font-black text-emerald-600 uppercase">{analysis?.phRisk}</p>
-              </div>
-            </div>
+            ))}
+          </TabsContent>
 
-            {analysis?.calmag !== "0" && (
-              <div className="bg-blue-600 text-white p-4 rounded-2xl flex items-center gap-3">
-                <FlaskConical size={20}/>
-                <p className="text-xs font-bold uppercase tracking-tight text-blue-50">Añadir {analysis?.calmag}ml de CalMag antes de los nutrientes</p>
+          {/* PESTAÑA: TORRE MEJORADA */}
+          <TabsContent value="tower" className="space-y-4">
+            <div className="bg-white border border-slate-200 p-6 rounded-[2.5rem]">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-black uppercase italic tracking-widest">Matriz de Cultivo V15</h3>
+                <button onClick={rotateTower} className="bg-slate-950 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black flex items-center gap-2 hover:bg-emerald-600 transition-all shadow-lg active:scale-95">
+                  <RotateCw size={14}/> ROTAR PLANTAS
+                </button>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* PESTAÑA: TORRE (GESTIÓN DE 15 PLANTAS) */}
-        {tab === "tower" && (
-          <div className="space-y-4 animate-in fade-in">
-            <div className="bg-white border border-slate-200 p-6 rounded-3xl">
-              <h3 className="text-xs font-black uppercase mb-4 flex items-center gap-2">
-                <Layers size={16} className="text-emerald-600"/> Matriz de Ocupación
-              </h3>
+              
               <div className="grid grid-cols-5 gap-3">
                 {tower.map((plant, i) => (
-                  <div key={i} onClick={() => cycleLevel(i)} className={`aspect-square rounded-2xl border-2 transition-all flex flex-col items-center justify-center relative cursor-pointer ${plant ? 'border-emerald-500 bg-emerald-50' : 'border-dashed border-slate-200 bg-slate-50'}`}>
+                  <div key={i} className={`aspect-square rounded-[1.5rem] border-2 flex flex-col items-center justify-center relative transition-all duration-500 ${plant ? `border-emerald-500 ${plant.bg}` : 'border-dashed border-slate-200 bg-slate-50'}`}>
+                    <span className="absolute top-1 left-2.5 text-[8px] font-black text-slate-300">{i+1}</span>
                     {plant ? (
                       <>
-                        <span className="text-[10px] font-black">{plant.name[0]}</span>
-                        <div className="absolute bottom-1 w-2/3 h-1 bg-emerald-200 rounded-full overflow-hidden">
-                           <div className="h-full bg-emerald-600" style={{width: `${(plant.level/3)*100}%`}}></div>
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); const n = [...tower]; n[i]=null; setTower(n); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md">
-                          <XIcon size={10}/>
-                        </button>
+                        <div className={`${plant.color} animate-in zoom-in`}>{plant.icon}</div>
+                        <button onClick={() => { const n = [...tower]; n[i] = null; setTower(n); }} className="absolute -top-1 -right-1 bg-white border border-slate-200 rounded-full p-1 text-red-500 shadow-sm"><Trash2 size={10}/></button>
                       </>
-                    ) : <Plus size={14} className="text-slate-300"/>}
+                    ) : <Plus size={14} className="text-slate-200"/>}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 p-4 rounded-3xl">
-              <h3 className="text-[10px] font-black uppercase text-slate-400 mb-3">Seleccionar Variedad para Huecos Vacíos</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {Object.keys(VARIETIES).map(key => (
-                  <button key={key} onClick={() => {
-                    const firstEmpty = tower.findIndex(p => p === null);
-                    if (firstEmpty !== -1) placePlant(firstEmpty, key);
-                  }} className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">
-                    + {VARIETIES[key as keyof typeof VARIETIES].name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PESTAÑA: PROTOCOLOS */}
-        {tab === "tips" && (
-          <div className="space-y-4 animate-in fade-in">
-            <div className="bg-white border-l-4 border-emerald-500 p-5 rounded-r-3xl shadow-sm">
-              <h4 className="text-[11px] font-black uppercase text-emerald-600 mb-2">Protocolo Lana de Roca</h4>
-              <p className="text-[11px] text-slate-600 leading-relaxed italic">
-                Lavar raíces con agua a 22°C. Insertar en dado Grodan 2.5cm pre-estabilizado a pH 5.5. No sumergir la corona de la raíz.
-              </p>
-            </div>
-            <div className="bg-slate-900 border-l-4 border-orange-500 p-5 rounded-r-3xl shadow-sm">
-              <h4 className="text-[11px] font-black uppercase text-orange-400 mb-2 flex items-center gap-1"><Wind size={12}/> Castellón: Poniente</h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed italic font-medium">
-                En días de Poniente, la planta transpira más. El sistema baja la EC automáticamente para evitar quemar las puntas por exceso de sales.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* PESTAÑA: AJUSTES */}
-        {tab === "settings" && (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-6 animate-in fade-in">
-             <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-black uppercase">Modo Poniente</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Compensación por viento seco</p>
-                </div>
-                <button onClick={() => setConfig({...config, isPoniente: !config.isPoniente})} className={`w-12 h-6 rounded-full transition-all relative ${config.isPoniente ? 'bg-orange-500' : 'bg-slate-200'}`}>
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${config.isPoniente ? 'right-1' : 'left-1'}`} />
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(VARIETIES).map(([id, v]) => (
+                <button key={id} onClick={() => {
+                  const idx = tower.findIndex(p => p === null)
+                  if (idx !== -1) { const n = [...tower]; n[idx] = v; setTower(n); }
+                }} className="flex flex-col items-center p-4 bg-white rounded-2xl border border-slate-200 hover:border-emerald-500 transition-all">
+                  <div className={v.color}>{v.icon}</div>
+                  <span className="text-[9px] font-black uppercase mt-2">{v.name}</span>
                 </button>
-             </div>
-             
-             <div className="space-y-2 pt-4 border-t border-slate-100">
-                <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
-                  <span>Temperatura Agua</span>
-                  <span className="text-slate-900">{config.temp}°C</span>
-                </div>
-                <input type="range" min="15" max="32" value={config.temp} onChange={(e) => setConfig({...config, temp: parseInt(e.target.value)})} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-slate-900" />
-             </div>
+              ))}
+            </div>
+          </TabsContent>
 
-             <button onClick={() => setStep(0)} className="w-full py-4 text-red-500 text-[10px] font-black uppercase border border-red-100 rounded-2xl hover:bg-red-50 transition-all mt-4">
-                Reiniciar Configuración Inicial
-             </button>
-          </div>
-        )}
-
-      </main>
-
-      {/* NAVBAR INFERIOR */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-2 z-50">
-        <div className="max-w-xl mx-auto grid grid-cols-4 gap-1">
-          <NavBtn id="dashboard" icon={<Home size={20}/>} label="Panel" active={tab} set={setTab} />
-          <NavBtn id="tower" icon={<Layers size={20}/>} label="Torre" active={tab} set={setTab} />
-          <NavBtn id="tips" icon={<Brain size={20}/>} label="Manual" active={tab} set={setTab} />
-          <NavBtn id="settings" icon={<Settings size={20}/>} label="Ajustes" active={tab} set={setTab} />
-        </div>
-      </footer>
-    </div>
-  )
-}
-
-function NavBtn({id, icon, label, active, set}: any) {
-  const isActive = active === id
-  return (
-    <button onClick={() => set(id)} className={`flex flex-col items-center py-2 rounded-xl transition-all ${isActive ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 hover:text-slate-600'}`}>
-      {icon}
-      <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">{label}</span>
-    </button>
-  )
-}
-
-function XIcon({size}: {size: number}) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-}
+          {/* PESTAÑA: MANUAL TÉCNICO PROFUNDO */}
+          <TabsContent value="manual" className="space-y-4">
+            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 space-y-8">
+              <section>
+                <div className="
