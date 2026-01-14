@@ -1348,7 +1348,7 @@ export default function HydroCaruApp() {
     </div>
   );
 
-  // 8. 🎓 CONSEJOS MAESTROS
+  // 8. 🎓 CONSEJOS MAESTROS (ESTA ES LA SECCIÓN CORREGIDA)
   const TipsTab = () => (
     <div className="space-y-6 animate-fade-in">
       <div className="text-center mb-6">
@@ -1443,7 +1443,8 @@ export default function HydroCaruApp() {
           <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
             <h4 className="font-bold text-amber-700 text-sm mb-1">Verano (Jun-Sep)</h4>
             <p className="text-xs text-slate-700">Temp: 22-32°C • Humedad: 60-70% • Viento: Poniente</p>
-            <p className="text-xs text-slate-600 mt-1">📌 Aumentar riego 20% • Controlar temperatura agua • Reducir EC si >30°C</p>
+            {/* LÍNEA CORREGIDA: Se cambió > por &gt; */}
+            <p className="text-xs text-slate-600 mt-1">📌 Aumentar riego 20% • Controlar temperatura agua • Reducir EC si &gt;30°C</p>
           </div>
           
           <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
