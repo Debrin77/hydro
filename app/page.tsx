@@ -110,11 +110,11 @@ const VARIETIES = {
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO - SIMPLIFICADAS
+// FUNCIONES DE CÁLCULO - CORREGIDAS
 // ============================================================================
 
 const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
-  if (plants.length === 0) return { targetEC: "1200", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
+  if (!plants || plants.length === 0) return { targetEC: "1200", targetPH: "6.0", statistics: { seedlingCount: 0, growthCount: 0, matureCount: 0 } };
   
   let totalECWeighted = 0;
   let totalPH = 0;
@@ -153,7 +153,7 @@ const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
 };
 
 const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_mineral") => {
-  if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 } };
+  if (!plants || plants.length === 0 || !totalVolume || totalVolume <= 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 } };
 
   let totalA = 0, totalB = 0;
   let usedWaterType = WATER_TYPES[waterType] || WATER_TYPES["bajo_mineral"];
@@ -192,6 +192,10 @@ const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_m
     }
   };
 };
+
+// ============================================================================
+// FUNCIÓN GENERATE CALENDAR - AÑADIDA
+// ============================================================================
 
 const generateCalendar = (plants, lastRot, lastClean) => {
   const now = new Date();
@@ -420,6 +424,42 @@ export default function HydroAppFinal() {
     return calculateSystemEC(plants, parseFloat(config.currentVol), config.waterType);
   }, [plants, config.currentVol, config.waterType]);
 
+  // =================== COMPONENTE DE CONFIRMACIÓN ===================
+
+  const CompletionConfirmation = () => (
+    <div className="mb-6 p-4 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl text-white shadow-lg">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <Check size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg">¡Sistema Configurado!</h3>
+            <p className="text-emerald-100 text-sm">
+              {plants.length} plantas activas • EC objetivo: {systemEC.targetEC} µS/cm • pH: {systemEC.targetPH}
+            </p>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="bg-white/20 hover:bg-white/30 border-white text-white"
+          onClick={() => {
+            if (confirm("¿Reiniciar todo el sistema? Se perderán todos los datos.")) {
+              localStorage.removeItem("hydro_master");
+              setPlants([]);
+              setStep(0);
+              setTab("dashboard");
+            }
+          }}
+        >
+          <RotateCcw size={14} className="mr-2" />
+          Reiniciar
+        </Button>
+      </div>
+    </div>
+  );
+
   // =================== FLUJO DE CONFIGURACIÓN ===================
 
   const renderStep = () => {
@@ -473,7 +513,7 @@ export default function HydroAppFinal() {
             
             <Button 
               onClick={() => setStep(1)}
-              className="px-8 py-6 text-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-2xl shadow-lg"
+              className="px-8 py-6 text-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
             >
               Comenzar Configuración
               <ChevronRight className="ml-2" />
@@ -1039,13 +1079,17 @@ export default function HydroAppFinal() {
               <Button 
                 onClick={() => {
                   if (plants.length === 0) {
-                    alert("Debes añadir al menos una planta para continuar");
+                    alert("⚠️ Debes añadir al menos una planta para continuar");
                     return;
                   }
                   setStep(4);
                   setTab("dashboard");
+                  alert("✅ ¡Configuración completada! Ahora puedes usar todas las funciones del sistema.");
                 }}
-                className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl"
+                disabled={plants.length === 0}
+                className={`px-8 py-3 rounded-xl ${plants.length === 0 
+                  ? 'bg-slate-300 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white'}`}
               >
                 Completar Configuración
                 <ChevronRight className="ml-2" />
@@ -1066,6 +1110,8 @@ export default function HydroAppFinal() {
     
     return (
       <div className="space-y-8 animate-fade-in">
+        <CompletionConfirmation />
+        
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-800">Panel de Control</h1>
@@ -1842,6 +1888,8 @@ export default function HydroAppFinal() {
         </div>
       ) : (
         <div className="max-w-6xl mx-auto">
+          <CompletionConfirmation />
+          
           <div className="mb-6">
             <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="dashboard" onClick={() => setTab("dashboard")} className="flex items-center justify-center gap-2 px-2 py-3">
