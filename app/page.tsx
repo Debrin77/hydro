@@ -1,3 +1,7 @@
+// ============================================================================
+// REESTRUCTURACIÓN COMPLETA DEL CÓDIGO CON LAS NUEVAS PESTAÑAS
+// ============================================================================
+
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
@@ -28,41 +32,26 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 
-// Configuraciones base (agregadas para que funcione)
+// ... (TODAS LAS CONFIGURACIONES BASE SE MANTIENEN IGUAL) ...
+// (WATER_TYPES, VARIETIES, ROCKWOOL_CHARACTERISTICS, etc.)
+// Aquí agrego las configuraciones base que faltaban para que funcione:
 const WATER_TYPES = {
   bajo_mineral: { name: "Agua baja en minerales", ec: 50 },
   osmosis: { name: "Agua de ósmosis", ec: 10 },
-  // Agrega más si necesitas
 };
 
 const VARIETIES = {
   lettuce: { name: "Lechuga", targetEC: 1400, targetPH: 6.0 },
-  // Agrega más variedades
 };
 
 const ROCKWOOL_CHARACTERISTICS = {
   size: "2.5x2.5cm",
   moisture: 70,
-  // Agrega más
 };
 
-// Funciones de cálculo (implementadas básicamente)
-const calculateSystemEC = (plants, volume, waterType) => {
-  const baseEC = WATER_TYPES[waterType]?.ec || 50;
-  const plantCount = plants.length;
-  const targetEC = plantCount > 0 ? VARIETIES[plants[0]?.v]?.targetEC || 1400 : 1400;
-  return { targetEC, currentEC: baseEC + (plantCount * 50) }; // Lógica simple
-};
-
-const calculateCannaDosage = (plants, volume) => {
-  const plantCount = plants.length;
-  const baseDosage = { a: 5, b: 5 }; // ml por 10L
-  const totalA = (baseDosage.a * volume) / 10;
-  const totalB = (baseDosage.b * volume) / 10;
-  return { a: Math.round(totalA), b: Math.round(totalB), per10L: baseDosage };
-};
-
-const generatePlantId = () => Date.now().toString();
+// ============================================================================
+// COMPONENTE PRINCIPAL REESTRUCTURADO
+// ============================================================================
 
 export default function HydroAppFinal() {
   // Estados principales
@@ -77,27 +66,107 @@ export default function HydroAppFinal() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [expandedTips, setExpandedTips] = useState({});
   
-  // Configuración del sistema
+  // Configuración del sistema - AHORA CON MÁS CONTROL
   const [config, setConfig] = useState({ 
-    ph: "6.0", ec: "1200", temp: "22", currentVol: "20", totalVol: "20",
-    targetEC: "1400", targetPH: "6.0", waterType: "bajo_mineral", 
-    useOsmosisMix: false, osmosisMixPercentage: 0, waterNotes: "", 
-    hasHeater: true, humidity: "65", lightHours: "12"
+    // Valores medidos manualmente
+    ph: "6.0",
+    ec: "1200",
+    temp: "22",
+    currentVol: "20",
+    totalVol: "20",
+    
+    // Objetivos
+    targetEC: "1400",
+    targetPH: "6.0",
+    
+    // Configuración agua
+    waterType: "bajo_mineral",
+    useOsmosisMix: false,
+    osmosisMixPercentage: 0,
+    waterNotes: "",
+    hasHeater: true,
+    
+    // Parámetros adicionales
+    humidity: "65",
+    lightHours: "12"
   });
   
-  // Configuración de riego
+  // Configuración de riego - MÁS DETALLADA
   const [irrigationConfig, setIrrigationConfig] = useState({
-    enabled: true, mode: "auto", pumpTime: 10, interval: 30, 
-    calculatedPumpTime: 10, calculatedInterval: 30, showAdvanced: false, 
-    customSchedule: false, notes: ""
+    enabled: true,
+    mode: "auto",
+    // Parámetros manuales
+    pumpTime: 10,
+    interval: 30,
+    // Parámetros calculados automáticamente
+    calculatedPumpTime: 10,
+    calculatedInterval: 30,
+    // Configuración avanzada
+    showAdvanced: false,
+    customSchedule: false,
+    // Notas
+    notes: ""
   });
 
-  // Estados para edición
+  // Estado para controlar si estamos editando valores manualmente
   const [editingPH, setEditingPH] = useState(false);
   const [editingEC, setEditingEC] = useState(false);
   const [editingVolume, setEditingVolume] = useState(false);
+  
+  // =================== FUNCIONES PARA EDICIÓN MANUAL ===================
+  
+  const handleManualPHChange = (value) => {
+    setConfig({...config, ph: value});
+    // Guardar en historial
+    const now = new Date().toISOString();
+    setHistory([{
+      id: generatePlantId(),
+      date: now,
+      ph: value,
+      ec: config.ec,
+      temp: config.temp,
+      notes: "Medición manual de pH"
+    }, ...history.slice(0, 49)]); // Mantener solo últimas 50
+  };
+  
+  const handleManualECChange = (value) => {
+    setConfig({...config, ec: value});
+    const now = new Date().toISOString();
+    setHistory([{
+      id: generatePlantId(),
+      date: now,
+      ph: config.ph,
+      ec: value,
+      temp: config.temp,
+      notes: "Medición manual de EC"
+    }, ...history.slice(0, 49)]);
+  };
+  
+  const handleManualVolumeChange = (value) => {
+    setConfig({...config, currentVol: value});
+  };
+  
+  // =================== CÁLCULOS (MANTENER FUNCIONES EXISTENTES) ===================
+  
+  // ... (TODAS LAS FUNCIONES DE CÁLCULO SE MANTIENEN) ...
+  // calculateSystemEC, calculateCannaDosage, etc.
+  // Aquí agrego las funciones faltantes para que funcione:
+  const generatePlantId = () => Date.now().toString();
+  const calculateSystemEC = (plants, volume, waterType) => {
+    const baseEC = WATER_TYPES[waterType]?.ec || 50;
+    const plantCount = plants.length;
+    const targetEC = plantCount > 0 ? VARIETIES[plants[0]?.v]?.targetEC || 1400 : 1400;
+    return { targetEC, currentEC: baseEC + (plantCount * 50) };
+  };
+  const calculateCannaDosage = (plants, volume) => {
+    const plantCount = plants.length;
+    const baseDosage = { a: 5, b: 5 };
+    const totalA = (baseDosage.a * volume) / 10;
+    const totalB = (baseDosage.b * volume) / 10;
+    return { a: Math.round(totalA), b: Math.round(totalB), per10L: baseDosage };
+  };
 
-  // Estados calculados (agregados y calculados automáticamente)
+  // Estados calculados agregados para que funcione
   const alerts = useMemo(() => {
     const newAlerts = [];
     if (parseFloat(config.ph) < 5.5) newAlerts.push({ title: 'pH Bajo', description: 'El pH está por debajo de 5.5. Añade pH+ para subirlo.', color: 'bg-red-500', icon: '⚠️', priority: 1 });
@@ -112,13 +181,13 @@ export default function HydroAppFinal() {
     const volume = parseFloat(config.currentVol);
     const pumpTime = irrigationConfig.pumpTime;
     const interval = irrigationConfig.interval;
-    const cyclesPerDay = Math.round(1440 / interval); // 1440 min/día
-    const totalWaterPerDay = (pumpTime * cyclesPerDay * 0.1) / 1000; // ml a L (aprox)
-    const waterPerCycle = (pumpTime * 0.1); // ml por ciclo
-    const rockwoolMoisture = 70; // %
+    const cyclesPerDay = Math.round(1440 / interval);
+    const totalWaterPerDay = (pumpTime * cyclesPerDay * 0.1) / 1000;
+    const waterPerCycle = (pumpTime * 0.1);
+    const rockwoolMoisture = 70;
     const dayCycles = Math.round(cyclesPerDay * 0.6);
     const nightCycles = cyclesPerDay - dayCycles;
-    const season = new Date().getMonth() < 3 || new Date().getMonth() > 9 ? 'winter' : 'summer'; // Simple
+    const season = new Date().getMonth() < 3 || new Date().getMonth() > 9 ? 'winter' : 'summer';
     const stats = {
       seedlingCount: plants.filter(p => p.level === 'N1').length,
       growthCount: plants.filter(p => p.level === 'N2').length,
@@ -136,7 +205,7 @@ export default function HydroAppFinal() {
   const phAdjustmentWithPretreatment = useMemo(() => {
     const diff = parseFloat(config.targetPH) - parseFloat(config.ph);
     const volume = parseFloat(config.currentVol);
-    const phMinus = diff < 0 ? Math.abs(diff) * volume * 0.5 : 0; // ml aproximado
+    const phMinus = diff < 0 ? Math.abs(diff) * volume * 0.5 : 0;
     const phPlus = diff > 0 ? diff * volume * 0.5 : 0;
     return { phMinus: Math.round(phMinus), phPlus: Math.round(phPlus) };
   }, [config]);
@@ -154,33 +223,9 @@ export default function HydroAppFinal() {
     mature: { day: 20, night: 25 }
   }), []);
 
-  // Funciones para edición
-  const handleManualPHChange = (value) => {
-    setConfig({...config, ph: value});
-    setHistory([{
-      id: generatePlantId(), date: new Date().toISOString(), ph: value, ec: config.ec, temp: config.temp, notes: "Medición manual de pH"
-    }, ...history.slice(0, 49)]);
-  };
-  
-  const handleManualECChange = (value) => {
-    setConfig({...config, ec: value});
-    setHistory([{
-      id: generatePlantId(), date: new Date().toISOString(), ph: config.ph, ec: value, temp: config.temp, notes: "Medición manual de EC"
-    }, ...history.slice(0, 49)]);
-  };
-  
-  const handleManualVolumeChange = (value) => {
-    setConfig({...config, currentVol: value});
-  };
+  // =================== COMPONENTES DE PESTAÑAS REORGANIZADAS ===================
 
-  const handleRotation = () => {
-    // Lógica simple para rotar plantas (ejemplo: mover de N1 a N2)
-    setPlants(plants.map(p => ({ ...p, level: p.level === 'N1' ? 'N2' : p.level === 'N2' ? 'N3' : 'N1' })));
-    setLastRot(new Date().toISOString());
-    alert('Niveles rotados exitosamente.');
-  };
-
-  // Componentes de pestañas
+  // 1. 📊 PANEL PRINCIPAL
   const DashboardTab = () => (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -202,12 +247,18 @@ export default function HydroAppFinal() {
         </div>
       </div>
       
+      {/* ALERTAS */}
       {alerts.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-slate-800">⚠️ Alertas del Sistema</h2>
           {alerts.map((alert, index) => (
-            <div key={index} className={`${alert.color} text-white rounded-2xl p-5 flex items-center gap-4 shadow-lg`}>
-              <div className="flex-shrink-0">{alert.icon}</div>
+            <div 
+              key={index} 
+              className={`${alert.color} text-white rounded-2xl p-5 flex items-center gap-4 shadow-lg`}
+            >
+              <div className="flex-shrink-0">
+                {alert.icon}
+              </div>
               <div className="flex-grow">
                 <div className="flex justify-between items-start">
                   <h3 className="font-bold text-lg">{alert.title}</h3>
@@ -220,6 +271,7 @@ export default function HydroAppFinal() {
         </div>
       )}
       
+      {/* RESUMEN RÁPIDO */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-5 rounded-2xl">
           <div className="flex items-center gap-3 mb-4">
@@ -249,65 +301,4 @@ export default function HydroAppFinal() {
           
           <div className="mt-6 pt-4 border-t border-slate-200">
             <div className="flex justify-between">
-              <span className="font-bold text-slate-800">Total plantas</span>
-              <span className="font-bold text-blue-600">{plants.length}/15</span>
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-5 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-              <FlaskConical className="text-white" size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Nutrición</h3>
-              <p className="text-sm text-slate-600">CANNA Aqua Vega</p>
-            </div>
-          </div>
-          
-          {plants.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">EC objetivo</span>
-                <span className="font-bold text-blue-600">{config.targetEC} µS/cm</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">pH objetivo</span>
-                <span className="font-bold text-purple-600">{config.targetPH}</span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">CANNA A</span>
-                <span className="font-bold text-emerald-600">{cannaDosage.a} ml</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">CANNA B</span>
-                <span className="font-bold text-emerald-600">{cannaDosage.b} ml</span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-slate-500 text-center py-4">Añade plantas para ver dosificación</p>
-          )}
-        </Card>
-        
-        <Card className="p-5 rounded-2xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <CloudRain className="text-white" size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Condiciones Actuales</h3>
-              <p className="text-sm text-slate-600">Mediciones</p>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-700">pH actual</span>
-              <span className={`font-bold ${
-                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5 ? 'text-red-600' :
-                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.2 ? 'text-amber-600' :
-                'text-green-600'
-              }`}>
-                {config.ph}
+              <span class
