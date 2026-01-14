@@ -1,34 +1,17 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
-  Sprout, Activity, Layers, Beaker, Calendar, 
+  Sprout, Activity, Leaf, TreePine,
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
-  Lightbulb, Scissors, Clock, AlertTriangle, Wind, Droplets, 
-  Thermometer, Zap, ShieldAlert, ChevronRight, Anchor, 
-  ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun, 
-  RefreshCw, Skull, Info, Calculator, Filter, 
-  Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun, 
-  Clipboard, ThermometerSnowflake, TreePine, Settings,
-  Home, BarChart3, X, RotateCcw, AlertCircle,
-  Droplet, Leaf, TimerReset,
-  ChevronDown, ChevronUp, Eye, EyeOff,
-  Target, Brain, AlertOctagon, GitCompare, BarChart,
-  History
+  AlertTriangle, Droplets, Thermometer, Zap, ShieldAlert, 
+  ChevronRight, ArrowLeft, ArrowRight, RefreshCw, 
+  Target, RotateCcw, Calendar, Home, Settings,
+  X, Filter, ThermometerSnowflake, ThermometerSun
 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 
 // ============================================================================
-// CONFIGURACIÓN BASE - SIMPLIFICADA
+// CONFIGURACIÓN BASE
 // ============================================================================
 
 const WATER_TYPES = {
@@ -110,7 +93,7 @@ const VARIETIES = {
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO - SIMPLIFICADAS
+// FUNCIONES DE CÁLCULO
 // ============================================================================
 
 const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
@@ -152,142 +135,16 @@ const calculateSystemEC = (plants, totalVolume, waterType = "bajo_mineral") => {
   };
 };
 
-const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_mineral") => {
-  if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 } };
-
-  let totalA = 0, totalB = 0;
-  let usedWaterType = WATER_TYPES[waterType] || WATER_TYPES["bajo_mineral"];
-  
-  plants.forEach(plant => {
-    const variety = VARIETIES[plant.v];
-    if (!variety) return;
-    
-    let stage;
-    if (plant.l === 1) stage = "seedling";
-    else if (plant.l === 2) stage = "growth";
-    else stage = "mature";
-    
-    const dosage = variety.cannaDosage[stage];
-    
-    const plantContribution = (dosage.a / 10) * (totalVolume / plants.length);
-    totalA += plantContribution;
-    totalB += plantContribution;
-  });
-  
-  let ecRatio = parseFloat(targetEC) / 1300;
-  
-  if (usedWaterType.hardness > 150) {
-    ecRatio *= 0.9;
-  }
-  
-  totalA *= ecRatio;
-  totalB *= ecRatio;
-  
-  return {
-    a: Math.round(totalA),
-    b: Math.round(totalB),
-    per10L: {
-      a: Math.round((totalA * 10) / totalVolume),
-      b: Math.round((totalB * 10) / totalVolume)
-    }
-  };
-};
-
-const generateCalendar = (plants, lastRot, lastClean) => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-  
-  const firstDayOfWeek = firstDayOfMonth.getDay();
-  const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-  
-  const daysInMonth = lastDayOfMonth.getDate();
-  const totalCells = 42;
-  const calendarDays = [];
-
-  const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-  for (let i = 0; i < startOffset; i++) {
-    const day = prevMonthLastDay - startOffset + i + 1;
-    const date = new Date(currentYear, currentMonth - 1, day);
-    calendarDays.push({
-      date,
-      dayOfMonth: day,
-      isCurrentMonth: false,
-      events: []
-    });
-  }
-
-  for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(currentYear, currentMonth, i);
-    calendarDays.push({
-      date,
-      dayOfMonth: i,
-      isCurrentMonth: true,
-      events: []
-    });
-  }
-
-  const remainingCells = totalCells - calendarDays.length;
-  for (let i = 1; i <= remainingCells; i++) {
-    const date = new Date(currentYear, currentMonth + 1, i);
-    calendarDays.push({
-      date,
-      dayOfMonth: i,
-      isCurrentMonth: false,
-      events: []
-    });
-  }
-
-  const totalPlants = plants.length;
-  const measureFrequency = totalPlants > 10 ? 2 : totalPlants > 5 ? 3 : 4;
-  
-  const lastRotDate = new Date(lastRot);
-  const lastCleanDate = new Date(lastClean);
-
-  calendarDays.forEach(day => {
-    if (!day.isCurrentMonth) return;
-    
-    const dayDate = day.date;
-    const diffTime = dayDate - now;
-    const diffDays = Math.floor(diffTime / (1000 * 3600 * 24));
-    
-    if (diffDays < 0) return;
-
-    if (diffDays % measureFrequency === 0) {
-      day.events.push('measure');
-    }
-
-    const daysFromLastRot = Math.floor((dayDate - lastRotDate) / (1000 * 3600 * 24));
-    if (daysFromLastRot > 0 && daysFromLastRot % 7 === 0) {
-      day.events.push('rotation');
-    }
-
-    const daysFromLastClean = Math.floor((dayDate - lastCleanDate) / (1000 * 3600 * 24));
-    if (daysFromLastClean > 0 && daysFromLastClean % 14 === 0) {
-      day.events.push('clean');
-    }
-  });
-
-  return calendarDays;
-};
-
 // ============================================================================
-// COMPONENTE PRINCIPAL - SIMPLIFICADO Y FUNCIONAL
+// COMPONENTE PRINCIPAL - CORREGIDO
 // ============================================================================
 
 export default function HydroAppFinal() {
   // Estados principales
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [lastRot, setLastRot] = useState(new Date().toISOString());
-  const [lastClean, setLastClean] = useState(new Date().toISOString());
-  const [tab, setTab] = useState("dashboard");
   
-  // Estados para añadir plantas - CORREGIDOS
+  // Estados para añadir plantas
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [selectedVariety, setSelectedVariety] = useState(null);
   const [selectedPosition, setSelectedPosition] = useState(null);
@@ -304,10 +161,7 @@ export default function HydroAppFinal() {
     temp: "22", 
     targetEC: "1400",
     targetPH: "6.0",
-    waterType: "bajo_mineral",
-    hasHeater: true,
-    useOsmosisMix: false,
-    osmosisMixPercentage: 0
+    waterType: "bajo_minimal"
   });
 
   // =================== PERSISTENCIA ===================
@@ -319,14 +173,9 @@ export default function HydroAppFinal() {
         const data = JSON.parse(saved);
         setPlants(data.plants || []);
         setConfig(data.config || config);
-        setHistory(data.history || []);
-        setLastRot(data.lastRot || lastRot);
-        setLastClean(data.lastClean || lastClean);
         
-        // CORRECCIÓN: Si hay plantas, ir directamente al dashboard
         if (data.plants && data.plants.length > 0) {
           setStep(4);
-          setTab("dashboard");
         }
       } catch (e) {
         console.log("Error cargando datos, empezando fresco");
@@ -339,13 +188,10 @@ export default function HydroAppFinal() {
       localStorage.setItem("hydro_master", 
         JSON.stringify({ 
           plants, 
-          config, 
-          history, 
-          lastRot, 
-          lastClean
+          config
         }));
     }
-  }, [plants, config, history, lastRot, lastClean, step]);
+  }, [plants, config, step]);
 
   // =================== FUNCIONES UTILITARIAS ===================
 
@@ -353,25 +199,8 @@ export default function HydroAppFinal() {
     return `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const deleteHistoryRecord = (id) => {
-    setHistory(history.filter(record => record.id !== id));
-  };
-
-  const handleRotation = () => {
-    if (confirm("¿ROTAR NIVELES?\n• Nivel 3 → Cosecha\n• Nivel 2 → Nivel 3 (maduración)\n• Nivel 1 → Nivel 2 (crecimiento)\n• Nivel 1 vacío para nuevas plántulas")) {
-      const withoutMature = plants.filter(p => p.l !== 3);
-      const moved = withoutMature.map(p => ({ ...p, l: p.l + 1 }));
-      setPlants(moved);
-      setLastRot(new Date().toISOString());
-      alert("✅ Rotación completada\n\nAhora añade NUEVAS PLÁNTULAS en el nivel 1.");
-      setTab("tower");
-      setShowAddForm(true);
-    }
-  };
-
   // FUNCIÓN CORREGIDA PARA AÑADIR PLANTAS
   const handleAddPlant = () => {
-    // Validar que todo esté seleccionado
     if (!selectedLevel || !selectedVariety || !selectedPosition) {
       alert("Por favor, selecciona nivel, variedad y posición");
       return;
@@ -411,18 +240,7 @@ export default function HydroAppFinal() {
     alert(`✅ Planta "${selectedVariety}" añadida en Nivel ${selectedLevel}, Posición ${selectedPosition}`);
   };
 
-  // =================== CÁLCULOS ===================
-
-  const calendarDays = useMemo(() => {
-    return generateCalendar(plants, lastRot, lastClean);
-  }, [plants, lastRot, lastClean]);
-
-  const systemEC = useMemo(() => {
-    return calculateSystemEC(plants, parseFloat(config.currentVol), config.waterType);
-  }, [plants, config.currentVol, config.waterType]);
-
-  // =================== FUNCIÓN PARA PASAR AL SIGUIENTE PASO ===================
-  // CORRECCIÓN CRÍTICA: Función que maneja la transición del paso 3 al 4
+  // =================== FUNCIÓN SIMPLIFICADA PARA PASAR AL DASHBOARD ===================
 
   const handleCompleteConfiguration = () => {
     if (plants.length === 0) {
@@ -430,29 +248,27 @@ export default function HydroAppFinal() {
       return;
     }
     
-    console.log("Pasando al dashboard con plantas:", plants);
+    console.log("Plantas añadidas:", plants);
+    console.log("Pasando al dashboard...");
     
-    // FORZAR EL GUARDADO
+    // Guardar en localStorage
     localStorage.setItem("hydro_master", 
       JSON.stringify({ 
         plants, 
-        config, 
-        history, 
-        lastRot, 
-        lastClean
+        config
       }));
     
-    // Ir al dashboard
+    // Ir directamente al dashboard
     setStep(4);
-    setTab("dashboard");
-    
-    // Forzar un re-render si es necesario
-    setTimeout(() => {
-      window.dispatchEvent(new Event('storage'));
-    }, 100);
   };
 
-  // =================== FLUJO DE CONFIGURACIÓN ===================
+  // =================== CÁLCULOS ===================
+
+  const systemEC = useMemo(() => {
+    return calculateSystemEC(plants, parseFloat(config.currentVol), config.waterType);
+  }, [plants, config.currentVol, config.waterType]);
+
+  // =================== RENDER DE PASOS ===================
 
   const renderStep = () => {
     switch(step) {
@@ -463,12 +279,6 @@ export default function HydroAppFinal() {
               <div className="relative">
                 <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center animate-pulse-slow">
                   <Sprout size={64} className="text-white" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center">
-                  <Droplets size={32} className="text-white" />
-                </div>
-                <div className="absolute -bottom-2 -left-2 w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center">
-                  <FlaskConical size={32} className="text-white" />
                 </div>
               </div>
             </div>
@@ -481,35 +291,13 @@ export default function HydroAppFinal() {
               Sistema experto para cultivo hidropónico
             </p>
             
-            <div className="space-y-4 max-w-md mx-auto">
-              <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-emerald-100">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <Sprout className="text-emerald-600" size={20} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-bold text-slate-800">Gestión de Plantas</h3>
-                  <p className="text-sm text-slate-600">Sistema 5-5-5 simplificado</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-blue-100">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Droplets className="text-blue-600" size={20} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-bold text-slate-800">Control de Nutrientes</h3>
-                  <p className="text-sm text-slate-600">Cálculos automáticos de EC y pH</p>
-                </div>
-              </div>
-            </div>
-            
-            <Button 
+            <button 
               onClick={() => setStep(1)}
               className="px-8 py-6 text-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-2xl shadow-lg"
             >
               Comenzar Configuración
-              <ChevronRight className="ml-2" />
-            </Button>
+              <ChevronRight className="inline ml-2" />
+            </button>
           </div>
         );
       
@@ -521,8 +309,8 @@ export default function HydroAppFinal() {
               <p className="text-slate-600">Define las características de tu sistema</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6 rounded-2xl">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                     <Droplets className="text-blue-600" size={24} />
@@ -554,9 +342,9 @@ export default function HydroAppFinal() {
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
               
-              <Card className="p-6 rounded-2xl">
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                     <Thermometer className="text-purple-600" size={24} />
@@ -598,9 +386,9 @@ export default function HydroAppFinal() {
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
               
-              <Card className="p-6 rounded-2xl md:col-span-2">
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                     <Filter className="text-amber-600" size={24} />
@@ -630,26 +418,25 @@ export default function HydroAppFinal() {
                     </div>
                   ))}
                 </div>
-              </Card>
+              </div>
             </div>
             
             <div className="flex justify-between">
-              <Button 
+              <button 
                 onClick={() => setStep(0)}
-                variant="outline"
-                className="px-6 py-3 rounded-xl"
+                className="px-6 py-3 rounded-xl border border-slate-300"
               >
-                <ArrowLeft className="mr-2" size={18} />
+                <ArrowLeft className="inline mr-2" size={18} />
                 Atrás
-              </Button>
+              </button>
               
-              <Button 
+              <button 
                 onClick={() => setStep(2)}
                 className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl"
               >
                 Continuar
-                <ChevronRight className="ml-2" />
-              </Button>
+                <ChevronRight className="inline ml-2" />
+              </button>
             </div>
           </div>
         );
@@ -662,8 +449,8 @@ export default function HydroAppFinal() {
               <p className="text-slate-600">Introduce los valores medidos de tu sistema</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6 rounded-2xl">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
                     <Activity className="text-white" size={24} />
@@ -684,14 +471,14 @@ export default function HydroAppFinal() {
                     
                     <div className="flex gap-3 mb-4">
                       <div className="flex-1">
-                        <Input
+                        <input
                           type="number"
                           min="4.0"
                           max="9.0"
                           step="0.1"
                           value={config.ph}
                           onChange={(e) => setConfig({...config, ph: e.target.value})}
-                          className="w-full text-center text-lg"
+                          className="w-full p-2 text-center text-lg border border-slate-300 rounded"
                           placeholder="Ej: 6.0"
                         />
                       </div>
@@ -714,9 +501,9 @@ export default function HydroAppFinal() {
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
               
-              <Card className="p-6 rounded-2xl">
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
                     <Zap className="text-white" size={24} />
@@ -737,14 +524,14 @@ export default function HydroAppFinal() {
                     
                     <div className="flex gap-3 mb-4">
                       <div className="flex-1">
-                        <Input
+                        <input
                           type="number"
                           min="0"
                           max="3000"
                           step="50"
                           value={config.ec}
                           onChange={(e) => setConfig({...config, ec: e.target.value})}
-                          className="w-full text-center text-lg"
+                          className="w-full p-2 text-center text-lg border border-slate-300 rounded"
                           placeholder="Ej: 1200"
                         />
                       </div>
@@ -767,80 +554,25 @@ export default function HydroAppFinal() {
                     </div>
                   </div>
                 </div>
-              </Card>
-              
-              <Card className="p-6 rounded-2xl md:col-span-2">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-                    <Target className="text-white" size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800">Objetivos del Sistema</h3>
-                    <p className="text-slate-600">Define los valores objetivo</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">
-                      EC Objetivo (µS/cm)
-                    </label>
-                    <div className="flex gap-3 mb-4">
-                      <div className="flex-1">
-                        <Input
-                          type="number"
-                          min="800"
-                          max="1900"
-                          step="100"
-                          value={config.targetEC}
-                          onChange={(e) => setConfig({...config, targetEC: e.target.value})}
-                          className="w-full text-center text-lg"
-                          placeholder="Ej: 1400"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">
-                      pH Objetivo
-                    </label>
-                    <div className="flex gap-3 mb-4">
-                      <div className="flex-1">
-                        <Input
-                          type="number"
-                          min="5.5"
-                          max="6.5"
-                          step="0.1"
-                          value={config.targetPH}
-                          onChange={(e) => setConfig({...config, targetPH: e.target.value})}
-                          className="w-full text-center text-lg"
-                          placeholder="Ej: 6.0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              </div>
             </div>
             
             <div className="flex justify-between">
-              <Button 
+              <button 
                 onClick={() => setStep(1)}
-                variant="outline"
-                className="px-6 py-3 rounded-xl"
+                className="px-6 py-3 rounded-xl border border-slate-300"
               >
-                <ArrowLeft className="mr-2" size={18} />
+                <ArrowLeft className="inline mr-2" size={18} />
                 Atrás
-              </Button>
+              </button>
               
-              <Button 
+              <button 
                 onClick={() => setStep(3)}
                 className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl"
               >
                 Continuar a Plantación
-                <ChevronRight className="ml-2" />
-              </Button>
+                <ChevronRight className="inline ml-2" />
+              </button>
             </div>
           </div>
         );
@@ -853,7 +585,7 @@ export default function HydroAppFinal() {
               <p className="text-slate-600">Añade plantas a tu sistema hidropónico</p>
             </div>
             
-            <Card className="p-6 rounded-2xl">
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
                   <TreePine className="text-white" size={24} />
@@ -905,9 +637,9 @@ export default function HydroAppFinal() {
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="font-bold text-slate-800">Añadir Nueva Planta</h4>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                    <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
                       {plants.length}/15 plantas
-                    </Badge>
+                    </span>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -1005,14 +737,14 @@ export default function HydroAppFinal() {
                     </div>
                   </div>
                   
-                  <Button
+                  <button
                     onClick={handleAddPlant}
                     disabled={!selectedLevel || !selectedVariety || !selectedPosition}
-                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl"
+                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl disabled:opacity-50"
                   >
-                    <Plus className="mr-2" />
+                    <Plus className="inline mr-2" />
                     Añadir Planta a la Torre
-                  </Button>
+                  </button>
                 </div>
                 
                 {plants.length > 0 && (
@@ -1028,13 +760,13 @@ export default function HydroAppFinal() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-slate-800">{plant.v}</span>
-                                <Badge className={
-                                  plant.l === 1 ? 'bg-cyan-100 text-cyan-700' :
-                                  plant.l === 2 ? 'bg-green-100 text-green-700' :
-                                  'bg-emerald-100 text-emerald-700'
+                                <span className={
+                                  plant.l === 1 ? 'bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs' :
+                                  plant.l === 2 ? 'bg-green-100 text-green-700 px-2 py-1 rounded text-xs' :
+                                  'bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs'
                                 }>
                                   Nivel {plant.l}
-                                </Badge>
+                                </span>
                               </div>
                               <p className="text-sm text-slate-600">
                                 Posición {plant.p} • {plant.l === 1 ? 'Plántula' : plant.l === 2 ? 'Crecimiento' : 'Maduración'}
@@ -1042,41 +774,125 @@ export default function HydroAppFinal() {
                             </div>
                           </div>
                           
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <button
                             onClick={() => setShowDeleteConfirm(plant.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded"
                           >
                             <Trash2 size={18} />
-                          </Button>
+                          </button>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
-            </Card>
+            </div>
             
             <div className="flex justify-between">
-              <Button 
+              <button 
                 onClick={() => setStep(2)}
-                variant="outline"
-                className="px-6 py-3 rounded-xl"
+                className="px-6 py-3 rounded-xl border border-slate-300"
               >
-                <ArrowLeft className="mr-2" size={18} />
+                <ArrowLeft className="inline mr-2" size={18} />
                 Atrás
-              </Button>
+              </button>
               
-              {/* CORRECCIÓN: Usar la nueva función para completar la configuración */}
-              <Button 
+              <button 
                 onClick={handleCompleteConfiguration}
-                className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl disabled:opacity-50"
                 disabled={plants.length === 0}
               >
                 Completar Configuración
-                <ChevronRight className="ml-2" />
-              </Button>
+                <ChevronRight className="inline ml-2" />
+              </button>
+            </div>
+          </div>
+        );
+      
+      case 4:
+        // DASHBOARD SIMPLIFICADO
+        return (
+          <div className="space-y-8 animate-fade-in">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-slate-800">¡Configuración Completada!</h1>
+              <p className="text-slate-600">Sistema hidropónico listo para usar</p>
+            </div>
+            
+            <div className="p-6 rounded-2xl border border-slate-200 bg-white">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+                  <Check className="text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800">Configuración Guardada</h3>
+                  <p className="text-slate-600">Tu sistema está listo para funcionar</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm text-slate-600">Plantas Configuradas</p>
+                      <p className="text-2xl font-bold text-blue-700">{plants.length} plantas</p>
+                    </div>
+                    <TreePine className="text-blue-600" size={24} />
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm text-slate-600">EC Objetivo</p>
+                      <p className="text-2xl font-bold text-emerald-700">{systemEC.targetEC} µS/cm</p>
+                    </div>
+                    <Zap className="text-emerald-600" size={24} />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <h4 className="font-bold text-slate-800 mb-4">Resumen de Plantas</h4>
+                <div className="space-y-3">
+                  {plants.map(plant => (
+                    <div key={plant.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                          {VARIETIES[plant.v]?.icon || <Sprout className="text-white" size={12} />}
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-800">{plant.v}</p>
+                          <p className="text-sm text-slate-600">Nivel {plant.l}, Posición {plant.p}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("hydro_master");
+                    setPlants([]);
+                    setConfig({ 
+                      totalVol: "20", 
+                      currentVol: "20", 
+                      ph: "6.0", 
+                      ec: "1200",
+                      temp: "22", 
+                      targetEC: "1400",
+                      targetPH: "6.0",
+                      waterType: "bajo_minimal"
+                    });
+                    setStep(0);
+                    alert("Sistema reiniciado");
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl"
+                >
+                  Reiniciar Sistema
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -1086,48 +902,18 @@ export default function HydroAppFinal() {
     }
   };
 
-  // Resto del código se mantiene igual...
-  // [El resto del código permanece exactamente igual que en tu versión original]
-
   // =================== RENDER PRINCIPAL ===================
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
-      {step < 4 ? (
-        <div className="max-w-6xl mx-auto">
-          {renderStep()}
-        </div>
-      ) : (
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-6">
-            <TabsList className="grid grid-cols-5 w-full">
-              <TabsTrigger value="dashboard" onClick={() => setTab("dashboard")} className="flex items-center justify-center gap-2 px-2 py-3">
-                <Home size={16} />
-                <span className="hidden sm:inline">Panel</span>
-              </TabsTrigger>
-              <TabsTrigger value="tower" onClick={() => setTab("tower")} className="flex items-center justify-center gap-2 px-2 py-3">
-                <TreePine size={16} />
-                <span className="hidden sm:inline">Torre</span>
-              </TabsTrigger>
-              <TabsTrigger value="calendar" onClick={() => setTab("calendar")} className="flex items-center justify-center gap-2 px-2 py-3">
-                <Calendar size={16} />
-                <span className="hidden sm:inline">Calendario</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" onClick={() => setTab("settings")} className="flex items-center justify-center gap-2 px-2 py-3">
-                <Settings size={16} />
-                <span className="hidden sm:inline">Ajustes</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          
-          {/* Resto del renderizado de pestañas... */}
-        </div>
-      )}
+      <div className="max-w-6xl mx-auto">
+        {renderStep()}
+      </div>
       
       {/* Modal de confirmación de eliminación */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="p-6 rounded-2xl max-w-md w-full">
+          <div className="p-6 rounded-2xl max-w-md w-full bg-white">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="text-amber-600" size={24} />
               <h3 className="font-bold text-slate-800">Confirmar Eliminación</h3>
@@ -1138,24 +924,24 @@ export default function HydroAppFinal() {
             </p>
             
             <div className="flex justify-end gap-3">
-              <Button
-                variant="outline"
+              <button
                 onClick={() => setShowDeleteConfirm(null)}
+                className="px-4 py-2 border border-slate-300 rounded-lg"
               >
                 Cancelar
-              </Button>
+              </button>
               
-              <Button
-                variant="destructive"
+              <button
                 onClick={() => {
                   setPlants(plants.filter(p => p.id !== showDeleteConfirm));
                   setShowDeleteConfirm(null);
                 }}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg"
               >
                 Eliminar
-              </Button>
+              </button>
             </div>
-          </Card>
+          </div>
         </div>
       )}
     </div>
