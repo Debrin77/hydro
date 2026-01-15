@@ -18,348 +18,404 @@ import {
 } from "lucide-react"
 
 // ============================================================================
-// COMPONENTES UI SIMPLIFICADOS
+// COMPONENTES UI (DISEÑO LIMPIO)
 // ============================================================================
 
 const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}>
+  <div className={`bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden ${className}`}>
     {children}
   </div>
 )
 
-const Button = ({ children, onClick, className = "", variant = "default", disabled = false }) => {
-  const baseStyles = "px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    outline: "border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500",
-    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-    ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500"
+const Badge = ({ children, variant = "default" }) => {
+  const styles = {
+    default: "bg-slate-100 text-slate-600",
+    danger: "bg-red-100 text-red-600",
+    success: "bg-emerald-100 text-emerald-600",
+    warning: "bg-amber-100 text-amber-600",
+    blue: "bg-blue-100 text-blue-600"
   }
-  return (
-    <button onClick={onClick} disabled={disabled} className={`${baseStyles} ${variants[variant]} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}>
-      {children}
-    </button>
-  )
+  return <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${styles[variant]}`}>{children}</span>
 }
 
-const Badge = ({ children, className = "", variant = "default" }) => {
-  const baseStyles = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-  const variants = {
-    default: "bg-gray-100 text-gray-800",
-    secondary: "bg-blue-100 text-blue-800",
-    destructive: "bg-red-100 text-red-800",
-    outline: "border border-gray-300 text-gray-700"
-  }
-  return <span className={`${baseStyles} ${variants[variant]} ${className}`}>{children}</span>
-}
-
-const Input = ({ ...props }) => (
-  <input {...props} className={`w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${props.className || ""}`} />
-)
-
 // ============================================================================
-// CONFIGURACIÓN BASE (AQUA VEGA)
+// LÓGICA DE NEGOCIO (AQUA VEGA & CASTELLÓN)
 // ============================================================================
-
-const WATER_TYPES = {
-  "osmosis": {
-    name: "Ósmosis Inversa",
-    icon: <Filter className="text-blue-500" />,
-    ecBase: 0.0,
-    hardness: 0,
-    phBase: 7.0,
-    description: "Agua pura, EC casi 0. Perfecta para hidroponía.",
-    recommendation: "Usar Aqua Vega desde el inicio.",
-    calmagRequired: true,
-    isOsmosis: true
-  },
-  "bajo_mineral": {
-    name: "Baja Mineralización",
-    icon: <Droplets className="text-cyan-500" />,
-    ecBase: 200,
-    hardness: 50,
-    phBase: 7.2,
-    description: "Agua blanda, ideal para Aqua Vega.",
-    recommendation: "Ajuste mínimo de pH necesario.",
-    calmagRequired: false,
-    isOsmosis: false
-  },
-  "medio_mineral": {
-    name: "Media Mineralización",
-    icon: <Droplets className="text-teal-500" />,
-    ecBase: 400,
-    hardness: 150,
-    phBase: 7.5,
-    description: "Agua de grifo típica.",
-    recommendation: "Considerar dureza al mezclar.",
-    calmagRequired: false,
-    isOsmosis: false
-  },
-  "alta_mineral": {
-    name: "Alta Mineralización",
-    icon: <Droplets className="text-amber-500" />,
-    ecBase: 800,
-    hardness: 300,
-    phBase: 8.0,
-    description: "Agua dura de Castellón.",
-    recommendation: "Usar Aqua Vega para aguas duras si es posible.",
-    calmagRequired: false,
-    isOsmosis: false
-  }
-};
 
 const VARIETIES = {
-  "Iceberg": { 
-    color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
-    ecMax: 1600, phIdeal: 6.0,
-    dosage: { seedling: { a: 15, b: 15, ec: 900 }, growth: { a: 20, b: 20, ec: 1300 }, mature: { a: 25, b: 25, ec: 1600 } }
-  },
-  "Lollo Rosso": { 
-    color: "bg-gradient-to-br from-purple-600 to-purple-700",
-    ecMax: 1800, phIdeal: 6.0,
-    dosage: { seedling: { a: 15, b: 15, ec: 900 }, growth: { a: 20, b: 20, ec: 1400 }, mature: { a: 25, b: 25, ec: 1700 } }
-  },
-  "Maravilla": { 
-    color: "bg-gradient-to-br from-amber-600 to-amber-700",
-    ecMax: 1700, phIdeal: 6.0,
-    dosage: { seedling: { a: 15, b: 15, ec: 900 }, growth: { a: 20, b: 20, ec: 1300 }, mature: { a: 25, b: 25, ec: 1600 } }
-  },
-  "Trocadero": { 
-    color: "bg-gradient-to-br from-lime-600 to-lime-700",
-    ecMax: 1600, phIdeal: 6.0,
-    dosage: { seedling: { a: 15, b: 15, ec: 900 }, growth: { a: 20, b: 20, ec: 1300 }, mature: { a: 25, b: 25, ec: 1600 } }
-  },
-  "Hoja de Roble Rojo": { 
-    color: "bg-gradient-to-br from-red-600 to-red-700",
-    ecMax: 1900, phIdeal: 6.0,
-    dosage: { seedling: { a: 15, b: 15, ec: 1000 }, growth: { a: 20, b: 20, ec: 1500 }, mature: { a: 25, b: 25, ec: 1800 } }
-  },
-  "Romana": { 
-    color: "bg-gradient-to-br from-blue-600 to-blue-700",
-    ecMax: 1750, phIdeal: 6.0,
-    dosage: { seedling: { a: 15, b: 15, ec: 950 }, growth: { a: 20, b: 20, ec: 1350 }, mature: { a: 25, b: 25, ec: 1650 } }
-  }
+  "Iceberg": { color: "bg-cyan-500", ecMax: 1600, phIdeal: 6.0 },
+  "Lollo Rosso": { color: "bg-red-500", ecMax: 1800, phIdeal: 6.0 },
+  "Maravilla": { color: "bg-emerald-500", ecMax: 1700, phIdeal: 6.0 },
+  "Trocadero": { color: "bg-lime-500", ecMax: 1600, phIdeal: 6.0 },
+  "Hoja Roble": { color: "bg-orange-600", ecMax: 1900, phIdeal: 6.0 },
+  "Romana": { color: "bg-green-600", ecMax: 1750, phIdeal: 6.0 }
 };
 
-// ============================================================================
-// FUNCIONES DE CÁLCULO
-// ============================================================================
-
-const calculateIrrigation = (plants, pumpWatts = 7) => {
-  const month = new Date().getMonth();
-  // Factor estacional para Castellón de la Plana
-  const seasonalFactor = [0.8, 0.8, 1.0, 1.2, 1.5, 2.0, 2.5, 2.4, 1.8, 1.3, 1.0, 0.8][month];
+export default function HydroCaru() {
+  const [activeTab, setActiveTab] = useState("dashboard")
+  const [plants, setPlants] = useState([])
   
-  // Lana de roca 2.5cm retiene poca agua, requiere ciclos frecuentes pero cortos
-  const baseMinutes = 2; 
-  const totalPlants = plants.length || 1;
-  const growthStageFactor = plants.reduce((acc, p) => acc + (p.l === 1 ? 0.5 : p.l === 2 ? 1 : 1.5), 0) / totalPlants;
+  // PARÁMETROS DE CONFIGURACIÓN
+  const [config, setConfig] = useState({
+    vol: 20,
+    targetPH: 6.0,
+    targetEC: 1400,
+    tempIdeal: 21
+  })
 
-  const onTime = Math.ceil(baseMinutes * growthStageFactor);
-  const offTime = Math.max(15, Math.floor(60 / (seasonalFactor * growthStageFactor)));
+  // MEDICIONES MANUALES (EL MOTOR DE ALERTAS)
+  const [manual, setManual] = useState({
+    ph: "",
+    ec: "",
+    tempAgua: "",
+    humedadAmb: ""
+  })
 
-  return {
-    onTime,
-    offTime,
-    dailyCycles: Math.floor(1440 / (onTime + offTime)),
-    location: "Castellón de la Plana",
-    pumpPower: pumpWatts
-  };
-};
+  // --- 1. LÓGICA DE DIAGNÓSTICO Y CORRECCIÓN ---
+  const diagnosis = useMemo(() => {
+    const alerts = [];
+    if (!manual.ph || !manual.ec) return alerts;
 
-// ============================================================================
-// COMPONENTE PRINCIPAL
-// ============================================================================
+    // Diagnóstico pH
+    const phNum = parseFloat(manual.ph);
+    if (phNum > 6.5) {
+      alerts.push({
+        title: "pH DEMASIADO ALTO",
+        desc: `Nivel actual: ${phNum}. Bloqueo de micronutrientes inminente.`,
+        fix: `Añadir 0.1ml por litro de pH Down (Total: ${(config.vol * 0.1).toFixed(1)}ml) y volver a medir en 10 min.`,
+        type: "danger",
+        icon: <AlertOctagon className="text-red-500" />
+      });
+    } else if (phNum < 5.5) {
+      alerts.push({
+        title: "pH DEMASIADO BAJO",
+        desc: `Nivel actual: ${phNum}. Riesgo de toxicidad por metales.`,
+        fix: "Añadir agua del grifo (Castellón es alcalina) o pH Up para subir a 6.0.",
+        type: "danger",
+        icon: <AlertOctagon className="text-red-500" />
+      });
+    }
 
-export default function HydroCaruApp() {
-  const [tab, setTab] = useState("dashboard");
-  const [plants, setPlants] = useState([]);
-  const [manualParams, setManualParams] = useState({ ph: "6.0", ec: "1200", temp: "22" });
-  const [config, setConfig] = useState({ totalVol: "20", targetPH: "6.0", targetEC: "1400" });
+    // Diagnóstico EC (Aqua Vega)
+    const ecNum = parseInt(manual.ec);
+    if (ecNum > config.targetEC + 200) {
+      const surplus = ecNum - config.targetEC;
+      const waterToAdd = ((surplus / config.targetEC) * config.vol).toFixed(1);
+      alerts.push({
+        title: "EC ALTA (SOLUCIÓN CONCENTRADA)",
+        desc: `La EC de ${ecNum}µS supera el límite de seguridad.`,
+        fix: `Añadir ${waterToAdd}L de agua sola para diluir sales y bajar la EC.`,
+        type: "warning",
+        icon: <FlaskConical className="text-amber-500" />
+      });
+    } else if (ecNum < config.targetEC - 200) {
+      alerts.push({
+        title: "EC BAJA (CARENCIA NUTRICIONAL)",
+        desc: "Las plantas están consumiendo más nutrientes de los disponibles.",
+        fix: `Añadir dosis de refuerzo Aqua Vega A+B (1ml/L cada uno) para subir EC.`,
+        type: "blue",
+        icon: <Beaker className="text-blue-500" />
+      });
+    }
 
-  const irrigation = useMemo(() => calculateIrrigation(plants), [plants]);
+    return alerts;
+  }, [manual, config]);
 
-  const getStatusColor = (val, target, tolerance) => {
-    const diff = Math.abs(val - target);
-    if (diff <= tolerance) return "text-green-600";
-    if (diff <= tolerance * 2) return "text-amber-500";
-    return "text-red-500";
-  };
+  // --- 2. CÁLCULO DE RIEGO ESPECÍFICO (CASTELLÓN/7W) ---
+  const irrigation = useMemo(() => {
+    const month = new Date().getMonth();
+    const seasonalFactor = [0.8, 0.9, 1.1, 1.4, 1.8, 2.4, 2.8, 2.6, 1.9, 1.3, 1.0, 0.8][month];
+    
+    // Lana de roca 2.5cm: Poca retención. 
+    // Bomba 7W: Caudal moderado para torre vertical.
+    const onTime = Math.ceil(3 * (plants.length > 12 ? 1.3 : 1));
+    const offTime = Math.max(15, Math.floor(45 / seasonalFactor));
+
+    return { onTime, offTime, totalCycles: Math.floor(1440 / (onTime + offTime)) };
+  }, [plants]);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 p-4">
-        <div className="flex justify-between items-center max-w-6xl mx-auto">
-          <div className="flex items-center gap-2">
-            <Droplet className="text-blue-600" size={32} />
-            <h1 className="text-2xl font-black text-slate-800 tracking-tight">HydroCaru</h1>
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-28">
+      {/* HEADER RE-BRANDED */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 p-4 shadow-sm">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600 p-2.5 rounded-2xl text-white shadow-lg shadow-blue-200">
+              <Droplets size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black italic tracking-tighter text-slate-800">HydroCaru</h1>
+              <Badge variant="blue">Aqua Vega Expert</Badge>
+            </div>
           </div>
-          <Badge variant="secondary" className="bg-blue-50 text-blue-700">Aqua Vega System</Badge>
+          <div className="bg-slate-100 px-4 py-2 rounded-2xl flex items-center gap-2">
+            <MapPin size={14} className="text-blue-500" />
+            <span className="text-[10px] font-black text-slate-600 uppercase">Castellón</span>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto p-4 max-w-6xl">
-        {/* TABS CONTENT */}
-        {tab === "dashboard" && (
-          <div className="space-y-6">
-            <Card className="p-6 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Activity size={20} /> Estado General
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                  <p className="text-xs opacity-80">pH Actual</p>
-                  <p className={`text-2xl font-bold ${getStatusColor(manualParams.ph, config.targetPH, 0.2)}`}>
-                    {manualParams.ph}
-                  </p>
+      <main className="max-w-4xl mx-auto p-4 space-y-6">
+
+        {/* --- PESTAÑA DASHBOARD --- */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-6 animate-in fade-in">
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="p-5 border-none bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+                <p className="text-[10px] font-black opacity-70 uppercase mb-4 tracking-widest">Nutrición Base</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold">Aqua Vega A</span>
+                    <span className="text-xl font-black">{(config.vol * 2)}ml</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold">Aqua Vega B</span>
+                    <span className="text-xl font-black">{(config.vol * 2)}ml</span>
+                  </div>
                 </div>
-                <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                  <p className="text-xs opacity-80">EC Actual</p>
-                  <p className={`text-2xl font-bold ${getStatusColor(manualParams.ec, config.targetEC, 100)}`}>
-                    {manualParams.ec}
-                  </p>
-                </div>
-                <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                  <p className="text-xs opacity-80">Plantas</p>
-                  <p className="text-2xl font-bold">{plants.length}</p>
-                </div>
-                <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                  <p className="text-xs opacity-80">Próximo Riego</p>
-                  <p className="text-2xl font-bold">En {irrigation.offTime}m</p>
-                </div>
+              </Card>
+              <Card className="p-5 bg-white flex flex-col justify-center items-center border-2 border-blue-50">
+                <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Plantas Activas</p>
+                <span className="text-4xl font-black text-slate-800">{plants.length}</span>
+                <p className="text-[10px] font-bold text-blue-500 mt-1 uppercase">Torre Vertical</p>
+              </Card>
+            </div>
+
+            {/* Alertas Críticas Visibles en Dashboard */}
+            {diagnosis.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-red-500 uppercase ml-1">Atención Requerida</p>
+                {diagnosis.map((alert, i) => (
+                  <div key={i} className={`p-4 rounded-2xl border-l-4 flex gap-4 shadow-sm ${
+                    alert.type === "danger" ? "bg-red-50 border-red-500" : 
+                    alert.type === "warning" ? "bg-amber-50 border-amber-500" : "bg-blue-50 border-blue-500"
+                  }`}>
+                    <div className="mt-1">{alert.icon}</div>
+                    <div>
+                      <p className={`text-xs font-black uppercase ${alert.type === "danger" ? "text-red-700" : alert.type === "warning" ? "text-amber-700" : "text-blue-700"}`}>
+                        {alert.title}
+                      </p>
+                      <p className="text-xs font-bold text-slate-600 mt-1">{alert.fix}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </Card>
+            )}
           </div>
         )}
 
-        {tab === "manual" && (
-          <div className="space-y-6">
+        {/* --- PESTAÑA MEDICIONES MANUALES --- */}
+        {activeTab === "manual" && (
+          <div className="space-y-6 animate-in zoom-in-95">
             <Card className="p-6">
-              <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <Clipboard size={22} className="text-blue-600" /> Parámetros Manuales
+              <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                <Activity className="text-blue-500" /> ENTRADA DE DATOS
               </h2>
-              <div className="grid gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">pH Medido</label>
-                  <Input 
-                    type="number" step="0.1" 
-                    value={manualParams.ph} 
-                    onChange={(e) => setManualParams({...manualParams, ph: e.target.value})} 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1">pH Medido (Digital)</label>
+                  <input 
+                    type="number" step="0.1"
+                    className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-xl font-black focus:border-blue-500 focus:bg-white outline-none transition-all"
+                    value={manual.ph}
+                    onChange={(e) => setManual({...manual, ph: e.target.value})}
+                    placeholder="Ej: 6.2"
                   />
-                  {Math.abs(manualParams.ph - config.targetPH) > 0.2 && (
-                    <p className="text-sm text-red-600 mt-2 font-medium flex items-center gap-1">
-                      <AlertCircle size={14} /> Corregir: Añadir {manualParams.ph > config.targetPH ? "pH Down" : "pH Up"}
-                    </p>
-                  )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">EC Medida (µS/cm)</label>
-                  <Input 
-                    type="number" 
-                    value={manualParams.ec} 
-                    onChange={(e) => setManualParams({...manualParams, ec: e.target.value})} 
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1">EC Medida (µS/cm)</label>
+                  <input 
+                    type="number"
+                    className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-xl font-black focus:border-blue-500 focus:bg-white outline-none transition-all"
+                    value={manual.ec}
+                    onChange={(e) => setManual({...manual, ec: e.target.value})}
+                    placeholder="Ej: 1400"
                   />
-                  {Math.abs(manualParams.ec - config.targetEC) > 100 && (
-                    <p className="text-sm text-amber-600 mt-2 font-medium flex items-center gap-1">
-                      <AlertTriangle size={14} /> {manualParams.ec > config.targetEC ? "Añadir agua sola para bajar EC" : "Añadir Aqua Vega A+B para subir EC"}
-                    </p>
-                  )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Temperatura Agua (°C)</label>
-                  <Input 
-                    type="number" 
-                    value={manualParams.temp} 
-                    onChange={(e) => setManualParams({...manualParams, temp: e.target.value})} 
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Temperatura Agua (°C)</label>
+                  <input 
+                    type="number"
+                    className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-xl font-black focus:border-blue-500 outline-none transition-all"
+                    value={manual.tempAgua}
+                    onChange={(e) => setManual({...manual, tempAgua: e.target.value})}
+                    placeholder="22"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Humedad Ambiente (%)</label>
+                  <input 
+                    type="number"
+                    className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-xl font-black focus:border-blue-500 outline-none transition-all"
+                    value={manual.humedadAmb}
+                    onChange={(e) => setManual({...manual, humedadAmb: e.target.value})}
+                    placeholder="65"
                   />
                 </div>
               </div>
+
+              {manual.ph && (
+                <div className="mt-8 p-6 bg-slate-900 rounded-3xl text-white">
+                  <h3 className="text-xs font-black text-blue-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                    <Brain size={16}/> Análisis HydroCaru
+                  </h3>
+                  {diagnosis.length > 0 ? (
+                    <div className="space-y-4">
+                      {diagnosis.map((d, i) => (
+                        <div key={i} className="border-l-2 border-blue-500 pl-4">
+                          <p className="text-xs font-black text-white uppercase">{d.title}</p>
+                          <p className="text-sm text-slate-400 mt-1 italic">{d.fix}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 text-emerald-400">
+                      <Check size={20} />
+                      <p className="text-sm font-bold uppercase">Parámetros en rango óptimo para Aqua Vega</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
           </div>
         )}
 
-        {tab === "irrigation" && (
-          <div className="space-y-6">
-            <Card className="p-6 border-l-4 border-blue-500">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <Zap className="text-blue-600" size={24} />
-                </div>
+        {/* --- PESTAÑA RIEGO --- */}
+        {activeTab === "irrigation" && (
+          <div className="space-y-6 animate-in slide-in-from-right-4">
+            <Card className="p-8 border-none bg-blue-600 text-white shadow-2xl shadow-blue-200">
+              <div className="flex justify-between items-start mb-12">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Cálculo de Riego Real</h2>
-                  <p className="text-sm text-slate-500">Optimizado para Torre Vertical en Castellón</p>
+                  <h2 className="text-3xl font-black italic tracking-tighter">RIEGO EN TIEMPO REAL</h2>
+                  <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1">Torre Vertical Hidropónica</p>
+                </div>
+                <Zap className="text-white/40" size={40} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-10">
+                <div className="bg-white/10 p-6 rounded-3xl backdrop-blur-md">
+                  <p className="text-[10px] font-black text-blue-200 uppercase mb-2">Bomba Encendida</p>
+                  <span className="text-5xl font-black tracking-tighter">{irrigation.onTime}</span>
+                  <span className="ml-2 text-xl font-bold opacity-60">min</span>
+                </div>
+                <div className="bg-white/10 p-6 rounded-3xl backdrop-blur-md">
+                  <p className="text-[10px] font-black text-blue-200 uppercase mb-2">Bomba Apagada</p>
+                  <span className="text-5xl font-black tracking-tighter">{irrigation.offTime}</span>
+                  <span className="ml-2 text-xl font-bold opacity-60">min</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <p className="text-xs text-slate-500 uppercase font-bold mb-1">Configuración Bomba</p>
-                  <p className="text-lg font-bold text-slate-700">7W - Flujo Constante</p>
-                  <p className="text-sm text-slate-600">Caída sobre dados de 2.5cm</p>
+              <div className="mt-10 p-6 bg-black/10 rounded-3xl flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <Clock className="text-blue-200" />
+                  <span className="text-sm font-bold uppercase">Ciclos al día</span>
                 </div>
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                  <p className="text-xs text-blue-500 uppercase font-bold mb-1 flex items-center gap-1">
-                    <MapPin size={12} /> Ubicación
-                  </p>
-                  <p className="text-lg font-bold text-blue-700">Castellón de la Plana</p>
-                  <p className="text-sm text-blue-600">Ajuste estacional automático</p>
-                </div>
+                <span className="text-3xl font-black">{irrigation.totalCycles}</span>
               </div>
-
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-200">
-                <h3 className="font-bold text-blue-800 mb-4 flex items-center gap-2">
-                  <Timer size={18} /> Ciclo Recomendado
-                </h3>
-                <div className="flex items-center justify-around text-center">
-                  <div>
-                    <span className="block text-4xl font-black text-blue-600">{irrigation.onTime} min</span>
-                    <span className="text-sm font-medium text-blue-700 uppercase">Encendido</span>
-                  </div>
-                  <div className="h-12 w-px bg-blue-200"></div>
-                  <div>
-                    <span className="block text-4xl font-black text-slate-600">{irrigation.offTime} min</span>
-                    <span className="text-sm font-medium text-slate-500 uppercase">Apagado</span>
-                  </div>
-                </div>
-                <div className="mt-6 pt-6 border-t border-blue-200 flex justify-between items-center text-sm text-blue-800">
-                  <span>Ciclos diarios: <strong>{irrigation.dailyCycles}</strong></span>
-                  <Badge className="bg-blue-200">Estado: Activo</Badge>
-                </div>
-              </div>
+              
+              <p className="mt-6 text-[10px] text-blue-100 font-medium italic opacity-80 leading-relaxed">
+                * Configuración calculada para bomba de 7W y sustrato de lana de roca (2.5cm) en Castellón de la Plana. 
+                Ajuste estacional aplicado.
+              </p>
             </Card>
           </div>
         )}
 
-        {tab === "tower" && (
-           <Card className="p-6">
-             <h2 className="text-xl font-bold mb-4">Gestión de Torre</h2>
-             <p className="text-slate-500 italic">Aquí puedes añadir y rotar tus 6 variedades de lechugas.</p>
-             {/* Lógica de plantas se mantiene del original */}
-           </Card>
+        {/* --- PESTAÑA CALENDARIO --- */}
+        {activeTab === "calendar" && (
+          <Card className="p-6 animate-in fade-in">
+            <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2 uppercase italic">
+              <Calendar className="text-indigo-500" /> Histórico de Cultivo
+            </h2>
+            <div className="grid grid-cols-7 gap-2">
+              {[...Array(28)].map((_, i) => (
+                <div key={i} className={`aspect-square rounded-2xl flex items-center justify-center text-xs font-black ${
+                  i < 15 ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "bg-slate-100 text-slate-400"
+                }`}>
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                <div className="p-2 bg-indigo-600 rounded-xl text-white"><Sprout size={16}/></div>
+                <div>
+                  <p className="text-xs font-black text-indigo-900 uppercase">Fase de Crecimiento</p>
+                  <p className="text-[10px] text-indigo-600 font-bold uppercase">Aqua Vega activado • Día 15/45</p>
+                </div>
+              </div>
+            </div>
+          </Card>
         )}
+
+        {/* --- PESTAÑA TORRE (PLANTAS) --- */}
+        {activeTab === "tower" && (
+          <div className="space-y-6 animate-in fade-in">
+            <Card className="p-6">
+              <h2 className="text-xl font-black text-slate-800 mb-6 uppercase italic">Selector de Variedades</h2>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(VARIETIES).map(([name, data]) => (
+                  <button 
+                    key={name}
+                    onClick={() => setPlants([...plants, { id: Date.now(), name }])}
+                    className="flex flex-col items-center p-4 border-2 border-slate-50 rounded-3xl hover:border-blue-500 hover:bg-blue-50 transition-all group active:scale-90"
+                  >
+                    <div className={`w-12 h-12 rounded-full ${data.color} flex items-center justify-center text-white mb-2 shadow-lg group-hover:rotate-12 transition-transform`}>
+                      <Leaf size={24} />
+                    </div>
+                    <span className="text-[9px] font-black text-slate-600 uppercase text-center">{name}</span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            <div className="grid grid-cols-1 gap-3">
+              {plants.map((p, i) => (
+                <div key={p.id} className="bg-white p-4 rounded-3xl border border-slate-200 flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-black text-xs">
+                      {i + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-slate-800 uppercase italic">{p.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Torre Vertical • Nivel {Math.ceil((i+1)/4)}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setPlants(plants.filter(x => x.id !== p.id))} className="text-slate-300 hover:text-red-500 p-2">
+                    <X size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </main>
 
-      {/* Footer Navigation - SOLO ICONOS */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-2 z-50">
+      {/* --- NAVEGACIÓN INFERIOR (SOLO ICONOS) --- */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-4 z-50">
         <div className="max-w-md mx-auto flex justify-between items-center">
-          <button onClick={() => setTab("dashboard")} className={`p-3 rounded-xl transition-colors ${tab === "dashboard" ? "bg-blue-100 text-blue-600" : "text-slate-400"}`}>
-            <Home size={28} />
-          </button>
-          <button onClick={() => setTab("manual")} className={`p-3 rounded-xl transition-colors ${tab === "manual" ? "bg-blue-100 text-blue-600" : "text-slate-400"}`}>
-            <Activity size={28} />
-          </button>
-          <button onClick={() => setTab("tower")} className={`p-3 rounded-xl transition-colors ${tab === "tower" ? "bg-blue-100 text-blue-600" : "text-slate-400"}`}>
-            <Layers size={28} />
-          </button>
-          <button onClick={() => setTab("irrigation")} className={`p-3 rounded-xl transition-colors ${tab === "irrigation" ? "bg-blue-100 text-blue-600" : "text-slate-400"}`}>
-            <Droplet size={28} />
-          </button>
-          <button onClick={() => setTab("calendar")} className={`p-3 rounded-xl transition-colors ${tab === "calendar" ? "bg-blue-100 text-blue-600" : "text-slate-400"}`}>
-            <Calendar size={28} />
-          </button>
+          {[
+            { id: "dashboard", icon: <Home size={28} /> },
+            { id: "manual", icon: <Activity size={28} /> },
+            { id: "tower", icon: <Layers size={28} /> },
+            { id: "irrigation", icon: <Droplet size={28} /> },
+            { id: "calendar", icon: <Calendar size={28} /> }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`p-3 rounded-2xl transition-all duration-300 ${
+                activeTab === item.id 
+                ? "bg-blue-600 text-white shadow-xl shadow-blue-200 -translate-y-2 scale-110" 
+                : "text-slate-400 hover:text-blue-500 hover:bg-blue-50"
+              }`}
+            >
+              {item.icon}
+            </button>
+          ))}
         </div>
-      </footer>
+      </nav>
     </div>
   )
 }
