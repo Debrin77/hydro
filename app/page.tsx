@@ -15,7 +15,11 @@ import {
   ChevronDown, ChevronUp, Eye, EyeOff, CloudRain as Rain,
   Thermometer as Temp, Wind as Breeze, Target,
   Brain, AlertOctagon, Waves, GitCompare, BarChart,
-  GaugeCircle, Droplets as WaterDroplets
+  GaugeCircle, Droplets as WaterDroplets,
+  Flower2, Sparkles, Shield, Zap as Lightning,
+  Flask, Thermometer as ThermometerIcon, GitBranch,
+  Package, Hash, AlertOctagon as AlertOctagonIcon,
+  Sprout as Plant
 } from "lucide-react"
 
 // ============================================================================
@@ -3981,15 +3985,199 @@ const ProfessionalTipsTab = () => (
       </Card>
     </div>
     
+    {/* NUEVA SECCIÓN: Preparación de Plántulas y Lana de Roca */}
+    <Card className="p-6 rounded-2xl">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+          <Plant className="text-white" size={24} />
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-800">🌱 Preparación Profesional de Plántulas y Lana de Roca</h3>
+          <p className="text-slate-600">Protocolo completo desde la germinación hasta la torre</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
+            <h4 className="font-bold text-cyan-700 mb-3">🧼 Paso 1: Limpieza y Preparación de Plántulas</h4>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  1
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Limpieza de raíces</p>
+                  <p className="text-sm text-slate-600">Enjuagar suavemente las raíces con agua templada para eliminar restos de tierra o sustrato.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  2
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Desinfección (opcional pero recomendado)</p>
+                  <p className="text-sm text-slate-600">Sumergir raíces en solución de agua oxigenada al 3% (1ml por litro) durante 5 minutos.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  3
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Recorte de raíces dañadas</p>
+                  <p className="text-sm text-slate-600">Con tijeras esterilizadas, cortar raíces marrones o dañadas. Dejar solo raíces blancas y sanas.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+            <h4 className="font-bold text-emerald-700 mb-3">📏 Paso 2: Preparación de Dados de Lana de Roca 2.5cm</h4>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  1
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Acondicionamiento del pH</p>
+                  <p className="text-sm text-slate-600">Remojar los dados en agua con pH 5.5 durante 24 horas para estabilizar su pH natural (alcalino).</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  2
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Humedecimiento uniforme</p>
+                  <p className="text-sm text-slate-600">Exprimir suavemente para eliminar exceso de agua, dejando el dado húmedo pero no encharcado.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  3
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Creación del orificio</p>
+                  <p className="text-sm text-slate-600">Hacer un orificio central de 1-1.5cm de profundidad usando un lápiz o herramienta similar.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+            <h4 className="font-bold text-amber-700 mb-3">🌿 Paso 3: Inserción y Colocación Correcta</h4>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  1
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Inserción de la plántula</p>
+                  <p className="text-sm text-slate-600">Colocar las raíces en el orificio, asegurando que el cuello de la planta quede justo en la superficie del dado.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  2
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Sujeción suave</p>
+                  <p className="text-sm text-slate-600">Apretar suavemente el dado alrededor del tallo para fijar la planta, sin aplastar el tejido vegetal.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  3
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Colocación en la cesta</p>
+                  <p className="text-sm text-slate-600">Insertar el dado en la cesta de la torre, asegurando que quede firme pero sin comprimirlo excesivamente.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+            <h4 className="font-bold text-purple-700 mb-3">🎯 Paso 4: Consideraciones Especiales para Torre Vertical</h4>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  1
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Orientación de las raíces</p>
+                  <p className="text-sm text-slate-600">Asegurar que las raíces apunten hacia abajo, facilitando su crecimiento hacia el flujo de nutrientes.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  2
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Espaciado correcto</p>
+                  <p className="text-sm text-slate-600">Dejar al menos 2cm entre el borde del dado y la pared de la cesta para permitir expansión radicular.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                  3
+                </div>
+                <div>
+                  <p className="font-bold text-slate-700">Ajuste inicial de EC</p>
+                  <p className="text-sm text-slate-600">Usar EC más baja (800-1000 µS/cm) durante los primeros 3-5 días tras el trasplante.</p>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                <p className="text-sm font-bold text-blue-700">💡 Consejo Pro:</p>
+                <p className="text-sm text-blue-800">
+                  Los primeros 2 días mantener las plántulas en ambiente con humedad alta (70-80%) para reducir estrés del trasplante.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
+        <h4 className="font-bold text-slate-700 mb-3">⏰ Cronología Recomendada</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-3 bg-white rounded-lg">
+            <p className="font-bold text-cyan-700">Día 1</p>
+            <p className="text-sm text-slate-600">Preparación dados y limpieza plántulas</p>
+          </div>
+          <div className="p-3 bg-white rounded-lg">
+            <p className="font-bold text-emerald-700">Día 2</p>
+            <p className="text-sm text-slate-600">Trasplante a dados y colocación en nivel 1</p>
+          </div>
+          <div className="p-3 bg-white rounded-lg">
+            <p className="font-bold text-amber-700">Días 3-5</p>
+            <p className="text-sm text-slate-600">EC baja y monitoreo de adaptación</p>
+          </div>
+        </div>
+      </div>
+    </Card>
+    
     {/* Sección de Problemas y Soluciones */}
     <Card className="p-6 rounded-2xl">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center">
-          <AlertOctagon className="text-white" size={24} />
+          <AlertOctagonIcon className="text-white" size={24} />
         </div>
         <div>
           <h3 className="font-bold text-slate-800">Diagnóstico Rápido de Problemas</h3>
-          <p className="text-sm text-slate-600">Identifica y soluciona problemas comunes</p>
+          <p className="text-slate-600">Identifica y soluciona problemas comunes</p>
         </div>
       </div>
       
@@ -4112,75 +4300,77 @@ const ProfessionalTipsTab = () => (
         </div>
       </header>
 
-      {/* Navegación por pestañas */}
+      {/* Navegación por pestañas - MODIFICADO para centrar iconos y colores */}
       {step >= 5 && (
         <div className="sticky top-16 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
           <div className="container mx-auto p-4 max-w-6xl">
             <div className="grid grid-cols-8 w-full gap-2">
-              <Button
-                variant={tab === "dashboard" ? "default" : "outline"}
-                onClick={() => setTab("dashboard")}
-                className="flex-1 justify-center"
-                title="Panel de Control"
-              >
-                <Home size={20} />
-              </Button>
-              <Button
-                variant={tab === "tower" ? "default" : "outline"}
-                onClick={() => setTab("tower")}
-                className="flex-1 justify-center"
-                title="Gestión de Torre"
-              >
-                <TreePine size={20} />
-              </Button>
-              <Button
-                variant={tab === "calculator" ? "default" : "outline"}
-                onClick={() => setTab("calculator")}
-                className="flex-1 justify-center"
-                title="Calculadora"
-              >
-                <Calculator size={20} />
-              </Button>
-              <Button
-                variant={tab === "measurements" ? "default" : "outline"}
-                onClick={() => setTab("measurements")}
-                className="flex-1 justify-center"
-                title="Mediciones"
-              >
-                <Activity size={20} />
-              </Button>
-              <Button
-                variant={tab === "irrigation" ? "default" : "outline"}
-                onClick={() => setTab("irrigation")}
-                className="flex-1 justify-center"
-                title="Riego"
-              >
-                <WaterDroplets size={20} />
-              </Button>
-              <Button
-                variant={tab === "calendar" ? "default" : "outline"}
-                onClick={() => setTab("calendar")}
-                className="flex-1 justify-center"
-                title="Calendario"
-              >
-                <Calendar size={20} />
-              </Button>
-              <Button
-                variant={tab === "history" ? "default" : "outline"}
-                onClick={() => setTab("history")}
-                className="flex-1 justify-center"
-                title="Historial"
-              >
-                <BarChart size={20} />
-              </Button>
-              <Button
-                variant={tab === "proTips" ? "default" : "outline"}
-                onClick={() => setTab("proTips")}
-                className="flex-1 justify-center"
-                title="Consejos Pro"
-              >
-                <Brain size={20} />
-              </Button>
+              {[
+                { 
+                  key: "dashboard", 
+                  icon: <Home size={20} />, 
+                  title: "Panel de Control",
+                  color: "from-blue-500 to-cyan-600"
+                },
+                { 
+                  key: "tower", 
+                  icon: <TreePine size={20} />, 
+                  title: "Gestión de Torre",
+                  color: "from-emerald-500 to-green-600"
+                },
+                { 
+                  key: "calculator", 
+                  icon: <Calculator size={20} />, 
+                  title: "Calculadora",
+                  color: "from-purple-500 to-pink-600"
+                },
+                { 
+                  key: "measurements", 
+                  icon: <Activity size={20} />, 
+                  title: "Mediciones",
+                  color: "from-amber-500 to-orange-600"
+                },
+                { 
+                  key: "irrigation", 
+                  icon: <WaterDroplets size={20} />, 
+                  title: "Riego",
+                  color: "from-cyan-500 to-blue-600"
+                },
+                { 
+                  key: "calendar", 
+                  icon: <Calendar size={20} />, 
+                  title: "Calendario",
+                  color: "from-indigo-500 to-violet-600"
+                },
+                { 
+                  key: "history", 
+                  icon: <BarChart size={20} />, 
+                  title: "Historial",
+                  color: "from-rose-500 to-pink-600"
+                },
+                { 
+                  key: "proTips", 
+                  icon: <Brain size={20} />, 
+                  title: "Consejos Pro",
+                  color: "from-violet-500 to-purple-600"
+                },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setTab(item.key)}
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 ${
+                    tab === item.key 
+                      ? `bg-gradient-to-r ${item.color} text-white shadow-lg scale-105` 
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:scale-105'
+                  }`}
+                  title={item.title}
+                >
+                  <div className={`mb-1 ${tab === item.key ? 'text-white' : ''}`}>
+                    {item.icon}
+                  </div>
+                  <span className="text-xs font-medium">{item.title}</span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
