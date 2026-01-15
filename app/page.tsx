@@ -3,15 +3,13 @@
 import React, { useState, useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
-  Sprout, Plus, Trash2, FlaskConical, 
-  AlertTriangle, Droplets, Thermometer, Zap, 
-  Settings, Layers, RefreshCw, 
-  Leaf, Sun, Wind, BarChart3, 
-  Waves, Home, RotateCw, ArrowRight,
-  Timer, Activity, CheckCircle2, X, ChevronRight, Brain, FlaskRound
+  Sprout, Plus, Trash2, FlaskConical, AlertTriangle, Droplets, 
+  Thermometer, Zap, Settings, Layers, RefreshCw, Leaf, Sun, Wind, 
+  BarChart3, Waves, Home, RotateCw, ArrowRight, Timer, Activity, 
+  CheckCircle2, X, ChevronRight, Brain, FlaskRound, Info, Gauge
 } from "lucide-react"
 
-// --- DATOS MAESTROS ---
+// --- CONFIGURACIÓN TÉCNICA ---
 const WATER_TYPES = {
   osmosis: { name: "Ósmosis", ec: 0.0, calmagFactor: 1.0 },
   blanda: { name: "Blanda (Castellón)", ec: 0.35, calmagFactor: 0.4 },
@@ -26,31 +24,26 @@ const VARIETIES = {
   trocadero: { name: "Trocadero", ec: [0.8, 1.2, 1.7], color: "lime", icon: Droplets }
 }
 
-export default function HydrocaruProV6() {
-  const [step, setStep] = useState(0) 
+export default function HydrocaruV7() {
+  const [step, setStep] = useState(0)
   const [activeTab, setActiveTab] = useState("dashboard")
   
-  // Inputs estables (Strings para evitar que el punto decimal borre el número)
+  // Inputs estables
   const [inputPh, setInputPh] = useState("6.0")
-  const [inputEc, setInputEc] = useState("0.8")
+  const [inputEc, setInputEc] = useState("0.80")
   const [inputTemp, setInputTemp] = useState("22.0")
   const [inputVol, setInputVol] = useState("18.0")
   
   const [config, setConfig] = useState({
-    vol: 18.0,
-    temp: 22.0,
-    ph: 6.0,
-    ec_actual: 0.8,
-    isPoniente: false,
-    waterType: "blanda" as keyof typeof WATER_TYPES,
+    vol: 18.0, temp: 22.0, ph: 6.0, ec_actual: 0.8,
+    isPoniente: false, waterType: "blanda" as keyof typeof WATER_TYPES,
     month: new Date().getMonth()
   })
   
   const [tower, setTower] = useState<any[]>(Array(15).fill(null))
   const [history, setHistory] = useState<any[]>([])
 
-  // Sincronización manual de datos al Dashboard
-  const refreshSystemData = () => {
+  const syncData = () => {
     setConfig(prev => ({
       ...prev,
       ph: parseFloat(inputPh) || 0,
@@ -60,278 +53,295 @@ export default function HydrocaruProV6() {
     }))
   }
 
-  // --- ALGORITMO DE RIEGO Y CÁLCULOS ---
+  // --- MOTOR DE CÁLCULO PROFESIONAL ---
   const analysis = useMemo(() => {
     const active = tower.filter(p => p !== null)
-    let targetEC = 1.2 
-    if (active.length > 0) {
-      const sumEC = active.reduce((acc, p) => acc + p.ec[p.currentLevel - 1], 0)
-      targetEC = sumEC / active.length
+    const numPlants = active.length
+    
+    // 1. EC Objetivo según plantas
+    let targetEC = 1.3
+    if (numPlants > 0) {
+      targetEC = active.reduce((acc, p) => acc + p.ec[p.currentLevel - 1], 0) / numPlants
     }
     if (config.isPoniente) targetEC *= 0.85
 
-    const netECNeed = Math.max(0, targetEC - config.ec_actual)
-    const doseAB = ((netECNeed * 1000 / 500) * config.vol / 2).toFixed(1)
-    const calmag = (config.vol * 0.8 * WATER_TYPES[config.waterType].calmagFactor).toFixed(1)
+    // 2. CÁLCULO DE CORRECCIONES
+    let correctionAction = ""
+    const diffEC = targetEC - config.ec_actual
+    
+    if (diffEC > 0.05) {
+      const dose = ((diffEC * 1000 / 500) * config.vol / 2).toFixed(1)
+      correctionAction = `Añadir ${dose}ml de A y ${dose}ml de B`
+    } else if (diffEC < -0.1) {
+      const waterToAdd = ((Math.abs(diffEC) / config.ec_actual) * config.vol).toFixed(1)
+      correctionAction = `EC ALTA: Añadir ${waterToAdd}L de agua pura`
+    }
 
-    // Riego Precisión Castellón - Dados 2.5cm
+    // 3. RIEGO (Lana de roca 2.5cm)
+    // El dado de 2.5cm retiene solo ~15-20ml de agua útil.
     const isSummer = config.month >= 5 && config.month <= 8
-    let onTimeSeconds = 120 // 2 min siempre para Grodan 2.5
-    let offTimeMinutes = 45 // Descanso base invierno
-    
-    if (isSummer) offTimeMinutes -= 15
-    if (config.isPoniente) offTimeMinutes -= 10
-    if (active.length > 10) offTimeMinutes -= 5
-    if (config.temp > 26) offTimeMinutes -= 5
-    
-    return { 
-      targetEC: targetEC.toFixed(2), 
-      doseAB, 
-      calmag, 
-      onTime: onTimeSeconds, 
-      offTime: Math.max(offTimeMinutes, 10),
-      phCorrection: config.ph > 6.2 ? ((config.ph - 5.8) * config.vol * 0.15).toFixed(1) : "0",
-      activeCount: active.length
+    let onSecs = 120 // 2 min es el estándar para empapar sin lavar
+    let offMins = 40 // Base
+
+    if (isSummer) offMins -= 15
+    if (config.isPoniente) offMins -= 12
+    if (numPlants > 10) offMins -= 5
+    if (config.temp > 26) offMins -= 8
+
+    return {
+      targetEC: targetEC.toFixed(2),
+      correctionAction,
+      calmag: (config.vol * 0.8 * WATER_TYPES[config.waterType].calmagFactor).toFixed(1),
+      onSecs,
+      offMins: Math.max(offMins, 10),
+      phDown: config.ph > 6.2 ? ((config.ph - 5.8) * config.vol * 0.15).toFixed(1) : "0",
+      alerts: {
+        temp: config.temp > 26,
+        ph: config.ph < 5.5 || config.ph > 6.5,
+        ec: Math.abs(diffEC) > 0.3
+      }
     }
   }, [config, tower])
 
-  const saveToHistory = () => {
-    refreshSystemData()
-    const entry = {
-      id: Date.now(),
-      date: new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }),
-      ph: inputPh, ec: inputEc, temp: inputTemp, vol: inputVol
-    }
-    setHistory([entry, ...history])
-    setActiveTab("history")
-  }
-
-  const handleRotation = () => {
-    setTower(tower.map(p => (p && p.currentLevel < 3 ? { ...p, currentLevel: p.currentLevel + 1 } : null)))
-  }
-
-  // --- RENDERIZADO DE FLUJO ---
-
-  if (step === 0) { // PASO 1: AGUA
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full space-y-8 animate-in fade-in duration-500">
-          <div className="text-center space-y-2">
-            <h1 className="text-5xl font-black italic tracking-tighter text-slate-900">HYDRO<span className="text-emerald-500">CARU</span></h1>
-            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Water Selection</p>
-          </div>
-          <div className="grid gap-4">
-            {Object.entries(WATER_TYPES).map(([key, val]) => (
-              <button key={key} onClick={() => { setConfig({...config, waterType: key as any}); setStep(1); }}
-                className="group p-6 bg-white rounded-[2rem] border-2 border-slate-100 hover:border-emerald-500 shadow-xl shadow-slate-200/40 transition-all text-left flex justify-between items-center">
-                <div>
-                  <p className="font-black text-slate-800 text-lg uppercase italic">{val.name}</p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">Base: {val.ec} mS</p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                  <ChevronRight size={20} />
-                </div>
-              </button>
-            ))}
-          </div>
+  if (step === 0) return (
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+      <div className="max-w-md w-full space-y-8 animate-in zoom-in duration-500">
+        <div className="text-center">
+          <h1 className="text-5xl font-black italic text-white tracking-tighter">HYDRO<span className="text-emerald-500">CARU</span></h1>
+          <p className="text-emerald-500/50 text-[10px] font-black uppercase tracking-[0.5em] mt-4">Intelligence Agriculture</p>
+        </div>
+        <div className="grid gap-4">
+          {Object.entries(WATER_TYPES).map(([key, val]) => (
+            <button key={key} onClick={() => { setConfig({...config, waterType: key as any}); setStep(1); }}
+              className="p-8 bg-slate-800 rounded-[2.5rem] border-2 border-transparent hover:border-emerald-500 transition-all text-left group">
+              <p className="text-white font-black text-xl uppercase italic">{val.name}</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">EC Base: {val.ec} mS</p>
+            </button>
+          ))}
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 
-  if (step === 1) { // PASO 2: VALORES
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full space-y-8 animate-in slide-in-from-bottom duration-500">
-          <div className="text-center italic"><h2 className="text-2xl font-black uppercase tracking-tighter">Parámetros Iniciales</h2></div>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: "pH", val: inputPh, set: setInputPh, icon: Droplets },
-              { label: "EC (mS)", val: inputEc, set: setInputEc, icon: Activity },
-              { label: "Temp °C", val: inputTemp, set: setInputTemp, icon: Thermometer },
-              { label: "Volumen L", val: inputVol, set: setInputVol, icon: FlaskConical },
-            ].map((item, i) => (
-              <div key={i} className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 focus-within:border-emerald-500 transition-all">
-                <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase mb-2"><item.icon size={12}/> {item.label}</label>
-                <input type="text" value={item.val} onChange={(e) => item.set(e.target.value.replace(',', '.'))} className="w-full bg-transparent text-3xl font-black outline-none" />
-              </div>
-            ))}
-          </div>
-          <button onClick={() => { refreshSystemData(); setStep(2); }} className="w-full bg-slate-900 text-white font-black py-6 rounded-[2rem] shadow-2xl hover:bg-emerald-600 transition-all uppercase tracking-widest italic flex items-center justify-center gap-3">Configurar Torre <ArrowRight size={20}/></button>
-        </div>
-      </div>
-    )
-  }
-
-  if (step === 2) { // PASO 3: TORRE
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="max-w-xl w-full bg-white p-8 rounded-[3rem] shadow-2xl space-y-8 animate-in fade-in">
-          <div className="flex justify-between items-end px-2">
-            <div><p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Matriz V15</p><h2 className="text-3xl font-black italic uppercase tracking-tighter">Cultivo Actual</h2></div>
-            <button onClick={() => { refreshSystemData(); setStep(3); }} className="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-lg italic">Ir al Panel Principal</button>
-          </div>
-          <div className="grid grid-cols-5 gap-3 p-6 bg-slate-50 rounded-[2.5rem]">
-            {tower.map((plant, i) => (
-              <div key={i} className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center relative transition-all ${plant ? `border-${plant.color}-500 bg-white` : 'border-dashed border-slate-200'}`}>
-                {plant ? <plant.icon size={22} className={`text-${plant.color}-500`}/> : <Plus size={14} className="text-slate-200"/>}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(VARIETIES).map(([key, v]) => (
-              <button key={key} onClick={() => {
-                const idx = tower.findIndex(p => p === null);
-                if (idx !== -1) { const n = [...tower]; n[idx] = { ...v, currentLevel: 1 }; setTower(n); }
-              }} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center gap-2 hover:border-emerald-500 transition-all group">
-                <v.icon size={18} className={`text-${v.color}-500`}/><span className="text-[10px] font-black uppercase text-slate-600">{v.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // PASO 4: DASHBOARD
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-28">
-      <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 p-6">
-        <div className="max-w-xl mx-auto flex justify-between items-center">
+    <div className="min-h-screen bg-[#F1F5F9] pb-32">
+      <header className="bg-white border-b p-6 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="bg-slate-900 text-emerald-400 p-2 rounded-xl font-black italic shadow-lg">HC</div>
-            <h1 className="font-black text-slate-800 text-xl italic tracking-tighter">HYDROCARU <span className="text-emerald-500">V6</span></h1>
+            <div className="bg-slate-900 text-emerald-400 p-2 rounded-xl font-black italic">HC</div>
+            <h1 className="font-black text-slate-800 text-xl tracking-tighter italic uppercase">Hydrocaru <span className="text-emerald-500">Pro</span></h1>
           </div>
-          <div className="flex gap-2">
-            {config.isPoniente && <span className="bg-orange-500 text-white text-[9px] px-3 py-1 rounded-full font-black animate-pulse uppercase">Poniente</span>}
-            <span className="bg-slate-100 text-slate-500 text-[9px] px-3 py-1 rounded-full font-black uppercase border border-slate-200">{WATER_TYPES[config.waterType].name}</span>
+          <div className="flex gap-2 font-black text-[9px] uppercase">
+            <span className={`px-3 py-1 rounded-full ${config.isPoniente ? 'bg-orange-500 text-white animate-pulse' : 'bg-slate-100 text-slate-400'}`}>Poniente</span>
+            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-600">V. {config.vol}L</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-xl mx-auto p-4 space-y-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 bg-white border-2 border-slate-100 rounded-[2rem] h-18 p-1 shadow-xl">
-            <TabsTrigger value="dashboard" className="rounded-2xl py-3"><Home size={22}/></TabsTrigger>
-            <TabsTrigger value="lab" className="rounded-2xl py-3"><FlaskRound size={22}/></TabsTrigger>
-            <TabsTrigger value="tower" className="rounded-2xl py-3"><Layers size={22}/></TabsTrigger>
-            <TabsTrigger value="history" className="rounded-2xl py-3"><BarChart3 size={22}/></TabsTrigger>
+      <main className="max-w-2xl mx-auto p-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-5 bg-white border-2 border-slate-200 rounded-[2rem] h-20 p-1.5 shadow-xl">
+            <TabsTrigger value="dashboard" className="rounded-2xl py-3"><Home size={20}/></TabsTrigger>
+            <TabsTrigger value="lab" className="rounded-2xl py-3"><Beaker size={20}/></TabsTrigger>
+            <TabsTrigger value="tower" className="rounded-2xl py-3"><Layers size={20}/></TabsTrigger>
+            <TabsTrigger value="history" className="rounded-2xl py-3"><BarChart3 size={20}/></TabsTrigger>
+            <TabsTrigger value="tips" className="rounded-2xl py-3"><Brain size={20}/></TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-4 pt-4 animate-in fade-in">
-            {/* CARD PRINCIPAL NUTRICIÓN */}
-            <div className="bg-slate-900 text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-              <div className="relative z-10 space-y-8">
-                <div className="flex justify-between items-start font-black italic">
-                  <div><p className="text-[10px] text-emerald-400 uppercase tracking-widest mb-2">A+B Requerido</p><h2 className="text-7xl tracking-tighter">{analysis.doseAB}<small className="text-xl opacity-30 ml-2 italic">ml</small></h2></div>
-                  <div className="text-right"><p className="text-[10px] text-blue-400 uppercase tracking-widest mb-2">CalMag</p><h2 className="text-4xl tracking-tighter">{analysis.calmag}<small className="text-sm opacity-30 ml-1">ml</small></h2></div>
+          {/* 1. PANEL PRINCIPAL */}
+          <TabsContent value="dashboard" className="space-y-4 animate-in fade-in">
+            <div className="bg-slate-900 rounded-[3rem] p-8 text-white shadow-2xl relative overflow-hidden">
+              <div className="relative z-10 space-y-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 italic">Acción Correctiva EC</p>
+                    <h2 className="text-4xl font-black italic tracking-tighter leading-tight">
+                      {analysis.correctionAction || "EC ESTABLE"}
+                    </h2>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2 italic">Refuerzo</p>
+                    <p className="text-xl font-black">{analysis.calmag}ml CalMag</p>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/10 italic font-black">
-                  <div><p className="text-[9px] text-slate-500 uppercase">EC Target</p><p className="text-2xl">{analysis.targetEC} <small className="text-[10px] opacity-40">mS/cm</small></p></div>
-                  <div className="text-right"><p className="text-[9px] text-emerald-400 uppercase">Ajuste pH-</p><p className="text-2xl text-emerald-500">{analysis.phCorrection} <small className="text-[10px] opacity-40">ml</small></p></div>
+                
+                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/10">
+                  <div className="bg-white/5 p-4 rounded-2xl">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-1">EC Actual vs Objetivo</p>
+                    <p className="text-2xl font-black italic">{config.ec_actual} <span className="text-emerald-500">/ {analysis.targetEC}</span></p>
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-2xl">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-1">pH Down (5.8)</p>
+                    <p className="text-2xl font-black italic text-orange-400">{analysis.phDown}ml</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* CARD RIEGO */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-6 rounded-[2.5rem] border shadow-sm flex flex-col items-center">
-                <Timer className="text-blue-500 mb-2" size={24}/><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pulsos ON</p>
-                <p className="text-2xl font-black italic">{analysis.onTime} s</p>
+              <div className="bg-white p-6 rounded-[2.5rem] border-2 border-transparent shadow-sm">
+                <div className="flex items-center gap-3 mb-4 text-blue-500">
+                  <Timer size={20}/> <span className="text-[10px] font-black uppercase italic">Riego Grodan</span>
+                </div>
+                <p className="text-3xl font-black italic text-slate-800">{analysis.onSecs}s <small className="text-xs text-slate-400 uppercase">Cada {analysis.offMins}m</small></p>
               </div>
-              <div className="bg-white p-6 rounded-[2.5rem] border shadow-sm flex flex-col items-center">
-                <RefreshCw className="text-emerald-500 mb-2" size={24}/><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pausa OFF</p>
-                <p className="text-2xl font-black italic">{analysis.offTime} min</p>
+              <div className="bg-white p-6 rounded-[2.5rem] border-2 border-transparent shadow-sm">
+                <div className="flex items-center gap-3 mb-4 text-emerald-500">
+                  <Sprout size={20}/> <span className="text-[10px] font-black uppercase italic">Estado Torre</span>
+                </div>
+                <p className="text-3xl font-black italic text-slate-800">{tower.filter(p=>p).length} <small className="text-xs text-slate-400 uppercase">Plantas</small></p>
               </div>
             </div>
 
-            {/* ALERTAS */}
-            {(config.ph > 6.5 || config.temp > 27) && (
-              <div className="bg-red-50 p-6 rounded-[2.5rem] border-2 border-red-100 flex items-center gap-4 text-red-600">
-                <AlertTriangle className="animate-bounce" size={28}/>
-                <p className="text-[10px] font-black uppercase italic leading-tight">Alerta Crítica: Parámetros fuera de rango. Revisar depósito inmediatamente.</p>
+            {Object.values(analysis.alerts).some(v => v) && (
+              <div className="bg-red-500 text-white p-6 rounded-[2.5rem] flex items-center gap-4 shadow-lg animate-pulse">
+                <AlertTriangle size={32}/>
+                <div>
+                  <p className="font-black uppercase italic text-sm">Alerta de Sistema</p>
+                  <p className="text-[10px] font-bold opacity-80 uppercase leading-none">Valores críticos detectados en el laboratorio</p>
+                </div>
               </div>
             )}
           </TabsContent>
 
-          <TabsContent value="lab" className="space-y-4 pt-4 animate-in fade-in">
-            <div className="bg-white p-8 rounded-[3.5rem] border-2 border-slate-100 shadow-xl space-y-8">
+          {/* 2. MEDICIONES (LAB) */}
+          <TabsContent value="lab" className="space-y-4 animate-in fade-in">
+            <div className="bg-white p-8 rounded-[3rem] shadow-xl border-2 border-slate-100 space-y-8">
               <div className="grid grid-cols-2 gap-6">
                 {[
-                  { label: "pH", val: inputPh, set: setInputPh },
-                  { label: "EC (mS)", val: inputEc, set: setInputEc },
-                  { label: "Temperatura", val: inputTemp, set: setInputTemp },
-                  { label: "Volumen (L)", val: inputVol, set: setInputVol },
-                ].map((input, i) => (
+                  { label: "pH Actual", val: inputPh, set: setInputPh, icon: Droplets },
+                  { label: "EC (mS/cm)", val: inputEc, set: setInputEc, icon: Activity },
+                  { label: "Temperatura °C", val: inputTemp, set: setInputTemp, icon: Thermometer },
+                  { label: "Volumen Real L", val: inputVol, set: setInputVol, icon: FlaskRound },
+                ].map((item, i) => (
                   <div key={i} className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4">{input.label}</label>
-                    <input type="text" value={input.val} onChange={e => input.set(e.target.value.replace(',', '.'))} 
-                      className="w-full bg-slate-50 p-6 rounded-[2.5rem] text-4xl font-black text-center focus:ring-4 ring-emerald-50 outline-none" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 flex items-center gap-2">
+                      <item.icon size={12}/> {item.label}
+                    </label>
+                    <input type="text" value={item.val} onChange={e => item.set(e.target.value.replace(',','.'))} 
+                      className="w-full bg-slate-50 p-6 rounded-[2rem] text-4xl font-black text-center focus:ring-4 ring-emerald-50 outline-none border-2 border-transparent focus:border-emerald-200 transition-all" />
                   </div>
                 ))}
               </div>
-              <button onClick={saveToHistory} className="w-full bg-slate-900 text-white font-black py-6 rounded-[2.5rem] shadow-xl uppercase italic tracking-widest flex items-center justify-center gap-3">
-                <CheckCircle2 size={20}/> Registrar Mediciones
-              </button>
-            </div>
-            {/* SWITCH PONIENTE */}
-            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 flex justify-between items-center px-8">
-              <div><p className="text-xs font-black uppercase italic">Vientos de Poniente</p><p className="text-[10px] text-slate-400 uppercase tracking-widest">Ajuste de EC y Riego Automático</p></div>
-              <button onClick={() => setConfig({...config, isPoniente: !config.isPoniente})} className={`w-14 h-8 rounded-full transition-all relative ${config.isPoniente ? 'bg-orange-500' : 'bg-slate-200'}`}>
-                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${config.isPoniente ? 'right-1' : 'left-1'}`} />
-              </button>
+              
+              <div className="flex gap-4">
+                <button onClick={() => { syncData(); setConfig(c => ({...c, isPoniente: !c.isPoniente}))}} className={`flex-1 p-6 rounded-[2rem] border-2 font-black italic uppercase text-xs transition-all ${config.isPoniente ? 'bg-orange-500 text-white border-orange-600' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                  {config.isPoniente ? '🔥 Poniente Activo' : '🌬️ Modo Poniente'}
+                </button>
+                <button onClick={() => {
+                  syncData();
+                  const entry = { id: Date.now(), date: new Date().toLocaleString(), ph: inputPh, ec: inputEc, temp: inputTemp, vol: inputVol };
+                  setHistory([entry, ...history]);
+                  setActiveTab("dashboard");
+                }} className="flex-[2] bg-slate-900 text-white p-6 rounded-[2rem] font-black italic uppercase text-xs hover:bg-emerald-600 transition-all shadow-xl">
+                  Actualizar y Procesar Datos
+                </button>
+              </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="tower" className="space-y-4 pt-4 animate-in fade-in">
-            <div className="bg-white border p-8 rounded-[3.5rem] shadow-sm space-y-8">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xs font-black uppercase text-slate-400 italic">Torre Hydrocaru V15</h3>
-                <button onClick={handleRotation} className="bg-slate-900 text-white px-5 py-3 rounded-2xl text-[10px] font-black flex items-center gap-2 hover:bg-emerald-500 transition-all uppercase italic">
-                  <RotateCw size={14}/> Rotar Plantas
+          {/* 3. TORRE */}
+          <TabsContent value="tower" className="space-y-4 animate-in fade-in">
+            <div className="bg-white p-8 rounded-[3rem] shadow-sm border-2 border-slate-100 space-y-8">
+              <div className="flex justify-between items-center px-2">
+                <h3 className="text-xs font-black uppercase text-slate-400 italic tracking-[0.2em]">Matrix V15 Tower</h3>
+                <button onClick={() => setTower(tower.map(p => p && p.currentLevel < 3 ? {...p, currentLevel: p.currentLevel + 1} : null))} 
+                  className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black italic uppercase flex items-center gap-2">
+                  <RotateCw size={14}/> Evolucionar Ciclo
                 </button>
               </div>
               <div className="grid grid-cols-5 gap-3">
                 {tower.map((plant, i) => (
-                  <div key={i} className={`aspect-square rounded-[1.5rem] border-2 flex flex-col items-center justify-center relative transition-all ${plant ? `border-${plant.color}-500 bg-${plant.color}-50/30` : 'border-dashed border-slate-100'}`}>
+                  <div key={i} className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center relative transition-all duration-500 ${plant ? `border-${plant.color}-500 bg-${plant.color}-50/30 shadow-inner` : 'border-dashed border-slate-200 bg-slate-50'}`}>
                     {plant ? (
                       <>
                         <plant.icon size={22} className={`text-${plant.color}-500 mb-1`}/>
                         <div className="flex gap-0.5 mt-1">{[1,2,3].map(l => <div key={l} className={`w-1 h-1 rounded-full ${plant.currentLevel >= l ? `bg-${plant.color}-500` : 'bg-slate-200'}`} />)}</div>
+                        <button onClick={(e) => {e.stopPropagation(); const n = [...tower]; n[i] = null; setTower(n);}} className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full shadow-md p-0.5"><X size={10}/></button>
                       </>
                     ) : <Plus size={14} className="text-slate-200"/>}
                   </div>
                 ))}
               </div>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(VARIETIES).map(([key, v]) => (
+                  <button key={key} onClick={() => {
+                    const idx = tower.findIndex(p => p === null);
+                    if (idx !== -1) { const n = [...tower]; n[idx] = { ...v, currentLevel: 1 }; setTower(n); }
+                  }} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center gap-2 hover:border-emerald-500 transition-all group">
+                    <v.icon size={18} className={`text-${v.color}-500`}/><span className="text-[10px] font-black uppercase text-slate-600">{v.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="history" className="space-y-4 pt-4 animate-in fade-in">
-            <div className="bg-white rounded-[3rem] border shadow-xl overflow-hidden">
-                <div className="p-6 bg-slate-50 border-b italic font-black text-slate-400 text-[10px] uppercase">Laboratorio Histórico</div>
-                <div className="divide-y">
-                    {history.map(e => (
-                        <div key={e.id} className="p-6 flex justify-between items-center hover:bg-slate-50 transition-all">
-                            <div className="space-y-3">
-                                <p className="text-[10px] font-black text-slate-400 italic">{e.date}</p>
-                                <div className="flex gap-4">
-                                    {[{l:'pH', v:e.ph, c:'emerald'}, {l:'EC', v:e.ec, c:'blue'}, {l:'T°', v:e.temp, c:'orange'}].map((m, i) => (
-                                      <div key={i} className={`bg-${m.c}-50 px-3 py-1 rounded-xl border border-${m.c}-100`}>
-                                        <span className={`text-[8px] font-black text-${m.c}-600 uppercase`}>{m.l}: </span>
-                                        <span className="text-xs font-black text-slate-800 tracking-tighter">{m.v}</span>
-                                      </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <button onClick={() => setHistory(history.filter(h => h.id !== e.id))} className="p-3 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={20}/></button>
-                        </div>
-                    ))}
-                    {history.length === 0 && <div className="p-16 text-center text-slate-300 italic uppercase font-black text-xs tracking-widest">Sin registros</div>}
+          {/* 4. REGISTRO (HISTORY) */}
+          <TabsContent value="history" className="space-y-4 animate-in fade-in">
+            <div className="bg-white rounded-[3rem] shadow-xl border-2 border-slate-100 overflow-hidden">
+              <div className="p-6 bg-slate-50 border-b italic font-black text-slate-400 text-[10px] uppercase">Registro de Laboratorio</div>
+              <div className="divide-y max-h-[500px] overflow-y-auto">
+                {history.map(e => (
+                  <div key={e.id} className="p-6 flex justify-between items-center hover:bg-slate-50 transition-all">
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-black text-slate-400 italic">{e.date}</p>
+                      <div className="flex gap-3">
+                        {[{l:'pH', v:e.ph, c:'emerald'}, {l:'EC', v:e.ec, c:'blue'}, {l:'T', v:e.temp, c:'orange'}, {l:'V', v:e.vol, c:'purple'}].map((m, i) => (
+                          <div key={i} className={`bg-${m.c}-50 px-3 py-1 rounded-xl border border-${m.c}-100`}>
+                            <span className={`text-[8px] font-black text-${m.c}-600 uppercase`}>{m.l}: </span>
+                            <span className="text-xs font-black text-slate-800 tracking-tighter">{m.v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <button onClick={() => setHistory(history.filter(h => h.id !== e.id))} className="p-3 text-slate-200 hover:text-red-500 transition-all"><Trash2 size={20}/></button>
+                  </div>
+                ))}
+                {history.length === 0 && <div className="p-20 text-center text-slate-300 italic font-black uppercase text-xs">Sin registros</div>}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* 5. CONSEJOS MAESTROS */}
+          <TabsContent value="tips" className="space-y-4 animate-in fade-in">
+            <div className="grid gap-4">
+              {[
+                { 
+                  title: "Gestión de Lana de Roca (Grodan)", 
+                  text: "Con dados de 2.5cm, el riego debe ser por impulsos. Si el riego dura más de 3 minutos, lavas los nutrientes. Si la pausa es mayor a 1h, el dado se seca y las sales cristalizan quemando la raíz.",
+                  icon: Layers, color: "blue"
+                },
+                { 
+                  title: "El efecto Poniente", 
+                  text: "En Castellón, el Poniente baja la humedad al 20%. La planta transpira tanto que si la EC es alta (ej. 1.8), se 'autointoxica'. Baja la EC a 1.0-1.2 cuando sople viento seco.",
+                  icon: Wind, color: "orange"
+                },
+                { 
+                  title: "Oscilación de pH", 
+                  text: "No busques el 5.8 estático. Deja que el pH oscile naturalmente entre 5.8 y 6.2. Algunos micros se absorben mejor a 6.1 y otros a 5.7. La 'deriva controlada' es salud.",
+                  icon: Gauge, color: "emerald"
+                }
+              ].map((tip, i) => (
+                <div key={i} className="bg-white p-8 rounded-[3rem] border-2 border-slate-50 flex gap-6 items-start shadow-sm">
+                  <div className={`p-4 bg-${tip.color}-50 text-${tip.color}-500 rounded-3xl shadow-inner`}><tip.icon size={28}/></div>
+                  <div>
+                    <h4 className="font-black text-slate-800 uppercase italic text-sm mb-2">{tip.title}</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-medium italic">{tip.text}</p>
+                  </div>
                 </div>
+              ))}
             </div>
           </TabsContent>
         </Tabs>
       </main>
+
+      <footer className="fixed bottom-0 left-0 right-0 p-6 pointer-events-none">
+        <div className="max-w-2xl mx-auto flex justify-center">
+          <div className="bg-slate-900/90 backdrop-blur-xl text-white px-8 py-3 rounded-full text-[9px] font-black uppercase tracking-[0.5em] shadow-2xl pointer-events-auto border border-white/10 italic">
+            Hydrocaru Protocol v7.0 • Precision Farming
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
