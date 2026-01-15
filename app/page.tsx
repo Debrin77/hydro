@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   Sprout, Activity, Layers, Beaker, Calendar, 
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check, 
@@ -17,17 +16,103 @@ import {
   Thermometer as Temp, Wind as Breeze, Target,
   Brain, AlertOctagon, Waves, GitCompare, BarChart
 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
 
 // ============================================================================
-// CONFIGURACIÓN BASE - ACTUALIZADA
+// COMPONENTES UI SIMPLIFICADOS (para evitar errores de importación)
+// ============================================================================
+
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}>
+    {children}
+  </div>
+)
+
+const Button = ({ children, onClick, className = "", variant = "default", disabled = false }) => {
+  const baseStyles = "px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+  
+  const variants = {
+    default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    outline: "border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500",
+    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+    ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500"
+  }
+  
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseStyles} ${variants[variant]} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+const Badge = ({ children, className = "", variant = "default" }) => {
+  const baseStyles = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+  
+  const variants = {
+    default: "bg-gray-100 text-gray-800",
+    secondary: "bg-blue-100 text-blue-800",
+    destructive: "bg-red-100 text-red-800",
+    outline: "border border-gray-300 text-gray-700"
+  }
+  
+  return (
+    <span className={`${baseStyles} ${variants[variant]} ${className}`}>
+      {children}
+    </span>
+  )
+}
+
+const Progress = ({ value, className = "" }) => (
+  <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
+    <div 
+      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+      style={{ width: `${value}%` }}
+    />
+  </div>
+)
+
+const Label = ({ children, className = "" }) => (
+  <label className={`block text-sm font-medium text-gray-700 ${className}`}>
+    {children}
+  </label>
+)
+
+const Switch = ({ checked, onCheckedChange }) => (
+  <button
+    onClick={() => onCheckedChange(!checked)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${checked ? 'bg-blue-600' : 'bg-gray-200'}`}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+    />
+  </button>
+)
+
+const Slider = ({ value, min, max, step, onValueChange, className = "" }) => {
+  const handleChange = (e) => {
+    onValueChange([parseFloat(e.target.value)])
+  }
+  
+  return (
+    <div className={`w-full ${className}`}>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value[0]}
+        onChange={handleChange}
+        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+      />
+    </div>
+  )
+}
+
+// ============================================================================
+// CONFIGURACIÓN BASE
 // ============================================================================
 
 const WATER_TYPES = {
@@ -86,7 +171,7 @@ const CALMAG_CONFIG = {
   maxDosage: 5,
 };
 
-// Variedades (6 variedades actualizadas)
+// Variedades (6 variedades)
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
@@ -162,92 +247,32 @@ const VARIETIES = {
   }
 };
 
-// Configuración para dados de lana de roca
-const ROCKWOOL_CHARACTERISTICS = {
-  name: "Dados Grodan 2.5x2.5cm",
-  size: "2.5x2.5cm",
-  waterRetention: 0.85,
-  drainageRate: 0.20,
-  airPorosity: 0.35,
-  phNeutral: 7.0,
-  bufferCapacity: 0.1,
-  saturationTime: {
-    seedling: 8,
-    growth: 10,
-    mature: 12
-  },
-  saturationLevels: {
-    optimal: 0.75,
-    seedling: 0.65,
-    growth: 0.75,
-    mature: 0.80
-  },
-  dryingTimes: {
-    seedling: { summer: 2.0, winter: 4.5, spring: 3.0 },
-    growth: { summer: 1.5, winter: 3.5, spring: 2.5 },
-    mature: { summer: 1.0, winter: 3.0, spring: 2.0 }
-  },
-  irrigationPrinciples: {
-    cycleLength: 10,
-    drainagePercentage: 0.15,
-    drybackPeriod: 0.25
-  },
-  volumePerDado: 15,
-  preparation: {
-    phSoak: 5.5,
-    ecSoak: 0.6,
-    soakTime: 24
-  }
-};
-
-// Configuración de bomba
-const PUMP_CONFIG = {
-  power: 7,
-  flowRate: 600,
-  volumePerRiego: {
-    seedling: 88,
-    growth: 110,
-    mature: 132
-  },
-  pumpTimes: {
-    seedling: {
-      summer: { day: 8, night: 12 },
-      winter: { day: 10, night: 15 },
-      spring: { day: 9, night: 14 }
-    },
-    growth: {
-      summer: { day: 10, night: 15 },
-      winter: { day: 12, night: 18 },
-      spring: { day: 11, night: 16 }
-    },
-    mature: {
-      summer: { day: 12, night: 18 },
-      winter: { day: 15, night: 22 },
-      spring: { day: 13, night: 20 }
-    }
-  },
-  intervals: {
-    seedling: {
-      summer: { day: 40, night: 100 },
-      winter: { day: 80, night: 160 },
-      spring: { day: 55, night: 130 }
-    },
-    growth: {
-      summer: { day: 30, night: 75 },
-      winter: { day: 60, night: 120 },
-      spring: { day: 42, night: 100 }
-    },
-    mature: {
-      summer: { day: 20, night: 50 },
-      winter: { day: 45, night: 90 },
-      spring: { day: 30, night: 70 }
-    }
-  }
-};
-
 // ============================================================================
-// FUNCIONES DE CÁLCULO ESCOLONADO
+// FUNCIONES DE CÁLCULO
 // ============================================================================
+
+/**
+ * Calcula estadísticas de plantas
+ */
+const calculatePlantStats = (plants) => {
+  const stats = {
+    seedlingCount: 0,
+    growthCount: 0,
+    matureCount: 0,
+    total: plants.length,
+    varietyCount: {}
+  };
+  
+  plants.forEach(plant => {
+    if (plant.l === 1) stats.seedlingCount++;
+    else if (plant.l === 2) stats.growthCount++;
+    else stats.matureCount++;
+    
+    stats.varietyCount[plant.v] = (stats.varietyCount[plant.v] || 0) + 1;
+  });
+  
+  return stats;
+};
 
 /**
  * Método 1: Cálculo EC escalonado por niveles
@@ -288,7 +313,6 @@ const calculateStagedEC = (plants, waterType) => {
   
   let finalEC = weightedEC / totalPlants;
   
-  // Ajuste por tipo de agua
   const waterConfig = WATER_TYPES[waterType];
   if (waterConfig && waterType !== "osmosis") {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
@@ -326,7 +350,6 @@ const calculateAverageEC = (plants, waterType) => {
   
   let finalEC = totalEC / plants.length;
   
-  // Ajuste por tipo de agua
   const waterConfig = WATER_TYPES[waterType];
   if (waterConfig && waterType !== "osmosis") {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
@@ -358,7 +381,6 @@ const calculateConservativeEC = (plants, waterType) => {
   
   let finalEC = minEC;
   
-  // Ajuste por tipo de agua
   const waterConfig = WATER_TYPES[waterType];
   if (waterConfig && waterType !== "osmosis") {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
@@ -382,7 +404,6 @@ const calculateSmartEC = (plants, waterType) => {
   
   const stats = calculatePlantStats(plants);
   
-  // Selección del método basado en la distribución de plantas
   let selectedMethod = "promedio";
   
   if (stats.matureCount > stats.growthCount && stats.matureCount > stats.seedlingCount) {
@@ -397,29 +418,6 @@ const calculateSmartEC = (plants, waterType) => {
     ...methods[selectedMethod],
     allMethods: methods
   };
-};
-
-/**
- * Calcula estadísticas de plantas
- */
-const calculatePlantStats = (plants) => {
-  const stats = {
-    seedlingCount: 0,
-    growthCount: 0,
-    matureCount: 0,
-    total: plants.length,
-    varietyCount: {}
-  };
-  
-  plants.forEach(plant => {
-    if (plant.l === 1) stats.seedlingCount++;
-    else if (plant.l === 2) stats.growthCount++;
-    else stats.matureCount++;
-    
-    stats.varietyCount[plant.v] = (stats.varietyCount[plant.v] || 0) + 1;
-  });
-  
-  return stats;
 };
 
 /**
@@ -503,79 +501,7 @@ const calculateCalMagNeeded = (waterType, osmosisMix, volume) => {
 };
 
 /**
- * Protocolo especial para agua de ósmosis
- */
-const getOsmosisProtocol = (volume, calmagDosage, cannaDosage) => {
-  return {
-    steps: [
-      { 
-        step: 1, 
-        action: "Llenar con agua de ósmosis", 
-        details: `Preparar ${volume}L de agua pura de ósmosis`,
-        icon: "💧"
-      },
-      { 
-        step: 2, 
-        action: "Añadir CalMag", 
-        details: `Agregar ${calmagDosage}ml de CalMag (obligatorio para ósmosis)`,
-        critical: true,
-        reason: "Agua muy blanda (0 ppm). Necesario para prevenir deficiencias de Ca/Mg",
-        icon: "🧪"
-      },
-      { 
-        step: 3, 
-        action: "Mezclar", 
-        details: "Mezclar bien durante 2-3 minutos",
-        icon: "🔄"
-      },
-      { 
-        step: 4, 
-        action: "Añadir CANNA A", 
-        details: `Agregar ${cannaDosage.a}ml de CANNA Aqua Vega A`,
-        icon: "⚗️"
-      },
-      { 
-        step: 5, 
-        action: "Mezclar", 
-        details: "Mezclar durante 1 minuto",
-        icon: "🔄"
-      },
-      { 
-        step: 6, 
-        action: "Añadir CANNA B", 
-        details: `Agregar ${cannaDosage.b}ml de CANNA Aqua Vega B`,
-        icon: "⚗️"
-      },
-      { 
-        step: 7, 
-        action: "Mezclar", 
-        details: "Mezclar durante 2 minutos",
-        icon: "🔄"
-      },
-      { 
-        step: 8, 
-        action: "Medir EC", 
-        details: "Verificar EC. Objetivo: 1200-1800 µS/cm según plantas",
-        icon: "📊"
-      },
-      { 
-        step: 9, 
-        action: "Ajustar pH", 
-        details: "Ajustar pH a 6.0",
-        note: "El agua de ósmosis tiene bajo poder tampón - ajustar cuidadosamente",
-        icon: "⚖️"
-      }
-    ],
-    warnings: [
-      "🚨 Añadir CalMag ANTES de los nutrientes CANNA",
-      "🚨 El pH puede fluctuar rápidamente - monitorear cada 12 horas",
-      "🚨 EC demasiado baja - partir de EC 0 requiere dosis completas"
-    ]
-  };
-};
-
-/**
- * Calcula dosis CANNA con ajuste para ósmosis
+ * Calcula dosis CANNA
  */
 const calculateCannaDosage = (plants, totalVolume, targetEC, waterType = "bajo_mineral") => {
   if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 }, note: "" };
@@ -756,84 +682,8 @@ const getSeason = (currentTime = new Date()) => {
 };
 
 // ============================================================================
-// COMPONENTES
+// COMPONENTES REUTILIZABLES
 // ============================================================================
-
-const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, cannaDosage }) => {
-  const isOsmosis = waterType === "osmosis" || osmosisMix > 50;
-  
-  if (!isOsmosis) return null;
-  
-  const osmosisProtocol = getOsmosisProtocol(volume, calmagNeeded.dosage || 0, cannaDosage);
-  
-  return (
-    <Card className="p-6 rounded-2xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 mb-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
-          <Filter className="text-white" size={24} />
-        </div>
-        <div>
-          <h2 className="font-bold text-slate-800 text-xl">DIAGNÓSTICO COMPLETO PARA ÓSMOSIS</h2>
-          <p className="text-slate-600">Protocolo especial para agua de ósmosis inversa</p>
-        </div>
-      </div>
-      
-      <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
-        <h3 className="font-bold text-blue-700 mb-3">1. ✅ Detección Automática</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">0 µS/cm</div>
-            <p className="text-sm text-blue-700">EC base</p>
-          </div>
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">0 ppm</div>
-            <p className="text-sm text-blue-700">Dureza</p>
-          </div>
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">7.0</div>
-            <p className="text-sm text-blue-700">pH base</p>
-          </div>
-        </div>
-      </div>
-      
-      {calmagNeeded.required && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-          <h3 className="font-bold text-amber-700 mb-3">2. ✅ CALMAG OBLIGATORIO</h3>
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="font-bold text-amber-800">SE REQUIERE CALMAG</p>
-              <p className="text-sm text-amber-700">{calmagNeeded.reason}</p>
-            </div>
-            <div className="text-3xl font-bold text-amber-600">{calmagNeeded.dosage}ml</div>
-          </div>
-          <p className="text-sm font-bold text-amber-900">
-            INSTRUCCIÓN CRÍTICA: "Añadir CalMag ANTES de los nutrientes CANNA"
-          </p>
-        </div>
-      )}
-      
-      <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
-        <h3 className="font-bold text-blue-700 mb-3">3. 📋 Protocolo Especial para Ósmosis</h3>
-        <div className="space-y-3">
-          {osmosisProtocol.steps.map((step) => (
-            <div key={step.step} className={`flex items-start gap-3 p-3 rounded-lg ${step.critical ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step.critical ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
-                {step.step}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{step.icon}</span>
-                  <p className="font-bold text-slate-800">{step.action}</p>
-                </div>
-                <p className="text-sm text-slate-600 mt-1">{step.details}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Card>
-  );
-};
 
 const StagedECCalculator = ({ plants, waterType, onECCalculated }) => {
   const ecMethods = calculateSmartEC(plants, waterType);
@@ -920,6 +770,142 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated }) => {
             <p className="text-sm text-slate-600">Mínimo de las plantas</p>
             <p className="text-2xl font-bold text-blue-600 mt-2">{ecMethods.allMethods?.conservador?.targetEC || "1200"} µS/cm</p>
           </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, cannaDosage }) => {
+  const isOsmosis = waterType === "osmosis" || osmosisMix > 50;
+  
+  if (!isOsmosis) return null;
+  
+  const osmosisProtocol = {
+    steps: [
+      { 
+        step: 1, 
+        action: "Llenar con agua de ósmosis", 
+        details: `Preparar ${volume}L de agua pura de ósmosis`,
+        icon: "💧"
+      },
+      { 
+        step: 2, 
+        action: "Añadir CalMag", 
+        details: `Agregar ${calmagNeeded.dosage}ml de CalMag (obligatorio para ósmosis)`,
+        critical: true,
+        reason: "Agua muy blanda (0 ppm). Necesario para prevenir deficiencias de Ca/Mg",
+        icon: "🧪"
+      },
+      { 
+        step: 3, 
+        action: "Mezclar", 
+        details: "Mezclar bien durante 2-3 minutos",
+        icon: "🔄"
+      },
+      { 
+        step: 4, 
+        action: "Añadir CANNA A", 
+        details: `Agregar ${cannaDosage.a}ml de CANNA Aqua Vega A`,
+        icon: "⚗️"
+      },
+      { 
+        step: 5, 
+        action: "Mezclar", 
+        details: "Mezclar durante 1 minuto",
+        icon: "🔄"
+      },
+      { 
+        step: 6, 
+        action: "Añadir CANNA B", 
+        details: `Agregar ${cannaDosage.b}ml de CANNA Aqua Vega B`,
+        icon: "⚗️"
+      },
+      { 
+        step: 7, 
+        action: "Mezclar", 
+        details: "Mezclar durante 2 minutos",
+        icon: "🔄"
+      },
+      { 
+        step: 8, 
+        action: "Medir EC", 
+        details: "Verificar EC. Objetivo: 1200-1800 µS/cm según plantas",
+        icon: "📊"
+      },
+      { 
+        step: 9, 
+        action: "Ajustar pH", 
+        details: "Ajustar pH a 6.0",
+        note: "El agua de ósmosis tiene bajo poder tampón - ajustar cuidadosamente",
+        icon: "⚖️"
+      }
+    ]
+  };
+  
+  return (
+    <Card className="p-6 rounded-2xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 mb-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+          <Filter className="text-white" size={24} />
+        </div>
+        <div>
+          <h2 className="font-bold text-slate-800 text-xl">DIAGNÓSTICO PARA ÓSMOSIS</h2>
+          <p className="text-slate-600">Protocolo especial para agua de ósmosis inversa</p>
+        </div>
+      </div>
+      
+      <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
+        <h3 className="font-bold text-blue-700 mb-3">1. ✅ Detección Automática</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">0 µS/cm</div>
+            <p className="text-sm text-blue-700">EC base</p>
+          </div>
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">0 ppm</div>
+            <p className="text-sm text-blue-700">Dureza</p>
+          </div>
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">7.0</div>
+            <p className="text-sm text-blue-700">pH base</p>
+          </div>
+        </div>
+      </div>
+      
+      {calmagNeeded.required && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+          <h3 className="font-bold text-amber-700 mb-3">2. ✅ CALMAG OBLIGATORIO</h3>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="font-bold text-amber-800">SE REQUIERE CALMAG</p>
+              <p className="text-sm text-amber-700">{calmagNeeded.reason}</p>
+            </div>
+            <div className="text-3xl font-bold text-amber-600">{calmagNeeded.dosage}ml</div>
+          </div>
+          <p className="text-sm font-bold text-amber-900">
+            INSTRUCCIÓN CRÍTICA: "Añadir CalMag ANTES de los nutrientes CANNA"
+          </p>
+        </div>
+      )}
+      
+      <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
+        <h3 className="font-bold text-blue-700 mb-3">3. 📋 Protocolo Especial para Ósmosis</h3>
+        <div className="space-y-3">
+          {osmosisProtocol.steps.map((step) => (
+            <div key={step.step} className={`flex items-start gap-3 p-3 rounded-lg ${step.critical ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step.critical ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+                {step.step}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{step.icon}</span>
+                  <p className="font-bold text-slate-800">{step.action}</p>
+                </div>
+                <p className="text-sm text-slate-600 mt-1">{step.details}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </Card>
@@ -1126,7 +1112,7 @@ export default function HydroAppFinal() {
         title: "¡AGUA MUY BAJA!", 
         value: `${(vTot - vAct).toFixed(1)}L`, 
         description: `Crítico: Solo queda un ${(vAct/vTot*100).toFixed(0)}%`, 
-        color: "bg-gradient-to-r from-red-600 to-rose-700 animate-pulse",
+        color: "bg-gradient-to-r from-red-600 to-rose-700",
         icon: <Droplets className="text-white" size={28} />,
         priority: 1
       });
@@ -1147,7 +1133,7 @@ export default function HydroAppFinal() {
         title: "¡PELIGRO TEMPERATURA!", 
         value: `${temp}°C`, 
         description: "Alto riesgo. Añadir hielo en botella YA.", 
-        color: "bg-gradient-to-r from-red-700 to-pink-800 animate-pulse",
+        color: "bg-gradient-to-r from-red-700 to-pink-800",
         icon: <ThermometerSun className="text-white" size={28} />,
         priority: 1
       });
@@ -1262,7 +1248,7 @@ export default function HydroAppFinal() {
           <div className="text-center space-y-8 animate-fade-in">
             <div className="flex justify-center">
               <div className="relative">
-                <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center animate-pulse-slow">
+                <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center animate-pulse">
                   <Sprout size={64} className="text-white" />
                 </div>
                 <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center">
@@ -2774,28 +2760,48 @@ export default function HydroAppFinal() {
       {step >= 4 && (
         <div className="sticky top-16 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
           <div className="container mx-auto p-4 max-w-6xl">
-            <TabsList className="grid grid-cols-5 w-full">
-              <TabsTrigger value="dashboard" onClick={() => setTab("dashboard")}>
+            <div className="grid grid-cols-5 w-full gap-2">
+              <Button
+                variant={tab === "dashboard" ? "default" : "outline"}
+                onClick={() => setTab("dashboard")}
+                className="flex-1"
+              >
                 <Home size={16} className="mr-2" />
                 Panel
-              </TabsTrigger>
-              <TabsTrigger value="tower" onClick={() => setTab("tower")}>
+              </Button>
+              <Button
+                variant={tab === "tower" ? "default" : "outline"}
+                onClick={() => setTab("tower")}
+                className="flex-1"
+              >
                 <TreePine size={16} className="mr-2" />
                 Torre
-              </TabsTrigger>
-              <TabsTrigger value="calculator" onClick={() => setTab("calculator")}>
+              </Button>
+              <Button
+                variant={tab === "calculator" ? "default" : "outline"}
+                onClick={() => setTab("calculator")}
+                className="flex-1"
+              >
                 <Calculator size={16} className="mr-2" />
                 Calculadora
-              </TabsTrigger>
-              <TabsTrigger value="calendar" onClick={() => setTab("calendar")}>
+              </Button>
+              <Button
+                variant={tab === "calendar" ? "default" : "outline"}
+                onClick={() => setTab("calendar")}
+                className="flex-1"
+              >
                 <Calendar size={16} className="mr-2" />
                 Calendario
-              </TabsTrigger>
-              <TabsTrigger value="history" onClick={() => setTab("history")}>
+              </Button>
+              <Button
+                variant={tab === "history" ? "default" : "outline"}
+                onClick={() => setTab("history")}
+                className="flex-1"
+              >
                 <BarChart size={16} className="mr-2" />
                 Historial
-              </TabsTrigger>
-            </TabsList>
+              </Button>
+            </div>
           </div>
         </div>
       )}
