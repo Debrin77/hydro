@@ -1425,7 +1425,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       res.push({ 
         title: "DILUIR CON AGUA", 
         value: `${water}L`, 
-        description: `EC ${ec} µS/cm > objetivo ${tEc} µS/cm. Añadir agua sola.`, 
+        description: `EC ${ec} µS/cm &gt; objetivo ${tEc} µS/cm. Añadir agua sola.`, 
         color: "bg-gradient-to-r from-amber-600 to-orange-600",
         icon: <AlertTriangle className="text-white" size={28} />,
         priority: 2
@@ -1647,7 +1647,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Mezcla bien después de cada adición (2-3 minutos)</span>
+                      <span>Mezclar bien después de cada adición (2-3 minutos)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
@@ -3866,7 +3866,7 @@ const ProfessionalTipsTab = () => (
           <div className="p-4 bg-purple-50 rounded-xl">
             <h4 className="font-bold text-purple-700 mb-2">🌡️ EC vs Temperatura</h4>
             <p className="text-sm text-slate-700">
-              En temperaturas altas (>25°C), reduce la EC un 15-20% para compensar la mayor transpiración.
+              En temperaturas altas (&gt;25°C), reduce la EC un 15-20% para compensar la mayor transpiración.
             </p>
           </div>
         </div>
