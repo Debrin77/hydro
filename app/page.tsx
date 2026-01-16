@@ -117,7 +117,7 @@ const Slider = ({ value, min, max, step, onValueChange, className = "" }) => {
 }
 
 // ============================================================================
-// CONFIGURACIÓN BASE
+// CONFIGURACIÓN BASE CON EC OPTIMIZADO
 // ============================================================================
 
 const WATER_TYPES = {
@@ -176,84 +176,84 @@ const CALMAG_CONFIG = {
   maxDosage: 5,
 };
 
-// Variedades (6 variedades)
+// VARIEDADES CON EC OPTIMIZADO (VALORES CORREGIDOS)
 const VARIETIES = {
   "Iceberg": { 
     color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
     textColor: "text-cyan-700",
-    ecMax: 1600,
+    ecMax: 1400,
     phIdeal: 6.0,
     aquaVegaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 },
-      growth:   { a: 22, b: 22, ec: 1300 },
-      mature:   { a: 28, b: 28, ec: 1600 }
+      seedling: { a: 12, b: 12, ec: 600 },
+      growth:   { a: 18, b: 18, ec: 1000 },
+      mature:   { a: 24, b: 24, ec: 1300 }
     },
-    info: "Sensible al exceso de sales. Usar EC conservador."
+    info: "Variedad sensible. EC conservadora para evitar bordes quemados."
   },
   "Lollo Rosso": { 
     color: "bg-gradient-to-br from-purple-600 to-purple-700",
     textColor: "text-purple-700",
-    ecMax: 1800,
+    ecMax: 1500,
     phIdeal: 6.0,
     aquaVegaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 },
-      growth:   { a: 22, b: 22, ec: 1400 },
-      mature:   { a: 28, b: 28, ec: 1700 }
+      seedling: { a: 14, b: 14, ec: 700 },
+      growth:   { a: 20, b: 20, ec: 1100 },
+      mature:   { a: 26, b: 26, ec: 1400 }
     },
-    info: "Color intenso con EC algo más alta."
+    info: "Tolerancia media. Puede manejar EC ligeramente más alta para color."
   },
   "Maravilla": { 
     color: "bg-gradient-to-br from-amber-600 to-amber-700",
     textColor: "text-amber-700",
-    ecMax: 1700,
+    ecMax: 1400,
     phIdeal: 6.0,
     aquaVegaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 },
-      growth:   { a: 22, b: 22, ec: 1300 },
-      mature:   { a: 28, b: 28, ec: 1600 }
+      seedling: { a: 13, b: 13, ec: 650 },
+      growth:   { a: 19, b: 19, ec: 1050 },
+      mature:   { a: 25, b: 25, ec: 1350 }
     },
-    info: "Clásica de alto rendimiento."
+    info: "Variedad productiva pero no muy tolerante a sales altas."
   },
   "Trocadero": { 
     color: "bg-gradient-to-br from-lime-600 to-lime-700",
     textColor: "text-lime-700",
-    ecMax: 1600,
+    ecMax: 1300,
     phIdeal: 6.0,
     aquaVegaDosage: {
-      seedling: { a: 18, b: 18, ec: 900 },
-      growth:   { a: 22, b: 22, ec: 1300 },
-      mature:   { a: 28, b: 28, ec: 1600 }
+      seedling: { a: 12, b: 12, ec: 600 },
+      growth:   { a: 17, b: 17, ec: 950 },
+      mature:   { a: 22, b: 22, ec: 1250 }
     },
-    info: "Sabor suave. Cuidado en plántula."
+    info: "Muy sensible en plántula. Requiere EC baja inicial."
   },
   "Hoja de Roble Rojo": { 
     color: "bg-gradient-to-br from-red-600 to-red-700",
     textColor: "text-red-700",
-    ecMax: 1900,
+    ecMax: 1600,
     phIdeal: 6.0,
     aquaVegaDosage: {
-      seedling: { a: 18, b: 18, ec: 1000 },
-      growth:   { a: 22, b: 22, ec: 1500 },
-      mature:   { a: 28, b: 28, ec: 1800 }
+      seedling: { a: 14, b: 14, ec: 700 },
+      growth:   { a: 21, b: 21, ec: 1150 },
+      mature:   { a: 28, b: 28, ec: 1500 }
     },
-    info: "Crecimiento rápido, tolera EC alta."
+    info: "Variedad más tolerante. Puede manejar EC más alta en maduración."
   },
   "Romana": { 
     color: "bg-gradient-to-br from-blue-600 to-blue-700",
     textColor: "text-blue-700",
-    ecMax: 1750,
+    ecMax: 1450,
     phIdeal: 6.0,
     aquaVegaDosage: {
-      seedling: { a: 18, b: 18, ec: 950 },
-      growth:   { a: 22, b: 22, ec: 1350 },
-      mature:   { a: 28, b: 28, ec: 1650 }
+      seedling: { a: 13, b: 13, ec: 650 },
+      growth:   { a: 19, b: 19, ec: 1050 },
+      mature:   { a: 25, b: 25, ec: 1350 }
     },
-    info: "Variedad robusta con hojas crujientes."
+    info: "Variedad robusta con crecimiento vertical. EC media óptima."
   }
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO
+// FUNCIONES DE CÁLCULO OPTIMIZADAS
 // ============================================================================
 
 /**
@@ -280,7 +280,7 @@ const calculatePlantStats = (plants) => {
 };
 
 /**
- * Calcula EC por nivel de desarrollo
+ * Calcula EC por nivel de desarrollo con factores de seguridad
  */
 const calculateECByLevel = (plants, waterType) => {
   const levels = {
@@ -300,12 +300,20 @@ const calculateECByLevel = (plants, waterType) => {
     
     const ecTarget = variety.aquaVegaDosage[stage].ec;
     
+    // Aplicar factor de seguridad según etapa
+    let safetyFactor = 1.0;
+    if (plant.l === 1) safetyFactor = 0.7;  // Más protección para plántulas
+    else if (plant.l === 2) safetyFactor = 0.9;
+    else safetyFactor = 1.1;
+    
+    const adjustedEC = ecTarget * safetyFactor;
+    
     // Ajustar por tipo de agua
     const waterConfig = WATER_TYPES[waterType];
-    let adjustedEC = waterType !== "osmosis" ? Math.max(0, ecTarget - waterConfig.ecBase) : ecTarget;
+    let finalEC = waterType !== "osmosis" ? Math.max(0, adjustedEC - waterConfig.ecBase) : adjustedEC;
     
     levels[plant.l].plants += 1;
-    levels[plant.l].totalEC += adjustedEC;
+    levels[plant.l].totalEC += finalEC;
   });
   
   return {
@@ -316,10 +324,10 @@ const calculateECByLevel = (plants, waterType) => {
 };
 
 /**
- * Método 1: Cálculo EC escalonado por niveles
+ * Método 1: Cálculo EC escalonado por niveles con factores de seguridad
  */
 const calculateStagedEC = (plants, waterType) => {
-  if (plants.length === 0) return { targetEC: "1200", method: "estándar" };
+  if (plants.length === 0) return { targetEC: "900", method: "estándar" };
   
   const levels = {
     1: { plants: 0, totalEC: 0 },
@@ -359,6 +367,9 @@ const calculateStagedEC = (plants, waterType) => {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
   
+  // Aplicar límites seguros
+  finalEC = Math.max(800, Math.min(finalEC, 1500));
+  
   return {
     targetEC: Math.round(finalEC).toString(),
     method: "escalonado",
@@ -371,10 +382,10 @@ const calculateStagedEC = (plants, waterType) => {
 };
 
 /**
- * Método 2: Cálculo EC promedio simple
+ * Método 2: Cálculo EC promedio simple con límites seguros
  */
 const calculateAverageEC = (plants, waterType) => {
-  if (plants.length === 0) return { targetEC: "1200", method: "promedio" };
+  if (plants.length === 0) return { targetEC: "900", method: "promedio" };
   
   let totalEC = 0;
   plants.forEach(plant => {
@@ -396,6 +407,9 @@ const calculateAverageEC = (plants, waterType) => {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
   
+  // Aplicar límites seguros
+  finalEC = Math.max(800, Math.min(finalEC, 1500));
+  
   return {
     targetEC: Math.round(finalEC).toString(),
     method: "promedio"
@@ -403,14 +417,14 @@ const calculateAverageEC = (plants, waterType) => {
 };
 
 /**
- * Método 3: Cálculo EC conservador (mínimo de las plantas)
+ * Método 3: Cálculo EC conservador (mínimo de las plantas) con protección extra
  */
 const calculateConservativeEC = (plants, waterType) => {
-  if (plants.length === 0) return { targetEC: "1200", method: "conservador" };
+  if (plants.length === 0) return { targetEC: "800", method: "conservador" };
   
   const minEC = Math.min(...plants.map(plant => {
     const variety = VARIETIES[plant.v];
-    if (!variety) return 1900;
+    if (!variety) return 1400;
     
     let stage;
     if (plant.l === 1) stage = "seedling";
@@ -420,12 +434,15 @@ const calculateConservativeEC = (plants, waterType) => {
     return variety.aquaVegaDosage[stage].ec;
   }));
   
-  let finalEC = minEC;
+  let finalEC = minEC * 0.9; // 10% más conservador
   
   const waterConfig = WATER_TYPES[waterType];
   if (waterConfig && waterType !== "osmosis") {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
+  
+  // Aplicar límite mínimo seguro
+  finalEC = Math.max(700, finalEC);
   
   return {
     targetEC: Math.round(finalEC).toString(),
@@ -434,7 +451,7 @@ const calculateConservativeEC = (plants, waterType) => {
 };
 
 /**
- * Cálculo EC inteligente (selecciona el mejor método)
+ * Cálculo EC inteligente optimizado (selecciona el mejor método)
  */
 const calculateSmartEC = (plants, waterType) => {
   const methods = {
@@ -447,12 +464,13 @@ const calculateSmartEC = (plants, waterType) => {
   
   let selectedMethod = "promedio";
   
-  if (stats.matureCount > stats.growthCount && stats.matureCount > stats.seedlingCount) {
-    selectedMethod = "escalonado";
-  } else if (stats.seedlingCount > stats.matureCount * 1.5) {
-    selectedMethod = "conservador";
+  // Lógica mejorada de selección de método
+  if (stats.seedlingCount > stats.growthCount + stats.matureCount) {
+    selectedMethod = "conservador"; // Muchas plántulas
+  } else if (stats.matureCount > stats.growthCount && stats.matureCount > stats.seedlingCount) {
+    selectedMethod = "escalonado"; // Muchas plantas maduras
   } else if (stats.growthCount > 0 && stats.matureCount > 0 && stats.seedlingCount > 0) {
-    selectedMethod = "escalonado";
+    selectedMethod = "escalonado"; // Mezcla equilibrada
   }
   
   return {
@@ -542,7 +560,7 @@ const calculateCalMagNeeded = (waterType, osmosisMix, volume) => {
 };
 
 /**
- * Calcula dosis AQUA VEGA
+ * Calcula dosis AQUA VEGA optimizada
  */
 const calculateAquaVegaDosage = (plants, totalVolume, targetEC, waterType = "bajo_mineral") => {
   if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 }, note: "" };
@@ -563,21 +581,21 @@ const calculateAquaVegaDosage = (plants, totalVolume, targetEC, waterType = "baj
     
     let plantContribution;
     if (waterType === "osmosis") {
-      plantContribution = (dosage.a / 10) * (totalVolume / plants.length) * 1.2;
+      plantContribution = (dosage.a / 10) * (totalVolume / plants.length) * 1.1; // Reducido de 1.2
     } else {
-      plantContribution = (dosage.a / 10) * (totalVolume / plants.length);
+      plantContribution = (dosage.a / 10) * (totalVolume / plants.length) * 0.9; // Reducido de 1.0
     }
     
     totalA += plantContribution;
     totalB += plantContribution;
   });
   
-  let ecRatio = parseFloat(targetEC) / 1300;
+  let ecRatio = parseFloat(targetEC) / 1100; // Reducido de 1300
   
   if (waterType === "osmosis") {
-    ecRatio = parseFloat(targetEC) / 1400;
+    ecRatio = parseFloat(targetEC) / 1200; // Reducido de 1400
   } else if (usedWaterType.hardness > 150) {
-    ecRatio *= 0.9;
+    ecRatio *= 0.85; // Más reducción por dureza
   }
   
   totalA *= ecRatio;
@@ -587,9 +605,9 @@ const calculateAquaVegaDosage = (plants, totalVolume, targetEC, waterType = "baj
   if (waterType === "osmosis") {
     note = "✅ DOSIS COMPLETA: Partiendo de EC 0. No restar EC base.";
   } else if (usedWaterType.hardness > 150) {
-    note = "Dosis reducida por dureza del agua";
+    note = "⚠️ Dosis reducida por alta dureza del agua";
   } else {
-    note = "Dosis para agua blanda";
+    note = "✅ Dosis optimizada para agua blanda";
   }
   
   return {
@@ -621,19 +639,19 @@ const calculatePHAdjustment = (currentPH, targetPH, waterType, volume) => {
     adjustmentFactor = 1.15;
     bufferStrength = 1.2;
   } else if (waterType === "osmosis") {
-    adjustmentFactor = 0.8; // Agua pura requiere menos ajuste
+    adjustmentFactor = 0.7; // Agua pura requiere menos ajuste
     bufferStrength = 0.5;   // Bajo poder tampón
   }
   
-  const adjustment = Math.abs(phDiff) * volume * 0.12 * adjustmentFactor;
+  const adjustment = Math.abs(phDiff) * volume * 0.1 * adjustmentFactor; // Reducido de 0.12
   
   let recommendation = "";
-  if (phDiff > 0) {
+  if (phDiff > 0.3) { // Ajustado de > 0
     recommendation = `pH demasiado alto (${currentPH}). Añadir ${adjustment.toFixed(1)}ml de pH- (ácido fosfórico). Mezclar bien y esperar 15 minutos antes de medir de nuevo.`;
-  } else if (phDiff < 0) {
+  } else if (phDiff < -0.3) { // Ajustado de < 0
     recommendation = `pH demasiado bajo (${currentPH}). Añadir ${adjustment.toFixed(1)}ml de pH+ (hidróxido de potasio). Mezclar bien y esperar 15 minutos.`;
   } else {
-    recommendation = "pH en el rango ideal. No se requiere ajuste.";
+    recommendation = "✅ pH en el rango ideal. No se requiere ajuste.";
   }
   
   // Añadir advertencia si el agua tiene bajo poder tampón
@@ -642,10 +660,10 @@ const calculatePHAdjustment = (currentPH, targetPH, waterType, volume) => {
   }
   
   return { 
-    phMinus: phDiff > 0 ? adjustment.toFixed(1) : "0", 
-    phPlus: phDiff < 0 ? adjustment.toFixed(1) : "0",
+    phMinus: phDiff > 0.3 ? adjustment.toFixed(1) : "0", 
+    phPlus: phDiff < -0.3 ? adjustment.toFixed(1) : "0",
     recommendation,
-    critical: Math.abs(phDiff) > 0.5
+    critical: Math.abs(phDiff) > 0.8 // Ajustado de > 0.5
   };
 };
 
@@ -744,7 +762,7 @@ const getSeason = (currentTime = new Date()) => {
 };
 
 /**
- * Calcula riego para torre vertical en Castellón
+ * Calcula riego para torre vertical en Castellón optimizado
  */
 const calculateIrrigation = (plants, temp, humidity, season) => {
   const pumpPower = 7; // 7W
@@ -754,20 +772,33 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
   let totalWaterNeeds = 0;
   let totalPlants = plants.length;
   
+  if (totalPlants === 0) {
+    return {
+      totalWaterNeeds: "0.0",
+      pumpMinutesPerDay: "0",
+      cyclesPerDay: 0,
+      minutesPerCycle: "0.0",
+      pumpPower,
+      rockwoolCubes,
+      location: "Castellón de la Plana",
+      recommendations: ["Añade plantas al sistema para calcular riego"]
+    };
+  }
+  
   plants.forEach(plant => {
-    let waterPerPlant = 0.5; // litros/día base
+    let waterPerPlant = 0.4; // Reducido de 0.5 litros/día base
     
     // Ajustar por nivel de crecimiento
-    if (plant.l === 1) waterPerPlant *= 0.6; // Plántula
-    else if (plant.l === 2) waterPerPlant *= 0.9; // Crecimiento
-    else waterPerPlant *= 1.2; // Madura
+    if (plant.l === 1) waterPerPlant *= 0.5; // Plántula (reducido de 0.6)
+    else if (plant.l === 2) waterPerPlant *= 0.8; // Crecimiento (reducido de 0.9)
+    else waterPerPlant *= 1.0; // Madura (reducido de 1.2)
     
     // Ajustar por variedad
     const variety = VARIETIES[plant.v];
     if (variety) {
-      if (plant.v === "Iceberg") waterPerPlant *= 1.1;
-      else if (plant.v === "Lollo Rosso") waterPerPlant *= 0.9;
-      else if (plant.v === "Hoja de Roble Rojo") waterPerPlant *= 1.2;
+      if (plant.v === "Iceberg") waterPerPlant *= 1.0; // Reducido de 1.1
+      else if (plant.v === "Lollo Rosso") waterPerPlant *= 0.8; // Reducido de 0.9
+      else if (plant.v === "Hoja de Roble Rojo") waterPerPlant *= 1.1; // Reducido de 1.2
     }
     
     totalWaterNeeds += waterPerPlant;
@@ -775,18 +806,18 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
   
   // Ajustar por temperatura y humedad de Castellón
   let tempFactor = 1.0;
-  if (temp > 25) tempFactor = 1.3;
-  else if (temp > 20) tempFactor = 1.1;
-  else if (temp < 15) tempFactor = 0.8;
+  if (temp > 25) tempFactor = 1.2; // Reducido de 1.3
+  else if (temp > 20) tempFactor = 1.05; // Reducido de 1.1
+  else if (temp < 15) tempFactor = 0.85; // Reducido de 0.8
   
   let humidityFactor = 1.0;
-  if (humidity < 40) humidityFactor = 1.2;
-  else if (humidity > 70) humidityFactor = 0.9;
+  if (humidity < 40) humidityFactor = 1.15; // Reducido de 1.2
+  else if (humidity > 70) humidityFactor = 0.85; // Reducido de 0.9
   
   // Ajustar por estación en Castellón
   let seasonFactor = 1.0;
-  if (season === "summer") seasonFactor = 1.4;
-  else if (season === "winter") seasonFactor = 0.7;
+  if (season === "summer") seasonFactor = 1.3; // Reducido de 1.4
+  else if (season === "winter") seasonFactor = 0.8; // Reducido de 0.7
   
   totalWaterNeeds = totalWaterNeeds * tempFactor * humidityFactor * seasonFactor;
   
@@ -795,7 +826,7 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
   const dailyPumpMinutes = (totalWaterNeeds / pumpFlowRate) * 60;
   
   // Dividir en ciclos (cada 2 horas durante luz)
-  const cyclesPerDay = 8;
+  const cyclesPerDay = Math.min(Math.max(Math.round(dailyPumpMinutes / 5), 4), 12);
   const minutesPerCycle = dailyPumpMinutes / cyclesPerDay;
   
   return {
@@ -808,8 +839,8 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
     location: "Castellón de la Plana",
     recommendations: [
       `Regar ${cyclesPerDay} veces al día durante ${minutesPerCycle} minutos cada ciclo`,
-      "Ajustar riego según humedad ambiente",
-      "En verano aumentar frecuencia un 40%",
+      "En verano aumentar frecuencia un 30%",
+      "En invierno reducir frecuencia un 20%",
       "Los dados de lana de roca de 2.5cm retienen bien la humedad"
     ]
   };
@@ -822,6 +853,7 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
 const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod, onMethodChange }) => {
   const ecMethods = calculateSmartEC(plants, waterType);
   const ecByLevel = calculateECByLevel(plants, waterType);
+  const plantStats = calculatePlantStats(plants);
   
   // Usar el método seleccionado manualmente o el automático
   const currentMethod = selectedMethod || ecMethods.method;
@@ -842,8 +874,8 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
           <Calculator className="text-white" size={24} />
         </div>
         <div>
-          <h2 className="font-bold text-slate-800 text-xl">Cálculo EC Escalonado Inteligente</h2>
-          <p className="text-slate-600">3 métodos de cálculo según distribución de plantas</p>
+          <h2 className="font-bold text-slate-800 text-xl">Cálculo EC Escalonado Optimizado</h2>
+          <p className="text-slate-600">3 métodos de cálculo seguro para lechugas</p>
         </div>
       </div>
       
@@ -857,57 +889,77 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
           {selectedMethod && selectedMethod !== ecMethods.method && (
             <p className="text-xs text-slate-500 mt-1">Modificado manualmente</p>
           )}
+          <p className="text-xs text-slate-600 mt-2">
+            {currentMethod === "conservador" ? "✅ Seguro para plántulas" :
+             currentMethod === "escalonado" ? "✅ Ideal para múltiples etapas" :
+             "✅ Balanceado para crecimiento"}
+          </p>
         </div>
         
         <div className="p-4 bg-gradient-to-b from-green-50 to-white rounded-xl border-2 border-green-200">
-          <h4 className="font-bold text-green-700 mb-2">Distribución</h4>
+          <h4 className="font-bold text-green-700 mb-2">Distribución de Plantas</h4>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-slate-700">Nivel 1:</span>
-              <span className="font-bold text-cyan-600">{calculatePlantStats(plants).seedlingCount} plantas</span>
+              <span className="text-slate-700">Nivel 1 (Plántulas):</span>
+              <span className="font-bold text-cyan-600">{plantStats.seedlingCount} plantas</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-700">Nivel 2:</span>
-              <span className="font-bold text-green-600">{calculatePlantStats(plants).growthCount} plantas</span>
+              <span className="text-slate-700">Nivel 2 (Crecimiento):</span>
+              <span className="font-bold text-green-600">{plantStats.growthCount} plantas</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-700">Nivel 3:</span>
-              <span className="font-bold text-emerald-600">{calculatePlantStats(plants).matureCount} plantas</span>
+              <span className="text-slate-700">Nivel 3 (Maduras):</span>
+              <span className="font-bold text-emerald-600">{plantStats.matureCount} plantas</span>
+            </div>
+            <div className="pt-2 border-t border-slate-200">
+              <div className="flex justify-between">
+                <span className="text-slate-700 font-medium">Total:</span>
+                <span className="font-bold text-slate-800">{plantStats.total} plantas</span>
+              </div>
             </div>
           </div>
         </div>
         
         <div className="p-4 bg-gradient-to-b from-purple-50 to-white rounded-xl border-2 border-purple-200">
-          <h4 className="font-bold text-purple-700 mb-2">EC por Nivel (ajustado)</h4>
+          <h4 className="font-bold text-purple-700 mb-2">EC por Nivel (seguro)</h4>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-cyan-500"></div>
                 <span className="text-slate-700">Plántulas:</span>
               </div>
-              <span className="font-bold text-slate-800">{ecByLevel.level1} µS/cm</span>
+              <div className="text-right">
+                <span className="font-bold text-slate-800">{ecByLevel.level1} µS/cm</span>
+                <p className="text-xs text-slate-500">Rango seguro: 600-800</p>
+              </div>
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
                 <span className="text-slate-700">Crecimiento:</span>
               </div>
-              <span className="font-bold text-slate-800">{ecByLevel.level2} µS/cm</span>
+              <div className="text-right">
+                <span className="font-bold text-slate-800">{ecByLevel.level2} µS/cm</span>
+                <p className="text-xs text-slate-500">Rango seguro: 900-1200</p>
+              </div>
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                 <span className="text-slate-700">Maduras:</span>
               </div>
-              <span className="font-bold text-slate-800">{ecByLevel.level3} µS/cm</span>
+              <div className="text-right">
+                <span className="font-bold text-slate-800">{ecByLevel.level3} µS/cm</span>
+                <p className="text-xs text-slate-500">Rango seguro: 1200-1500</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
       
       <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-        <h4 className="font-bold text-blue-700 mb-3">Comparación de Métodos</h4>
-        <p className="text-sm text-slate-600 mb-4">Selecciona manualmente el método de cálculo o deja que el sistema elija automáticamente</p>
+        <h4 className="font-bold text-blue-700 mb-3">Comparación de Métodos de Cálculo</h4>
+        <p className="text-sm text-slate-600 mb-4">Selecciona el método según tu distribución de plantas o deja que el sistema elija automáticamente</p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div 
@@ -919,7 +971,10 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
               {currentMethod === "escalonado" && <Check className="text-blue-600" size={18} />}
             </div>
             <p className="text-sm text-slate-600 mb-3">Peso por nivel de desarrollo</p>
-            <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.escalonado?.targetEC || "1200"} µS/cm</p>
+            <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.escalonado?.targetEC || "1100"} µS/cm</p>
+            <p className="text-xs text-slate-500 mt-1">
+              ✅ Ideal cuando hay plantas en diferentes etapas
+            </p>
           </div>
           
           <div 
@@ -931,7 +986,10 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
               {currentMethod === "promedio" && <Check className="text-blue-600" size={18} />}
             </div>
             <p className="text-sm text-slate-600 mb-3">Media aritmética simple</p>
-            <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.promedio?.targetEC || "1200"} µS/cm</p>
+            <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.promedio?.targetEC || "1000"} µS/cm</p>
+            <p className="text-xs text-slate-500 mt-1">
+              ✅ Para etapas similares o sistema equilibrado
+            </p>
           </div>
           
           <div 
@@ -942,8 +1000,11 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
               <p className="font-bold text-slate-800">Conservador</p>
               {currentMethod === "conservador" && <Check className="text-blue-600" size={18} />}
             </div>
-            <p className="text-sm text-slate-600 mb-3">Mínimo de las plantas</p>
-            <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.conservador?.targetEC || "1200"} µS/cm</p>
+            <p className="text-sm text-slate-600 mb-3">Mínimo + protección extra</p>
+            <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.conservador?.targetEC || "800"} µS/cm</p>
+            <p className="text-xs text-slate-500 mt-1">
+              ✅ Para muchas plántulas o variedades sensibles
+            </p>
           </div>
         </div>
         
@@ -958,8 +1019,9 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
             size="sm"
             onClick={() => onMethodChange && onMethodChange(null)}
             disabled={!selectedMethod}
+            className="flex items-center gap-1"
           >
-            <RotateCcw size={14} className="mr-1" />
+            <RotateCcw size={14} />
             Restaurar automático
           </Button>
         </div>
@@ -1021,12 +1083,18 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
       },
       { 
         step: 8, 
-        action: "Medir EC", 
-        details: "Verificar EC. Objetivo: 1200-1800 µS/cm según plantas",
-        icon: "📊"
+        action: "Esperar estabilización", 
+        details: "Esperar 15-30 minutos para que los nutrientes se estabilicen",
+        icon: "⏰"
       },
       { 
         step: 9, 
+        action: "Medir EC", 
+        details: "Verificar EC. Objetivo: 800-1500 µS/cm según plantas",
+        icon: "📊"
+      },
+      { 
+        step: 10, 
         action: "Ajustar pH", 
         details: "Ajustar pH a 6.0",
         note: "El agua de ósmosis tiene bajo poder tampón - ajustar cuidadosamente",
@@ -1042,13 +1110,13 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
           <Filter className="text-white" size={24} />
         </div>
         <div>
-          <h2 className="font-bold text-slate-800 text-xl">DIAGNÓSTICO PARA ÓSMOSIS</h2>
-          <p className="text-slate-600">Protocolo especial para agua de ósmosis inversa</p>
+          <h2 className="font-bold text-slate-800 text-xl">DIAGNÓSTICO PARA ÓSMOSIS - EC OPTIMIZADO</h2>
+          <p className="text-slate-600">Protocolo especial para agua de ósmosis inversa con valores seguros</p>
         </div>
       </div>
       
       <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
-        <h3 className="font-bold text-blue-700 mb-3">1. ✅ Detección Automática</h3>
+        <h3 className="font-bold text-blue-700 mb-3">1. ✅ Detección Automática - Agua Pura</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-3 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">0 µS/cm</div>
@@ -1063,30 +1131,36 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
             <p className="text-sm text-blue-700">pH base</p>
           </div>
         </div>
+        <p className="text-sm text-slate-600 mt-3">
+          <strong>Nota:</strong> Con agua de ósmosis, comenzamos desde EC 0, permitiendo control total sobre los nutrientes.
+        </p>
       </div>
       
       {calmagNeeded.required && (
         <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-          <h3 className="font-bold text-amber-700 mb-3">2. ✅ CALMAG OBLIGATORIO</h3>
+          <h3 className="font-bold text-amber-700 mb-3">2. ⚠️ CALMAG OBLIGATORIO - ATENCIÓN</h3>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="font-bold text-amber-800">SE REQUIERE CALMAG</p>
+              <p className="font-bold text-amber-800">SE REQUIERE CALMAG IMPRESCINDIBLE</p>
               <p className="text-sm text-amber-700">{calmagNeeded.reason}</p>
             </div>
             <div className="text-3xl font-bold text-amber-600">{calmagNeeded.dosage}ml</div>
           </div>
-          <p className="text-sm font-bold text-amber-900">
-            INSTRUCCIÓN CRÍTICA: "Añadir CalMag ANTES de los nutrientes AQUA VEGA"
+          <p className="text-sm font-bold text-amber-900 bg-amber-100 p-3 rounded-lg">
+            🚨 INSTRUCCIÓN CRÍTICA: "Añadir CalMag ANTES de los nutrientes AQUA VEGA - NUNCA después"
+          </p>
+          <p className="text-sm text-amber-800 mt-2">
+            Sin CalMag, las plantas desarrollarán deficiencias de calcio y magnesio en 3-5 días.
           </p>
         </div>
       )}
       
       <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
-        <h3 className="font-bold text-blue-700 mb-3">3. 📋 Protocolo Especial para Ósmosis</h3>
+        <h3 className="font-bold text-blue-700 mb-3">3. 📋 Protocolo Especial para Ósmosis - Valores Seguros</h3>
         <div className="space-y-3">
           {osmosisProtocol.steps.map((step) => (
             <div key={step.step} className={`flex items-start gap-3 p-3 rounded-lg ${step.critical ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step.critical ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step.critical ? 'bg-amber-100 text-amber-700 font-bold' : 'bg-blue-100 text-blue-700 font-bold'}`}>
                 {step.step}
               </div>
               <div className="flex-1">
@@ -1095,10 +1169,35 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
                   <p className="font-bold text-slate-800">{step.action}</p>
                 </div>
                 <p className="text-sm text-slate-600 mt-1">{step.details}</p>
+                {step.note && (
+                  <p className="text-xs text-blue-600 mt-1 bg-blue-50 p-2 rounded">{step.note}</p>
+                )}
               </div>
             </div>
           ))}
         </div>
+      </div>
+      
+      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
+        <h3 className="font-bold text-emerald-700 mb-3">✅ Ventajas del Agua de Ósmosis</h3>
+        <ul className="space-y-2 text-sm text-slate-700">
+          <li className="flex items-start gap-2">
+            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <span><strong>Control total:</strong> Comienzas desde EC 0, sabes exactamente lo que añades</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <span><strong>Sin contaminantes:</strong> Eliminación de cloro, metales pesados y patógenos</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <span><strong>Precisión en fórmulas:</strong> Las fórmulas AQUA VEGA están diseñadas para agua pura</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <span><strong>Menos ajustes de pH:</strong> pH inicial neutro, más fácil de ajustar</span>
+          </li>
+        </ul>
       </div>
     </Card>
   );
@@ -1396,14 +1495,14 @@ export default function HydroAppFinal() {
   const [showRotationModal, setShowRotationModal] = useState(false);
   const [selectedECMethod, setSelectedECMethod] = useState(null);
   
-  // Configuración del sistema
+  // Configuración del sistema con valores iniciales optimizados
   const [config, setConfig] = useState({ 
     totalVol: "20", 
     currentVol: "20", 
     ph: "6.0", 
-    ec: "1200",
+    ec: "1000", // Reducido de 1200
     temp: "22", 
-    targetEC: "1400",
+    targetEC: "1100", // Reducido de 1400
     targetPH: "6.0",
     waterType: "bajo_mineral",
     hasHeater: true,
@@ -1413,10 +1512,10 @@ export default function HydroAppFinal() {
     calculationMethod: "escalonado"
   });
   
-  // Configuración de mediciones manuales
+  // Configuración de mediciones manuales con valores iniciales optimizados
   const [measurements, setMeasurements] = useState({
     manualPH: "6.0",
-    manualEC: "1200",
+    manualEC: "1000", // Reducido de 1200
     manualTemp: "22",
     manualWaterTemp: "22",
     manualVolume: "20",
@@ -1441,7 +1540,7 @@ export default function HydroAppFinal() {
         const savedMeasurements = data.measurements || {};
         setMeasurements({
           manualPH: savedMeasurements.manualPH || "6.0",
-          manualEC: savedMeasurements.manualEC || "1200",
+          manualEC: savedMeasurements.manualEC || "1000", // Reducido de 1200
           manualTemp: savedMeasurements.manualTemp || "22",
           manualWaterTemp: savedMeasurements.manualWaterTemp || "22",
           manualVolume: savedMeasurements.manualVolume || (data.config?.currentVol || "20"),
@@ -1548,7 +1647,7 @@ export default function HydroAppFinal() {
     
     // Calcular el EC usando el método seleccionado
     if (method) {
-      let newEC = "1400"; // Valor por defecto
+      let newEC = "1100"; // Valor por defecto optimizado
       
       if (method === "escalonado") {
         const result = calculateStagedEC(plants, config.waterType);
@@ -1660,14 +1759,14 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     );
   }, [plants, measurements.manualTemp, measurements.manualHumidity, season]);
 
-  // =================== ALERTAS ===================
+  // =================== ALERTAS OPTIMIZADAS ===================
 
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
     const vTot = parseFloat(config.totalVol) || 20;
     const ph = parseFloat(config.ph) || 6.0;
     const ec = parseFloat(config.ec) || 0;
-    const tEc = parseFloat(config.targetEC) || 1400;
+    const tEc = parseFloat(config.targetEC) || 1100;
     const tPh = parseFloat(config.targetPH) || 6.0;
     const temp = parseFloat(config.temp) || 20;
     const waterType = config.waterType || "bajo_mineral";
@@ -1697,8 +1796,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       });
     }
 
-    // Alertas existentes
-    if (vAct < vTot * 0.3) {
+    // Alertas existentes optimizadas
+    if (vAct < vTot * 0.25) { // Reducido de 0.3
       res.push({ 
         title: "¡AGUA MUY BAJA!", 
         value: `${(vTot - vAct).toFixed(1)}L`, 
@@ -1708,7 +1807,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 1
       });
     } 
-    else if (vAct < vTot * 0.5) {
+    else if (vAct < vTot * 0.45) { // Reducido de 0.5
       res.push({ 
         title: "RELLENAR AGUA", 
         value: `${(vTot - vAct).toFixed(1)}L`, 
@@ -1740,7 +1839,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       });
     }
 
-    if (ph > tPh + 0.5 || ph < tPh - 0.5) {
+    if (ph > tPh + 0.8 || ph < tPh - 0.8) { // Aumentado de 0.5
       const action = ph > tPh ? "pH-" : "pH+";
       const ml = ph > tPh ? phAdjustment.phMinus : phAdjustment.phPlus;
       res.push({ 
@@ -1753,7 +1852,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         details: phAdjustment.critical ? "CRÍTICO: Fuera del rango seguro para absorción de nutrientes" : "Ajustar gradualmente"
       });
     } 
-    else if (ph > tPh + 0.2 || ph < tPh - 0.2) {
+    else if (ph > tPh + 0.5 || ph < tPh - 0.5) { // Aumentado de 0.2
       const action = ph > tPh ? "pH-" : "pH+";
       const ml = ph > tPh ? phAdjustment.phMinus : phAdjustment.phPlus;
       res.push({ 
@@ -1767,9 +1866,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       });
     }
 
-    if (ec < tEc - 400 && ec > 0) {
+    if (ec < tEc - 300 && ec > 0) { // Reducido de 400
       const mlPerLiter = aquaVegaDosage.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5;
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4; // Reducido de 0.5
       res.push({ 
         title: "¡FALTAN NUTRIENTES!", 
         value: `${Math.round(mlToAdd)}ml A+B`, 
@@ -1779,9 +1878,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 1
       });
     } 
-    else if (ec < tEc - 200 && ec > 0) {
+    else if (ec < tEc - 150 && ec > 0) { // Reducido de 200
       const mlPerLiter = aquaVegaDosage.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.5;
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4; // Reducido de 0.5
       res.push({ 
         title: "AÑADIR NUTRIENTES", 
         value: `${Math.round(mlToAdd)}ml A+B`, 
@@ -1791,7 +1890,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 2
       });
     } 
-    else if (ec > tEc + 500) {
+    else if (ec > tEc + 400) { // Reducido de 500
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         title: "¡EC PELIGROSAMENTE ALTA!", 
@@ -1802,7 +1901,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 1
       });
     } 
-    else if (ec > tEc + 300) {
+    else if (ec > tEc + 250) { // Reducido de 300
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         title: "DILUIR CON AGUA", 
@@ -1854,11 +1953,11 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             </div>
             
             <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
-              HydroCaru
+              HydroCaru Optimizado
             </h1>
             
             <p className="text-xl text-slate-600 max-w-lg mx-auto">
-              Sistema experto para cultivo hidropónico con cálculo EC escalonado inteligente
+              Sistema experto para cultivo hidropónico con cálculo EC escalonado seguro para lechugas
             </p>
             
             <div className="space-y-4 max-w-md mx-auto">
@@ -1867,8 +1966,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   <Calculator className="text-emerald-600" size={20} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-slate-800">Cálculo EC Escalonado</h3>
-                  <p className="text-sm text-slate-600">3 métodos según distribución de plantas</p>
+                  <h3 className="font-bold text-slate-800">Cálculo EC Optimizado</h3>
+                  <p className="text-sm text-slate-600">Valores seguros para lechugas: 800-1500 µS/cm</p>
                 </div>
               </div>
               
@@ -1877,8 +1976,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   <Filter className="text-blue-600" size={20} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-slate-800">Detección Automática Ósmosis</h3>
-                  <p className="text-sm text-slate-600">Protocolo especial para agua pura</p>
+                  <h3 className="font-bold text-slate-800">Protección de Plántulas</h3>
+                  <p className="text-sm text-slate-600">EC reducido para plantas jóvenes: 600-800 µS/cm</p>
                 </div>
               </div>
               
@@ -1887,8 +1986,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   <TreePine className="text-purple-600" size={20} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-slate-800">6 Variedades de Lechuga</h3>
-                  <p className="text-sm text-slate-600">Parámetros específicos por variedad</p>
+                  <h3 className="font-bold text-slate-800">6 Variedades Específicas</h3>
+                  <p className="text-sm text-slate-600">Parámetros optimizados por variedad</p>
                 </div>
               </div>
             </div>
@@ -1907,8 +2006,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         return (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-slate-800">¡IMPORTANTE! Protocolo de Preparación</h2>
-              <p className="text-slate-600">Sigue estos pasos para preparar correctamente tu sistema</p>
+              <h2 className="text-3xl font-bold text-slate-800">¡IMPORTANTE! Protocolo de Preparación Optimizado</h2>
+              <p className="text-slate-600">Sigue estos pasos para preparar correctamente tu sistema con valores seguros</p>
             </div>
             
             <Card className="p-6 rounded-2xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -1917,17 +2016,17 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   <AlertOctagon className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800">⚠️ CONSEJO SUPER IMPORTANTE</h3>
-                  <p className="text-slate-600">Orden correcto para añadir nutrientes</p>
+                  <h3 className="font-bold text-slate-800">⚠️ CONSEJO SUPER IMPORTANTE - EC OPTIMIZADO</h3>
+                  <p className="text-slate-600">Orden correcto para añadir nutrientes con valores seguros</p>
                 </div>
               </div>
               
               <div className="space-y-6">
                 <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-                  <h4 className="font-bold text-amber-800 text-lg mb-3">📋 PASO A PASO - ORDEN CORRECTO</h4>
+                  <h4 className="font-bold text-amber-800 text-lg mb-3">📋 PASO A PASO - ORDEN CORRECTO CON VALORES SEGUROS</h4>
                   <p className="text-slate-700 mb-4">
-                    El éxito en hidroponía depende del <strong>orden correcto</strong> de adición de nutrientes y ajustes.
-                    Sigue estrictamente esta secuencia:
+                    El éxito en hidroponía depende del <strong>orden correcto</strong> y de usar <strong>valores seguros de EC</strong>.
+                    Sigue estrictamente esta secuencia con los valores optimizados:
                   </p>
                   
                   <div className="space-y-4">
@@ -1958,7 +2057,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                       </div>
                       <div>
                         <h5 className="font-bold text-slate-800">Añadir AQUA VEGA A</h5>
-                        <p className="text-sm text-slate-600">La cantidad calculada por este sistema</p>
+                        <p className="text-sm text-slate-600">La cantidad calculada por este sistema (valores optimizados)</p>
                         <p className="text-xs text-emerald-600 font-bold mt-1">✅ Mezclar durante 1-2 minutos</p>
                       </div>
                     </div>
@@ -1991,7 +2090,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                       </div>
                       <div>
                         <h5 className="font-bold text-slate-800">Medir pH y ajustar si es necesario</h5>
-                        <p className="text-sm text-slate-600">Objetivo: pH 5.8-6.2</p>
+                        <p className="text-sm text-slate-600">Objetivo: pH 5.8-6.2 (óptimo para lechugas)</p>
                         <p className="text-xs text-pink-600 font-bold mt-1">⚖️ NUNCA ajustar pH antes de añadir nutrientes</p>
                       </div>
                     </div>
@@ -1999,8 +2098,16 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                 </div>
                 
                 <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl border-2 border-red-200">
-                  <h4 className="font-bold text-red-700 text-lg mb-3">🚫 ERRORES COMUNES QUE DEBES EVITAR</h4>
+                  <h4 className="font-bold text-red-700 text-lg mb-3">🚫 ERRORES COMUNES QUE DEBES EVITAR CON VALORES OPTIMIZADOS</h4>
                   <ul className="space-y-2 text-slate-700">
+                    <li className="flex items-start gap-2">
+                      <X className="text-red-500 mt-0.5" size={16} />
+                      <span><strong>Nunca</strong> usar EC > 1500 µS/cm para lechugas (quemaduras garantizadas)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <X className="text-red-500 mt-0.5" size={16} />
+                      <span><strong>Nunca</strong> dar EC > 800 µS/cm a plántulas (estrés salino)</span>
+                    </li>
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
                       <span><strong>Nunca</strong> mezclar AQUA VEGA A y B directamente (crean precipitados)</span>
@@ -2013,31 +2120,27 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                       <X className="text-red-500 mt-0.5" size={16} />
                       <span><strong>Nunca</strong> añadir CalMag después de AQUA VEGA (se bloquea el calcio)</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> usar agua muy fría o muy caliente (ideal 18-22°C)</span>
-                    </li>
                   </ul>
                 </div>
                 
                 <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
-                  <h4 className="font-bold text-green-700 text-lg mb-3">✅ CONSEJOS DE ÉXITO</h4>
+                  <h4 className="font-bold text-green-700 text-lg mb-3">✅ CONSEJOS DE ÉXITO CON EC OPTIMIZADO</h4>
                   <ul className="space-y-2 text-slate-700">
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Usa siempre agua a temperatura ambiente (20-22°C)</span>
+                      <span>Usa EC 600-800 µS/cm para plántulas (primeras 2 semanas)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Mezclar bien después de cada adición (2-3 minutos)</span>
+                      <span>Incrementa gradualmente EC: +100-200 µS/cm por semana</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Espera 15-30 minutos antes de medir pH final</span>
+                      <span>Monitorea síntomas: hojas pálidas = EC baja, bordes quemados = EC alta</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Anota las cantidades usadas para referencia futura</span>
+                      <span>Para ósmosis: añadir siempre CalMag antes de nutrientes</span>
                     </li>
                   </ul>
                 </div>
@@ -2204,7 +2307,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800">pH del Agua</h3>
-                    <p className="text-sm text-slate-600">Rango ideal: 5.5 - 6.5</p>
+                    <p className="text-sm text-slate-600">Rango ideal para lechugas: 5.5 - 6.5</p>
                   </div>
                 </div>
                 
@@ -2249,7 +2352,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800">Conductividad Eléctrica (EC)</h3>
-                    <p className="text-sm text-slate-600">Nivel de nutrientes en µS/cm</p>
+                    <p className="text-sm text-slate-600">Nivel de nutrientes en µS/cm - Valores seguros</p>
                   </div>
                 </div>
                 
@@ -2260,14 +2363,14 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                         Valor de EC: <span className="font-bold text-blue-600">{config.ec} µS/cm</span>
                       </label>
                       <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        parseFloat(config.ec) >= 800 && parseFloat(config.ec) <= 1800 
+                        parseFloat(config.ec) >= 800 && parseFloat(config.ec) <= 1500 
                           ? 'bg-green-100 text-green-800' 
-                          : parseFloat(config.ec) > 1800 
+                          : parseFloat(config.ec) > 1500 
                           ? 'bg-red-100 text-red-800' 
                           : 'bg-amber-100 text-amber-800'
                       }`}>
-                        {parseFloat(config.ec) > 1800 ? 'DEMASIADO ALTA' : 
-                         parseFloat(config.ec) < 800 ? 'DEMASIADO BAJA' : 'ADEQUADA'}
+                        {parseFloat(config.ec) > 1500 ? 'DEMASIADO ALTA' : 
+                         parseFloat(config.ec) < 800 ? 'DEMASIADO BAJA' : 'ÓPTIMA'}
                       </span>
                     </div>
                     
@@ -2283,8 +2386,17 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     
                     <div className="flex justify-between text-sm text-slate-600 mt-2">
                       <span>0</span>
-                      <span className="font-bold text-green-600">800-1800</span>
+                      <span className="font-bold text-green-600">800-1500</span>
                       <span>3000</span>
+                    </div>
+                    
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Rangos seguros para lechugas:</strong><br/>
+                        • Plántulas: 600-800 µS/cm<br/>
+                        • Crecimiento: 800-1200 µS/cm<br/>
+                        • Maduración: 1200-1500 µS/cm
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2317,7 +2429,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-slate-800">Paso 4: Configurar Torre</h2>
-              <p className="text-slate-600">Añade plantas a tu sistema hidropónico</p>
+              <p className="text-slate-600">Añade plantas a tu sistema hidropónico con EC optimizado</p>
             </div>
             
             <Card className="p-6 rounded-2xl">
@@ -2327,7 +2439,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-800">Sistema Escalonado 5-5-5</h3>
-                  <p className="text-sm text-slate-600">15 plantas en 3 niveles de desarrollo</p>
+                  <p className="text-sm text-slate-600">15 plantas en 3 niveles de desarrollo con EC seguro</p>
                 </div>
               </div>
               
@@ -2361,7 +2473,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                           >
                             Nivel {level}
                             <div className="text-xs opacity-80">
-                              {level === 1 ? 'Plántula' : level === 2 ? 'Crecimiento' : 'Madura'}
+                              {level === 1 ? 'Plántula (600-800)' : 
+                               level === 2 ? 'Crecimiento (800-1200)' : 
+                               'Madura (1200-1500)'}
                             </div>
                           </button>
                         ))}
@@ -2463,7 +2577,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                                 </Badge>
                               </div>
                               <p className="text-sm text-slate-600">
-                                {plant.l === 1 ? 'Plántula' : plant.l === 2 ? 'Crecimiento' : 'Maduración'}
+                                EC óptimo: {plant.l === 1 ? '600-800 µS/cm' : 
+                                           plant.l === 2 ? '800-1200 µS/cm' : 
+                                           '1200-1500 µS/cm'}
                               </p>
                             </div>
                           </div>
@@ -2525,8 +2641,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Panel de Control</h1>
-          <p className="text-slate-600">Sistema hidropónico con cálculo EC escalonado</p>
+          <h1 className="text-3xl font-bold text-slate-800">Panel de Control - EC Optimizado</h1>
+          <p className="text-slate-600">Sistema hidropónico con cálculo EC escalonado seguro para lechugas</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -2597,21 +2713,21 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Estado del Cultivo</h3>
-              <p className="text-sm text-slate-600">Sistema 5-5-5</p>
+              <p className="text-sm text-slate-600">Sistema 5-5-5 con EC seguro</p>
             </div>
           </div>
           
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Plántulas (N1)</span>
+              <span className="text-slate-700">Plántulas (N1):</span>
               <span className="font-bold text-cyan-600">{plantStats.seedlingCount}/5</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Crecimiento (N2)</span>
+              <span className="text-slate-700">Crecimiento (N2):</span>
               <span className="font-bold text-green-600">{plantStats.growthCount}/5</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Maduras (N3)</span>
+              <span className="text-slate-700">Maduras (N3):</span>
               <span className="font-bold text-emerald-600">{plantStats.matureCount}/5</span>
             </div>
           </div>
@@ -2621,6 +2737,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               <span className="font-bold text-slate-800">Total plantas</span>
               <span className="font-bold text-blue-600">{plants.length}/15</span>
             </div>
+            <p className="text-xs text-slate-500 mt-2">
+              EC objetivo: {config.targetEC} µS/cm (optimizado)
+            </p>
           </div>
         </Card>
         
@@ -2631,28 +2750,34 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Nutrición AQUA VEGA</h3>
-              <p className="text-sm text-slate-600">AQUA VEGA A+B</p>
+              <p className="text-sm text-slate-600">AQUA VEGA A+B con dosis segura</p>
             </div>
           </div>
           
           {plants.length > 0 ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-slate-700">EC objetivo</span>
+                <span className="text-slate-700">EC objetivo:</span>
                 <span className="font-bold text-blue-600">{config.targetEC} µS/cm</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-700">pH objetivo</span>
+                <span className="text-slate-700">pH objetivo:</span>
                 <span className="font-bold text-purple-600">{config.targetPH}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-slate-700">AQUA VEGA A</span>
+                <span className="text-slate-700">AQUA VEGA A:</span>
                 <span className="font-bold text-emerald-600">{aquaVegaDosage.a} ml</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-700">AQUA VEGA B</span>
+                <span className="text-slate-700">AQUA VEGA B:</span>
                 <span className="font-bold text-emerald-600">{aquaVegaDosage.b} ml</span>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs text-blue-700 text-center">
+                  {aquaVegaDosage.note}
+                </p>
               </div>
             </div>
           ) : (
@@ -2667,17 +2792,17 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Condiciones Agua</h3>
-              <p className="text-sm text-slate-600">Depósito</p>
+              <p className="text-sm text-slate-600">Depósito con monitoreo</p>
             </div>
           </div>
           
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Volumen</span>
+              <span className="text-slate-700">Volumen:</span>
               <span className="font-bold text-blue-600">{config.currentVol}L / {config.totalVol}L</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Temperatura</span>
+              <span className="text-slate-700">Temperatura:</span>
               <span className={`font-bold ${
                 parseFloat(config.temp) > 28 ? 'text-red-600' : 
                 parseFloat(config.temp) < 18 ? 'text-blue-600' : 
@@ -2687,20 +2812,20 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">pH actual</span>
+              <span className="text-slate-700">pH actual:</span>
               <span className={`font-bold ${
-                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5 ? 'text-red-600' :
-                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.2 ? 'text-amber-600' :
+                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.8 ? 'text-red-600' :
+                Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5 ? 'text-amber-600' :
                 'text-green-600'
               }`}>
                 {config.ph}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">EC actual</span>
+              <span className="text-slate-700">EC actual:</span>
               <span className={`font-bold ${
-                parseFloat(config.ec) > parseFloat(config.targetEC) + 300 ? 'text-red-600' :
-                parseFloat(config.ec) < parseFloat(config.targetEC) - 300 ? 'text-amber-600' :
+                parseFloat(config.ec) > parseFloat(config.targetEC) + 250 ? 'text-red-600' :
+                parseFloat(config.ec) < parseFloat(config.targetEC) - 250 ? 'text-amber-600' :
                 'text-green-600'
               }`}>
                 {config.ec} µS/cm
@@ -2768,7 +2893,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       <div className="space-y-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales - Valores Seguros</h2>
             <p className="text-slate-600">Introduce los parámetros medidos de tu sistema</p>
           </div>
           
@@ -2788,7 +2913,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">pH Medido</h3>
-                <p className="text-sm text-slate-600">Rango ideal: 5.5 - 6.5</p>
+                <p className="text-sm text-slate-600">Rango ideal para lechugas: 5.5 - 6.5</p>
               </div>
             </div>
             
@@ -2826,9 +2951,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                 </div>
                 
                 <div className={`mt-4 p-4 rounded-xl border-2 ${
-                  Math.abs(parseFloat(measurements.manualPH) - parseFloat(config.targetPH)) > 0.5 
+                  Math.abs(parseFloat(measurements.manualPH) - parseFloat(config.targetPH)) > 0.8 
                     ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200' 
-                    : Math.abs(parseFloat(measurements.manualPH) - parseFloat(config.targetPH)) > 0.2
+                    : Math.abs(parseFloat(measurements.manualPH) - parseFloat(config.targetPH)) > 0.5
                     ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
                     : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
                 }`}>
@@ -2862,7 +2987,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     </div>
                   </div>
                   
-                  {parseFloat(measurements.manualPH) > parseFloat(config.targetPH) + 0.2 && (
+                  {parseFloat(measurements.manualPH) > parseFloat(config.targetPH) + 0.5 && (
                     <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
                       <p className="text-sm font-bold text-purple-700 mb-1">📋 Corrección requerida:</p>
                       <p className="text-sm text-purple-800">
@@ -2872,7 +2997,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     </div>
                   )}
                   
-                  {parseFloat(measurements.manualPH) < parseFloat(config.targetPH) - 0.2 && (
+                  {parseFloat(measurements.manualPH) < parseFloat(config.targetPH) - 0.5 && (
                     <div className="mt-3 p-3 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg">
                       <p className="text-sm font-bold text-pink-700 mb-1">📋 Corrección requerida:</p>
                       <p className="text-sm text-pink-800">
@@ -2894,7 +3019,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">EC Medida</h3>
-                <p className="text-sm text-slate-600">Nivel de nutrientes en µS/cm</p>
+                <p className="text-sm text-slate-600">Nivel de nutrientes en µS/cm - Valores seguros</p>
               </div>
             </div>
             
@@ -2927,7 +3052,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                 
                 <div className="flex justify-between text-sm text-slate-600 mt-2">
                   <span>0</span>
-                  <span className="font-bold text-green-600">800-1800</span>
+                  <span className="font-bold text-green-600">800-1500</span>
                   <span>3000</span>
                 </div>
                 
@@ -2935,13 +3060,13 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-slate-700">Estado:</span>
                     <Badge className={
-                      parseFloat(measurements.manualEC) >= 800 && parseFloat(measurements.manualEC) <= 1800 
+                      parseFloat(measurements.manualEC) >= 800 && parseFloat(measurements.manualEC) <= 1500 
                         ? "bg-green-100 text-green-800"
-                        : parseFloat(measurements.manualEC) > 1800
+                        : parseFloat(measurements.manualEC) > 1500
                         ? "bg-red-100 text-red-800"
                         : "bg-amber-100 text-amber-800"
                     }>
-                      {parseFloat(measurements.manualEC) > 1800 ? "DEMASIADO ALTA" :
+                      {parseFloat(measurements.manualEC) > 1500 ? "DEMASIADO ALTA" :
                        parseFloat(measurements.manualEC) < 800 ? "DEMASIADO BAJA" :
                        "DENTRO DE RANGO"}
                     </Badge>
@@ -2964,7 +3089,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     </div>
                   </div>
                   
-                  {parseFloat(measurements.manualEC) > parseFloat(config.targetEC) + 300 && (
+                  {parseFloat(measurements.manualEC) > parseFloat(config.targetEC) + 250 && (
                     <div className="mt-3 p-3 bg-gradient-to-r from-red-50 to-rose-50 rounded-lg">
                       <p className="text-sm font-bold text-red-700 mb-1">📋 Corrección requerida:</p>
                       <p className="text-sm text-red-800">
@@ -2974,7 +3099,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     </div>
                   )}
                   
-                  {parseFloat(measurements.manualEC) < parseFloat(config.targetEC) - 300 && (
+                  {parseFloat(measurements.manualEC) < parseFloat(config.targetEC) - 250 && (
                     <div className="mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
                       <p className="text-sm font-bold text-amber-700 mb-1">📋 Corrección requerida:</p>
                       <p className="text-sm text-amber-800">
@@ -3083,7 +3208,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">Temperatura del Agua</h3>
-                <p className="text-sm text-slate-600">Depósito</p>
+                <p className="text-sm text-slate-600">Depósito - Crítico para oxígeno</p>
               </div>
             </div>
             
@@ -3216,24 +3341,24 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                 </div>
                 
                 <div className={`mt-4 p-4 rounded-lg ${
-                  parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.5
+                  parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.45
                     ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200'
-                    : parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.3
+                    : parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.25
                     ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200'
                     : 'bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200'
                 }`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-slate-700">Estado:</span>
                     <Badge className={
-                      parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.5
+                      parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.45
                         ? "bg-green-100 text-green-800"
-                        : parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.3
+                        : parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.25
                         ? "bg-amber-100 text-amber-800"
                         : "bg-red-100 text-red-800"
                     }>
-                      {parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.5
+                      {parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.45
                         ? "ADEQUADO"
-                        : parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.3
+                        : parseFloat(measurements.manualVolume || config.currentVol) >= parseFloat(config.totalVol) * 0.25
                         ? "BAJO"
                         : "MUY BAJO"}
                     </Badge>
@@ -3256,7 +3381,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     </div>
                   </div>
                   
-                  {parseFloat(measurements.manualVolume || config.currentVol) < parseFloat(config.totalVol) * 0.5 && (
+                  {parseFloat(measurements.manualVolume || config.currentVol) < parseFloat(config.totalVol) * 0.45 && (
                     <div className="mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
                       <p className="text-sm font-bold text-amber-700 mb-1">📋 Acción recomendada:</p>
                       <p className="text-sm text-amber-800">
@@ -3296,8 +3421,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
   const CalculatorTab = () => (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Calculadora Completa</h2>
-        <p className="text-slate-600">Cálculos exactos para tu sistema hidropónico</p>
+        <h2 className="text-2xl font-bold text-slate-800">Calculadora Completa - EC Optimizado</h2>
+        <p className="text-slate-600">Cálculos exactos para tu sistema hidropónico con valores seguros</p>
       </div>
       
       {/* Cálculo EC escalonado */}
@@ -3317,8 +3442,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               <FlaskConical className="text-white" size={24} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800">Dosis AQUA VEGA</h3>
-              <p className="text-sm text-slate-600">Para {config.currentVol}L de agua</p>
+              <h3 className="font-bold text-slate-800">Dosis AQUA VEGA Optimizada</h3>
+              <p className="text-sm text-slate-600">Para {config.currentVol}L de agua - Valores seguros</p>
             </div>
           </div>
           
@@ -3345,11 +3470,14 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     Equivalente a <span className="font-bold text-emerald-600">{aquaVegaDosage.per10L.a}ml A</span> y 
                     <span className="font-bold text-emerald-600"> {aquaVegaDosage.per10L.b}ml B</span> por cada 10L
                   </p>
+                  <p className="text-center text-xs text-slate-500 mt-1">
+                    {aquaVegaDosage.note}
+                  </p>
                 </div>
               </div>
               
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <h4 className="font-bold text-blue-700 mb-3">📝 Instrucciones de mezcla</h4>
+                <h4 className="font-bold text-blue-700 mb-3">📝 Instrucciones de mezcla optimizadas</h4>
                 <ol className="space-y-2 text-sm text-slate-700">
                   <li className="flex items-start gap-2">
                     <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
@@ -3371,10 +3499,14 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "5" : "4"}</span>
-                    <span>Medir EC: objetivo <strong>{config.targetEC} µS/cm</strong></span>
+                    <span>Esperar 15-30 minutos para estabilización</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "6" : "5"}</span>
+                    <span>Medir EC: objetivo <strong>{config.targetEC} µS/cm</strong></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "7" : "6"}</span>
                     <span>Ajustar pH a <strong>{config.targetPH}</strong></span>
                   </li>
                 </ol>
@@ -3396,15 +3528,15 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                 <RefreshCw className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">Ajuste de pH</h3>
-                <p className="text-sm text-slate-600">De {config.ph} a {config.targetPH}</p>
+                <h3 className="font-bold text-slate-800">Ajuste de pH Optimizado</h3>
+                <p className="text-sm text-slate-600">De {config.ph} a {config.targetPH} - Tolerancia ampliada</p>
               </div>
             </div>
             
             <div className={`p-4 rounded-xl border-2 ${
-              Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5 
+              Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.8 
                 ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200' 
-                : Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.2
+                : Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5
                 ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
                 : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
             }`}>
@@ -3414,21 +3546,29 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   Objetivo: <span className="font-bold">{config.targetPH}</span>
                 </p>
                 
-                {parseFloat(config.ph) > parseFloat(config.targetPH) ? (
+                {parseFloat(config.ph) > parseFloat(config.targetPH) + 0.3 ? (
                   <div>
                     <div className="text-3xl font-bold text-purple-600 mb-2">
                       {phAdjustment.phMinus} ml
                     </div>
                     <p className="text-lg font-bold text-purple-700">pH- (Ácido)</p>
-                    <p className="text-sm text-slate-600 mt-2">Reducir pH</p>
+                    <p className="text-sm text-slate-600 mt-2">Reducir pH - Ajuste necesario</p>
                   </div>
-                ) : (
+                ) : parseFloat(config.ph) < parseFloat(config.targetPH) - 0.3 ? (
                   <div>
                     <div className="text-3xl font-bold text-pink-600 mb-2">
                       {phAdjustment.phPlus} ml
                     </div>
                     <p className="text-lg font-bold text-pink-700">pH+ (Alcalino)</p>
-                    <p className="text-sm text-slate-600 mt-2">Aumentar pH</p>
+                    <p className="text-sm text-slate-600 mt-2">Aumentar pH - Ajuste necesario</p>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="text-3xl font-bold text-green-600 mb-2">
+                      0 ml
+                    </div>
+                    <p className="text-lg font-bold text-green-700">✅ pH ÓPTIMO</p>
+                    <p className="text-sm text-slate-600 mt-2">No se requiere ajuste</p>
                   </div>
                 )}
               </div>
@@ -3439,1163 +3579,1206 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
                 <Waves className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">Calculadora de CalMag</h3>
+                <p className="text-sm text-slate-600">Para agua de ósmosis y mezclas</p>
+              </div>
+            </div>
+            
+            <div className={`p-4 rounded-xl border-2 ${
+              calmagNeeded.required 
+                ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200' 
+                : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+            }`}>
+              <div className="text-center">
+                <div className={`text-3xl font-bold mb-2 ${
+                  calmagNeeded.required ? 'text-blue-600' : 'text-green-600'
+                }`}>
+                  {calmagNeeded.required ? `${calmagNeeded.dosage} ml` : 'No necesario'}
+                </div>
+                <p className="text-lg font-bold text-slate-700">CalMag</p>
+                <p className="text-sm text-slate-600 mt-2">
+                  Para {config.currentVol}L de agua
+                </p>
+                
+                {calmagNeeded.required && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">{calmagNeeded.reason}</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      {calmagNeeded.instructions}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+
+  const TowerTab = () => (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre - EC Optimizado</h2>
+        <p className="text-slate-600">Sistema escalonado 5-5-5 con valores seguros de EC</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <Sprout className="text-white" size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800">Calculadora de CalMag</h3>
-              <p className="text-sm text-slate-600">Para agua de ósmosis y mezclas</p>
+              <h3 className="font-bold text-slate-800">Nivel 1 - Plántulas</h3>
+              <p className="text-sm text-slate-600">Plantas jóvenes (600-800 µS/cm)</p>
             </div>
           </div>
           
-          <div className={`p-4 rounded-xl border-2 ${
-            calmagNeeded.required 
-              ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200' 
-              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-          }`}>
-            <div className="text-center">
-              <div className={`text-3xl font-bold mb-2 ${
-                calmagNeeded.required ? 'text-blue-600' : 'text-green-600'
-              }`}>
-                {calmagNeeded.required ? `${calmagNeeded.dosage} ml` : 'No necesario'}
+          <div className="space-y-3">
+            {plants.filter(p => p.l === 1).map(plant => (
+              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                    <span className="text-white text-xs font-bold">{plant.p}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">{plant.v}</p>
+                    <p className="text-xs text-slate-500">Posición {plant.p} • EC: 600-800</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(plant.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
               </div>
-              <p className="text-lg font-bold text-slate-700">CalMag</p>
-              <p className="text-sm text-slate-600 mt-2">
-                Para {config.currentVol}L de agua
-              </p>
+            ))}
+            
+            {plants.filter(p => p.l === 1).length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-slate-500">No hay plántulas</p>
+                <p className="text-xs text-slate-400">EC recomendado: 600-800 µS/cm</p>
+              </div>
+            )}
+          </div>
+        </Card>
+        
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+              <Activity className="text-white" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Nivel 2 - Crecimiento</h3>
+              <p className="text-sm text-slate-600">Plantas en desarrollo (800-1200 µS/cm)</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {plants.filter(p => p.l === 2).map(plant => (
+              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                    <span className="text-white text-xs font-bold">{plant.p}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">{plant.v}</p>
+                    <p className="text-xs text-slate-500">Posición {plant.p} • EC: 800-1200</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(plant.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+            
+            {plants.filter(p => p.l === 2).length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-slate-500">No hay plantas en crecimiento</p>
+                <p className="text-xs text-slate-400">EC recomendado: 800-1200 µS/cm</p>
+              </div>
+            )}
+          </div>
+        </Card>
+        
+        <Card className="p-5 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+              <Leaf className="text-white" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Nivel 3 - Maduración</h3>
+              <p className="text-sm text-slate-600">Plantas listas para cosechar (1200-1500 µS/cm)</p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            {plants.filter(p => p.l === 3).map(plant => (
+              <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
+                    <span className="text-white text-xs font-bold">{plant.p}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-800">{plant.v}</p>
+                    <p className="text-xs text-slate-500">Posición {plant.p} • EC: 1200-1500</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(plant.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            ))}
+            
+            {plants.filter(p => p.l === 3).length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-slate-500">No hay plantas maduras</p>
+                <p className="text-xs text-slate-400">EC recomendado: 1200-1500 µS/cm</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+      
+      <div className="flex justify-between">
+        <Button
+          onClick={handleRotation}
+          className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+        >
+          <RotateCcw className="mr-2" />
+          Rotar Niveles
+        </Button>
+        
+        <Button
+          onClick={() => {
+            if (plants.length >= 15) {
+              alert("La torre está llena (15/15 plantas)");
+              return;
+            }
+            setSelPos({ l: 1, v: "Iceberg", p: 1 });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        >
+          <Plus className="mr-2" />
+          Añadir Planta
+        </Button>
+      </div>
+    </div>
+  );
+
+  const CalendarTab = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    const monthNames = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+    
+    const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">Calendario de Mantenimiento</h2>
+            <p className="text-slate-600">Planificación de tareas del sistema</p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white">
+              {monthNames[currentMonth]} {currentYear}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLastClean(new Date().toISOString())}
+            >
+              <ShieldAlert className="mr-2" size={16} />
+              Limpieza Hecha
+            </Button>
+          </div>
+        </div>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+              <Calendar className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Calendario Inteligente</h3>
+              <p className="text-sm text-slate-600">Tareas programadas automáticamente según tus plantas</p>
+            </div>
+          </div>
+          
+          {/* Días de la semana */}
+          <div className="grid grid-cols-7 gap-1 mb-4">
+            {dayNames.map((day, index) => (
+              <div 
+                key={day} 
+                className={`text-center font-bold py-3 rounded-lg ${
+                  index >= 5 
+                    ? "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700" 
+                    : "bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700"
+                }`}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+          
+          {/* Días del mes */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((day, index) => {
+              const isToday = day.date.toDateString() === now.toDateString();
+              const hasEvents = day.events.length > 0;
+              const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+              
+              return (
+                <div
+                  key={index}
+                  className={`min-h-28 p-2 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
+                    isToday
+                      ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg'
+                      : !day.isCurrentMonth
+                      ? 'border-slate-100 bg-slate-50 text-slate-400'
+                      : isWeekend
+                      ? 'border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50'
+                      : 'border-slate-200 bg-white'
+                  } ${hasEvents ? 'shadow-sm' : ''}`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`text-lg font-bold ${
+                      isToday 
+                        ? 'text-blue-600' 
+                        : !day.isCurrentMonth 
+                        ? 'text-slate-300' 
+                        : 'text-slate-800'
+                    }`}>
+                      {day.dayOfMonth}
+                    </span>
+                    
+                    {isToday && (
+                      <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs px-2">
+                        Hoy
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Eventos */}
+                  <div className="space-y-1">
+                    {day.events.includes('measure') && (
+                      <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg">
+                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
+                          <Activity size={12} className="text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-blue-800">Medir</p>
+                          <p className="text-xs text-blue-600">pH, EC, temperatura</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {day.events.includes('rotation') && (
+                      <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg">
+                        <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                          <RotateCcw size={12} className="text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-green-800">Rotar</p>
+                          <p className="text-xs text-green-600">Niveles de plantas</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {day.events.includes('clean') && (
+                      <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
+                        <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                          <ShieldAlert size={12} className="text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-purple-800">Limpiar</p>
+                          <p className="text-xs text-purple-600">Sistema completo</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Indicador si no hay eventos */}
+                  {!hasEvents && day.isCurrentMonth && (
+                    <div className="mt-2 text-center">
+                      <p className="text-xs text-slate-400 italic">Sin tareas</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Leyenda */}
+          <div className="mt-8 p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
+            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Info size={18} className="text-blue-600" />
+              Leyenda de Tareas
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                  <Activity size={18} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-800">Medición</p>
+                  <p className="text-xs text-slate-600">pH, EC, temperatura</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                  <RotateCcw size={18} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-800">Rotación</p>
+                  <p className="text-xs text-slate-600">Mover niveles de plantas</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                  <ShieldAlert size={18} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-800">Limpieza</p>
+                  <p className="text-xs text-slate-600">Depósito y tuberías</p>
+                </div>
+              </div>
             </div>
           </div>
         </Card>
       </div>
-    </div>
-  </div>
-);
+    );
+  };
 
-const TowerTab = () => (
-  <div className="space-y-8 animate-fade-in">
-    <div>
-      <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre</h2>
-      <p className="text-slate-600">Sistema escalonado 5-5-5</p>
-    </div>
-    
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card className="p-5 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-            <Sprout className="text-white" size={20} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Nivel 1 - Plántulas</h3>
-            <p className="text-sm text-slate-600">Plantas jóvenes</p>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          {plants.filter(p => p.l === 1).map(plant => (
-            <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
-                  <span className="text-white text-xs font-bold">{plant.p}</span>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-800">{plant.v}</p>
-                  <p className="text-xs text-slate-500">Posición {plant.p}</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(plant.id)}
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          ))}
-          
-          {plants.filter(p => p.l === 1).length === 0 && (
-            <div className="text-center py-4">
-              <p className="text-slate-500">No hay plántulas</p>
-            </div>
-          )}
-        </div>
-      </Card>
-      
-      <Card className="p-5 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-            <Activity className="text-white" size={20} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Nivel 2 - Crecimiento</h3>
-            <p className="text-sm text-slate-600">Plantas en desarrollo</p>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          {plants.filter(p => p.l === 2).map(plant => (
-            <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
-                  <span className="text-white text-xs font-bold">{plant.p}</span>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-800">{plant.v}</p>
-                  <p className="text-xs text-slate-500">Posición {plant.p}</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(plant.id)}
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          ))}
-          
-          {plants.filter(p => p.l === 2).length === 0 && (
-            <div className="text-center py-4">
-              <p className="text-slate-500">No hay plantas en crecimiento</p>
-            </div>
-          )}
-        </div>
-      </Card>
-      
-      <Card className="p-5 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-            <Leaf className="text-white" size={20} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Nivel 3 - Maduración</h3>
-            <p className="text-sm text-slate-600">Plantas listas para cosechar</p>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          {plants.filter(p => p.l === 3).map(plant => (
-            <div key={plant.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[plant.v]?.color || 'bg-slate-200'}`}>
-                  <span className="text-white text-xs font-bold">{plant.p}</span>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-800">{plant.v}</p>
-                  <p className="text-xs text-slate-500">Posición {plant.p}</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(plant.id)}
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          ))}
-          
-          {plants.filter(p => p.l === 3).length === 0 && (
-            <div className="text-center py-4">
-              <p className="text-slate-500">No hay plantas maduras</p>
-            </div>
-          )}
-        </div>
-      </Card>
-    </div>
-    
-    <div className="flex justify-between">
-      <Button
-        onClick={handleRotation}
-        className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
-      >
-        <RotateCcw className="mr-2" />
-        Rotar Niveles
-      </Button>
-      
-      <Button
-        onClick={() => {
-          if (plants.length >= 15) {
-            alert("La torre está llena (15/15 plantas)");
-            return;
-          }
-          setSelPos({ l: 1, v: "Iceberg", p: 1 });
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-      >
-        <Plus className="mr-2" />
-        Añadir Planta
-      </Button>
-    </div>
-  </div>
-);
-
-const CalendarTab = () => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  
-  const monthNames = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-  ];
-  
-  const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-  
-  return (
+  const HistoryTab = () => (
     <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Calendario de Mantenimiento</h2>
-          <p className="text-slate-600">Planificación de tareas del sistema</p>
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Historial del Sistema</h2>
+        <p className="text-slate-600">Registro de mediciones y eventos</p>
+      </div>
+      
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+            <BarChart className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Registro Histórico</h3>
+            <p className="text-sm text-slate-600">Todas las mediciones guardadas</p>
+          </div>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white">
-            {monthNames[currentMonth]} {currentYear}
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setLastClean(new Date().toISOString())}
-          >
-            <ShieldAlert className="mr-2" size={16} />
-            Limpieza Hecha
-          </Button>
-        </div>
+        {history.length > 0 ? (
+          <div className="space-y-4">
+            {history.slice(0, 10).map((record, index) => (
+              <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center">
+                      <Clipboard className="text-blue-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800">
+                        {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
+                      <p className="text-sm text-slate-600">{record.notes || "Medición manual"}</p>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteHistoryRecord(record.id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">pH</span>
+                      <span className="font-bold text-purple-600">{record.ph}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">EC</span>
+                      <span className="font-bold text-blue-600">{record.ec} µS/cm</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-amber-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Temperatura</span>
+                      <span className="font-bold text-amber-600">{record.temp}°C</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-cyan-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Humedad</span>
+                      <span className="font-bold text-cyan-600">{record.humidity || "65"}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {history.length > 10 && (
+              <div className="text-center py-4">
+                <p className="text-slate-600">
+                  Mostrando las 10 mediciones más recientes de {history.length} totales
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <BarChart className="mx-auto text-slate-300 mb-3" size={48} />
+            <p className="text-slate-500">No hay historial de mediciones</p>
+            <p className="text-sm text-slate-400 mt-2">
+              Guarda mediciones desde el panel principal para verlas aquí
+            </p>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+
+  const IrrigationTab = () => (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Cálculo de Riego Optimizado</h2>
+        <p className="text-slate-600">Torre vertical hidropónica en Castellón de la Plana</p>
       </div>
       
       <Card className="p-6 rounded-2xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
-            <Calendar className="text-white" size={24} />
+            <WaterDroplets className="text-white" size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800">Calendario Inteligente</h3>
-            <p className="text-sm text-slate-600">Tareas programadas automáticamente según tus plantas</p>
+            <h3 className="font-bold text-slate-800">Configuración del Sistema</h3>
+            <p className="text-sm text-slate-600">Bomba de 7W • Dados de lana de roca 2.5cm</p>
           </div>
         </div>
         
-        {/* Días de la semana */}
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          {dayNames.map((day, index) => (
-            <div 
-              key={day} 
-              className={`text-center font-bold py-3 rounded-lg ${
-                index >= 5 
-                  ? "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700" 
-                  : "bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700"
-              }`}
-            >
-              {day}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+            <h4 className="font-bold text-blue-700 mb-3">💧 Bomba de Agua</h4>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600">{irrigationData.pumpPower}W</div>
+              <p className="text-sm text-slate-600">Potencia de la bomba</p>
+              <p className="text-xs text-slate-500 mt-2">Aprox. 5L/hora de caudal</p>
             </div>
-          ))}
+          </div>
+          
+          <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+            <h4 className="font-bold text-emerald-700 mb-3">🌱 Dados de Lana de Roca</h4>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-emerald-600">{irrigationData.rockwoolCubes}cm</div>
+              <p className="text-sm text-slate-600">Tamaño de los dados</p>
+              <p className="text-xs text-slate-500 mt-2">Retienen humedad eficientemente</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+            <h4 className="font-bold text-amber-700 mb-3">📍 Ubicación</h4>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-amber-600">Castellón</div>
+              <p className="text-sm text-slate-600">de la Plana</p>
+              <p className="text-xs text-slate-500 mt-2">Clima mediterráneo</p>
+            </div>
+          </div>
         </div>
         
-        {/* Días del mes */}
-        <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map((day, index) => {
-            const isToday = day.date.toDateString() === now.toDateString();
-            const hasEvents = day.events.length > 0;
-            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-            
-            return (
-              <div
-                key={index}
-                className={`min-h-28 p-2 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
-                  isToday
-                    ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg'
-                    : !day.isCurrentMonth
-                    ? 'border-slate-100 bg-slate-50 text-slate-400'
-                    : isWeekend
-                    ? 'border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50'
-                    : 'border-slate-200 bg-white'
-                } ${hasEvents ? 'shadow-sm' : ''}`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`text-lg font-bold ${
-                    isToday 
-                      ? 'text-blue-600' 
-                      : !day.isCurrentMonth 
-                      ? 'text-slate-300' 
-                      : 'text-slate-800'
-                  }`}>
-                    {day.dayOfMonth}
+        <div className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
+          <h3 className="font-bold text-slate-800 mb-6 text-center">📊 Necesidades de Riego Diarias</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 bg-white rounded-xl border border-slate-200">
+              <h4 className="font-bold text-blue-700 mb-4">Agua Requerida</h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Total diario:</span>
+                  <span className="text-2xl font-bold text-blue-600">{irrigationData.totalWaterNeeds} L</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Por planta:</span>
+                  <span className="font-bold text-slate-800">
+                    {(parseFloat(irrigationData.totalWaterNeeds) / plants.length || 0).toFixed(2)} L
                   </span>
-                  
-                  {isToday && (
-                    <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs px-2">
-                      Hoy
-                    </Badge>
-                  )}
                 </div>
-                
-                {/* Eventos */}
-                <div className="space-y-1">
-                  {day.events.includes('measure') && (
-                    <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg">
-                      <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
-                        <Activity size={12} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-blue-800">Medir</p>
-                        <p className="text-xs text-blue-600">pH, EC, temperatura</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {day.events.includes('rotation') && (
-                    <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg">
-                      <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                        <RotateCcw size={12} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-green-800">Rotar</p>
-                        <p className="text-xs text-green-600">Niveles de plantas</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {day.events.includes('clean') && (
-                    <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
-                      <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
-                        <ShieldAlert size={12} className="text-white" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-purple-800">Limpiar</p>
-                        <p className="text-xs text-purple-600">Sistema completo</p>
-                      </div>
-                    </div>
-                  )}
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Tiempo bomba:</span>
+                  <span className="font-bold text-amber-600">{irrigationData.pumpMinutesPerDay} min/día</span>
                 </div>
-                
-                {/* Indicador si no hay eventos */}
-                {!hasEvents && day.isCurrentMonth && (
-                  <div className="mt-2 text-center">
-                    <p className="text-xs text-slate-400 italic">Sin tareas</p>
-                  </div>
-                )}
               </div>
-            );
-          })}
+            </div>
+            
+            <div className="p-4 bg-white rounded-xl border border-slate-200">
+              <h4 className="font-bold text-emerald-700 mb-4">Programación de Ciclos</h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Ciclos por día:</span>
+                  <span className="text-2xl font-bold text-emerald-600">{irrigationData.cyclesPerDay}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Minutos por ciclo:</span>
+                  <span className="font-bold text-slate-800">{irrigationData.minutesPerCycle} min</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700">Frecuencia:</span>
+                  <span className="font-bold text-blue-600">Cada 2 horas (luz)</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
-        {/* Leyenda */}
-        <div className="mt-8 p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
-          <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <Info size={18} className="text-blue-600" />
-            Leyenda de Tareas
-          </h4>
+        <div className="mt-8 p-6 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl border-2 border-cyan-200">
+          <h3 className="font-bold text-cyan-800 mb-4">📋 Recomendaciones de Riego</h3>
+          <div className="space-y-3">
+            {irrigationData.recommendations.map((rec, index) => (
+              <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg">
+                <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold">
+                  {index + 1}
+                </div>
+                <p className="text-slate-700">{rec}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200">
+          <h3 className="font-bold text-amber-800 mb-4">🌡️ Factores Climáticos Aplicados</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                <Activity size={18} className="text-white" />
+            <div className="p-3 bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Temperatura:</span>
+                <span className="font-bold text-amber-600">{measurements.manualTemp}°C</span>
               </div>
-              <div>
-                <p className="font-bold text-slate-800">Medición</p>
-                <p className="text-xs text-slate-600">pH, EC, temperatura</p>
-              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {parseFloat(measurements.manualTemp) > 25 ? "Aumenta riego +20%" :
+                 parseFloat(measurements.manualTemp) > 20 ? "Aumenta riego +5%" :
+                 parseFloat(measurements.manualTemp) < 15 ? "Reduce riego -15%" :
+                 "Condición normal"}
+              </p>
             </div>
             
-            <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <RotateCcw size={18} className="text-white" />
+            <div className="p-3 bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Humedad:</span>
+                <span className="font-bold text-cyan-600">{measurements.manualHumidity}%</span>
               </div>
-              <div>
-                <p className="font-bold text-slate-800">Rotación</p>
-                <p className="text-xs text-slate-600">Mover niveles de plantas</p>
-              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {parseFloat(measurements.manualHumidity) < 40 ? "Aumenta riego +15%" :
+                 parseFloat(measurements.manualHumidity) > 70 ? "Reduce riego -15%" :
+                 "Condición ideal"}
+              </p>
             </div>
             
-            <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                <ShieldAlert size={18} className="text-white" />
+            <div className="p-3 bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Estación:</span>
+                <span className="font-bold text-emerald-600">
+                  {season === "summer" ? "Verano" :
+                   season === "winter" ? "Invierno" :
+                   "Primavera/Otoño"}
+                </span>
               </div>
-              <div>
-                <p className="font-bold text-slate-800">Limpieza</p>
-                <p className="text-xs text-slate-600">Depósito y tuberías</p>
-              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {season === "summer" ? "Aumenta riego +30%" :
+                 season === "winter" ? "Reduce riego -20%" :
+                 "Condición normal"}
+              </p>
             </div>
           </div>
         </div>
       </Card>
     </div>
   );
-};
 
-const HistoryTab = () => (
-  <div className="space-y-8 animate-fade-in">
-    <div>
-      <h2 className="text-2xl font-bold text-slate-800">Historial del Sistema</h2>
-      <p className="text-slate-600">Registro de mediciones y eventos</p>
-    </div>
-    
-    <Card className="p-6 rounded-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-          <BarChart className="text-white" size={24} />
-        </div>
-        <div>
-          <h3 className="font-bold text-slate-800">Registro Histórico</h3>
-          <p className="text-sm text-slate-600">Todas las mediciones guardadas</p>
-        </div>
+  const TipsTab = () => (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Consejos y Mejores Prácticas - EC Optimizado</h2>
+        <p className="text-slate-600">Aprende a optimizar tu sistema hidropónico con valores seguros</p>
       </div>
       
-      {history.length > 0 ? (
-        <div className="space-y-4">
-          {history.slice(0, 10).map((record, index) => (
-            <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center">
-                    <Clipboard className="text-blue-600" size={18} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-800">
-                      {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </p>
-                    <p className="text-sm text-slate-600">{record.notes || "Medición manual"}</p>
-                  </div>
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteHistoryRecord(record.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-700">pH</span>
-                    <span className="font-bold text-purple-600">{record.ph}</span>
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-700">EC</span>
-                    <span className="font-bold text-blue-600">{record.ec} µS/cm</span>
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-amber-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-700">Temperatura</span>
-                    <span className="font-bold text-amber-600">{record.temp}°C</span>
-                  </div>
-                </div>
-                
-                <div className="p-3 bg-cyan-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-700">Humedad</span>
-                    <span className="font-bold text-cyan-600">{record.humidity || "65"}%</span>
-                  </div>
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+              <Calculator className="text-white" size={24} />
             </div>
-          ))}
+            <div>
+              <h3 className="font-bold text-slate-800">Cálculo EC Seguro para Lechugas</h3>
+              <p className="text-sm text-slate-600">3 métodos con valores optimizados</p>
+            </div>
+          </div>
           
-          {history.length > 10 && (
-            <div className="text-center py-4">
-              <p className="text-slate-600">
-                Mostrando las 10 mediciones más recientes de {history.length} totales
+          <div className="space-y-4">
+            <div className="p-3 bg-emerald-50 rounded-lg">
+              <p className="text-sm text-emerald-800">
+                <strong>Método escalonado:</strong> Da más peso a plantas maduras pero protege plántulas. Ideal para múltiples etapas.
               </p>
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <BarChart className="mx-auto text-slate-300 mb-3" size={48} />
-          <p className="text-slate-500">No hay historial de mediciones</p>
-          <p className="text-sm text-slate-400 mt-2">
-            Guarda mediciones desde el panel principal para verlas aquí
-          </p>
-        </div>
-      )}
-    </Card>
-  </div>
-);
-
-const IrrigationTab = () => (
-  <div className="space-y-8 animate-fade-in">
-    <div>
-      <h2 className="text-2xl font-bold text-slate-800">Cálculo de Riego</h2>
-      <p className="text-slate-600">Torre vertical hidropónica en Castellón de la Plana</p>
+            
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Método promedio:</strong> Simple y efectivo cuando todas las plantas están en etapas similares.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <strong>Método conservador:</strong> Usa el EC más bajo + protección extra. Ideal para plántulas o variedades sensibles.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-cyan-50 rounded-lg">
+              <p className="text-sm text-cyan-800">
+                <strong>Rangos seguros:</strong> Plántulas: 600-800, Crecimiento: 800-1200, Maduración: 1200-1500 µS/cm
+              </p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <Filter className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Agua de Ósmosis - Protocolo Especial</h3>
+              <p className="text-sm text-slate-600">Valores optimizados para agua pura</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-cyan-50 rounded-lg">
+              <p className="text-sm text-cyan-800">
+                <strong>CalMag obligatorio:</strong> El agua de ósmosis no tiene calcio ni magnesio. Añadir siempre antes de los nutrientes.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-amber-50 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>pH inestable:</strong> El agua pura tiene bajo poder tampón. Monitorizar pH cada 12 horas.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Ventaja:</strong> Base perfectamente conocida (EC 0). Control total sobre los nutrientes.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-800">
+                <strong>EC inicial:</strong> Comenzar con EC 600-800 para plántulas, incrementar gradualmente.
+              </p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <TreePine className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">6 Variedades de Lechuga - EC Optimizado</h3>
+              <p className="text-sm text-slate-600">Parámetros específicos con valores seguros</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-cyan-50 rounded-lg">
+              <p className="text-sm text-cyan-800">
+                <strong>Iceberg:</strong> Muy sensible al exceso de sales. Usar EC conservador (600-1400).
+              </p>
+            </div>
+            
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <strong>Lollo Rosso:</strong> Tolerancia media. Puede manejar EC ligeramente más alta para color (700-1500).
+              </p>
+            </div>
+            
+            <div className="p-3 bg-red-50 rounded-lg">
+              <p className="text-sm text-red-800">
+                <strong>Hoja de Roble Rojo:</strong> Variedad más tolerante. Puede manejar EC más alta en maduración (700-1600).
+              </p>
+            </div>
+            
+            <div className="p-3 bg-lime-50 rounded-lg">
+              <p className="text-sm text-lime-800">
+                <strong>Trocadero:</strong> Muy sensible en plántula. Requiere EC baja inicial (600-1300).
+              </p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+              <FlaskConical className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Nutrición AQUA VEGA Optimizada</h3>
+              <p className="text-sm text-slate-600">AQUA VEGA A+B con dosis segura</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-3 bg-emerald-50 rounded-lg">
+              <p className="text-sm text-emerald-800">
+                <strong>Orden correcto:</strong> Agua → CalMag → AQUA VEGA A → Mezclar → AQUA VEGA B → Mezclar → Esperar → pH-.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Dosificación:</strong> Partiendo de EC 0 (ósmosis) usar dosis completas. Para agua con minerales, restar EC base.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-purple-50 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <strong>pH objetivo:</strong> 6.0 para máxima absorción de nutrientes en lechugas.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-amber-50 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>Esperar estabilización:</strong> 15-30 minutos después de añadir nutrientes antes de ajustar pH.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
     </div>
-    
-    <Card className="p-6 rounded-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
-          <WaterDroplets className="text-white" size={24} />
-        </div>
+  );
+
+  const ProfessionalTipsTab = () => (
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 className="font-bold text-slate-800">Configuración del Sistema</h3>
-          <p className="text-sm text-slate-600">Bomba de 7W • Dados de lana de roca 2.5cm</p>
+          <h2 className="text-2xl font-bold text-slate-800">Consejos Profesionales - EC Optimizado</h2>
+          <p className="text-slate-600">Técnicas avanzadas para cultivo hidropónico con valores seguros</p>
         </div>
+        <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+          Nivel: Avanzado - Valores Seguros
+        </Badge>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-          <h4 className="font-bold text-blue-700 mb-3">💧 Bomba de Agua</h4>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600">{irrigationData.pumpPower}W</div>
-            <p className="text-sm text-slate-600">Potencia de la bomba</p>
-            <p className="text-xs text-slate-500 mt-2">Aprox. 5L/hora de caudal</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Consejo 1 */}
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+              <Brain className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Optimización de EC Segura</h3>
+              <p className="text-sm text-slate-600">Técnicas profesionales con protección</p>
+            </div>
           </div>
-        </div>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <h4 className="font-bold text-blue-700 mb-2">🔬 EC Dinámica Segura</h4>
+              <p className="text-sm text-slate-700">
+                Ajusta la EC según la tasa de absorción. Si las plantas beben más agua que nutrientes (EC sube >1500), reducir inmediatamente.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-cyan-50 rounded-xl">
+              <h4 className="font-bold text-cyan-700 mb-2">📊 Monitorización Continua</h4>
+              <p className="text-sm text-slate-700">
+                Instala sensores de EC continuos para detectar tendencias antes de que se conviertan en problemas graves.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-purple-50 rounded-xl">
+              <h4 className="font-bold text-purple-700 mb-2">🌡️ EC vs Temperatura Segura</h4>
+              <p className="text-sm text-slate-700">
+                En temperaturas altas (&gt;25°C), reducir EC 15% para compensar mayor transpiración y prevenir quemaduras.
+              </p>
+            </div>
+          </div>
+        </Card>
         
-        <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-          <h4 className="font-bold text-emerald-700 mb-3">🌱 Dados de Lana de Roca</h4>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-emerald-600">{irrigationData.rockwoolCubes}cm</div>
-            <p className="text-sm text-slate-600">Tamaño de los dados</p>
-            <p className="text-xs text-slate-500 mt-2">Retienen humedad eficientemente</p>
+        {/* Consejo 2 */}
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+              <FlaskConical className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Gestión de Nutrientes Segura</h3>
+              <p className="text-sm text-slate-600">AQUA VEGA profesional con límites</p>
+            </div>
           </div>
-        </div>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-emerald-50 rounded-xl">
+              <h4 className="font-bold text-emerald-700 mb-2">⚗️ Mezcla Perfecta Segura</h4>
+              <p className="text-sm text-slate-700">
+                Siempre añadir AQUA VEGA A primero, mezclar 2 minutos, luego B. Nunca superar 1500 µS/cm para lechugas.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-green-50 rounded-xl">
+              <h4 className="font-bold text-green-700 mb-2">💧 Prevención de Precipitados</h4>
+              <p className="text-sm text-slate-700">
+                Mantener pH entre 5.8-6.2 para evitar precipitación de calcio. Si el agua se enturbia, ajustar pH inmediatamente.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-lime-50 rounded-xl">
+              <h4 className="font-bold text-lime-700 mb-2">🔄 Renovación de Solución</h4>
+              <p className="text-sm text-slate-700">
+                Cambiar completamente la solución cada 2-3 semanas para evitar acumulación de sales y desequilibrios.
+              </p>
+            </div>
+          </div>
+        </Card>
         
-        <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-          <h4 className="font-bold text-amber-700 mb-3">📍 Ubicación</h4>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-amber-600">Castellón</div>
-            <p className="text-sm text-slate-600">de la Plana</p>
-            <p className="text-xs text-slate-500 mt-2">Clima mediterráneo</p>
+        {/* Consejo 3 */}
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <Thermometer className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Control de Temperatura Seguro</h3>
+              <p className="text-sm text-slate-600">Técnicas avanzadas con límites</p>
+            </div>
           </div>
-        </div>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-amber-50 rounded-xl">
+              <h4 className="font-bold text-amber-700 mb-2">❄️ Enfriamiento Pasivo Seguro</h4>
+              <p className="text-sm text-slate-700">
+                Usar botellas de hielo en el depósito durante olas de calor. Cambiar cada 6 horas para mantener 18-22°C.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-orange-50 rounded-xl">
+              <h4 className="font-bold text-orange-700 mb-2">🌊 Oxigenación Crítica</h4>
+              <p className="text-sm text-slate-700">
+                En agua caliente (&gt;22°C), el oxígeno disminuye. Añadir piedra difusora adicional o aumentar frecuencia de bombeo.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-red-50 rounded-xl">
+              <h4 className="font-bold text-red-700 mb-2">⚠️ Temperaturas Críticas Seguras</h4>
+              <p className="text-sm text-slate-700">
+                Por encima de 28°C: riesgo de Pythium. Por debajo de 15°C: crecimiento muy lento. Monitorizar continuamente.
+              </p>
+            </div>
+          </div>
+        </Card>
+        
+        {/* Consejo 4 */}
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+              <GitCompare className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Sistema Escalonado Seguro</h3>
+              <p className="text-sm text-slate-600">Optimización 5-5-5 con EC seguro</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-purple-50 rounded-xl">
+              <h4 className="font-bold text-purple-700 mb-2">🌱 Rotación Perfecta Segura</h4>
+              <p className="text-sm text-slate-700">
+                Rotar plantas cada 7 días exactamente. Mantener ciclo continuo para cosecha semanal constante.
+              </p>
+            </div>
+            
+            <div className="p-4 bg-pink-50 rounded-xl">
+              <h4 className="font-bold text-pink-700 mb-2">🎯 EC por Etapa Segura</h4>
+              <p className="text-sm text-slate-700">
+                Plántulas: EC baja (600-800). Crecimiento: EC media (800-1200). Maduración: EC alta (1200-1500).
+              </p>
+            </div>
+            
+            <div className="p-4 bg-rose-50 rounded-xl">
+              <h4 className="font-bold text-rose-700 mb-2">📈 Optimización de Espacio Seguro</h4>
+              <p className="text-sm text-slate-700">
+                Variedades de hoja pequeña en niveles altos, variedades grandes en niveles bajos. Maximiza producción.
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
       
-      <div className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
-        <h3 className="font-bold text-slate-800 mb-6 text-center">📊 Necesidades de Riego Diarias</h3>
+      {/* NUEVA SECCIÓN: Preparación de Plántulas y Lana de Roca */}
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+            <Plant className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">🌱 Preparación Profesional de Plántulas y Lana de Roca</h3>
+            <p className="text-slate-600">Protocolo completo desde la germinación hasta la torre con EC seguro</p>
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-4 bg-white rounded-xl border border-slate-200">
-            <h4 className="font-bold text-blue-700 mb-4">Agua Requerida</h4>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Total diario:</span>
-                <span className="text-2xl font-bold text-blue-600">{irrigationData.totalWaterNeeds} L</span>
+          <div className="space-y-4">
+            <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
+              <h4 className="font-bold text-cyan-700 mb-3">🧼 Paso 1: Limpieza y Preparación de Plántulas</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    1
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Limpieza de raíces</p>
+                    <p className="text-sm text-slate-600">Enjuagar suavemente las raíces con agua templada para eliminar restos de tierra o sustrato.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    2
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Desinfección (opcional pero recomendado)</p>
+                    <p className="text-sm text-slate-600">Sumergir raíces en solución de agua oxigenada al 3% (1ml por litro) durante 5 minutos.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    3
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Recorte de raíces dañadas</p>
+                    <p className="text-sm text-slate-600">Con tijeras esterilizadas, cortar raíces marrones o dañadas. Dejar solo raíces blancas y sanas.</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Por planta:</span>
-                <span className="font-bold text-slate-800">
-                  {(parseFloat(irrigationData.totalWaterNeeds) / plants.length || 0).toFixed(2)} L
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Tiempo bomba:</span>
-                <span className="font-bold text-amber-600">{irrigationData.pumpMinutesPerDay} min/día</span>
+            </div>
+            
+            <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+              <h4 className="font-bold text-emerald-700 mb-3">📏 Paso 2: Preparación de Dados de Lana de Roca 2.5cm</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    1
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Acondicionamiento del pH</p>
+                    <p className="text-sm text-slate-600">Remojar los dados en agua con pH 5.5 durante 24 horas para estabilizar su pH natural (alcalino).</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    2
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Humedecimiento uniforme</p>
+                    <p className="text-sm text-slate-600">Exprimir suavemente para eliminar exceso de agua, dejando el dado húmedo pero no encharcado.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    3
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Creación del orificio</p>
+                    <p className="text-sm text-slate-600">Hacer un orificio central de 1-1.5cm de profundidad usando un lápiz o herramienta similar.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="p-4 bg-white rounded-xl border border-slate-200">
-            <h4 className="font-bold text-emerald-700 mb-4">Programación de Ciclos</h4>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Ciclos por día:</span>
-                <span className="text-2xl font-bold text-emerald-600">{irrigationData.cyclesPerDay}</span>
+          <div className="space-y-4">
+            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+              <h4 className="font-bold text-amber-700 mb-3">🌿 Paso 3: Inserción y Colocación Correcta</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    1
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Inserción de la plántula</p>
+                    <p className="text-sm text-slate-600">Colocar las raíces en el orificio, asegurando que el cuello de la planta quede justo en la superficie del dado.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    2
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Sujeción suave</p>
+                    <p className="text-sm text-slate-600">Apretar suavemente el dado alrededor del tallo para fijar la planta, sin aplastar el tejido vegetal.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    3
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Colocación en la cesta</p>
+                    <p className="text-sm text-slate-600">Insertar el dado en la cesta de la torre, asegurando que quede firme pero sin comprimirlo excesivamente.</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Minutos por ciclo:</span>
-                <span className="font-bold text-slate-800">{irrigationData.minutesPerCycle} min</span>
+            </div>
+            
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+              <h4 className="font-bold text-purple-700 mb-3">🎯 Paso 4: Consideraciones Especiales para Torre Vertical</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    1
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Orientación de las raíces</p>
+                    <p className="text-sm text-slate-600">Asegurar que las raíces apunten hacia abajo, facilitando su crecimiento hacia el flujo de nutrientes.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    2
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Espaciado correcto</p>
+                    <p className="text-sm text-slate-600">Dejar al menos 2cm entre el borde del dado y la pared de la cesta para permitir expansión radicular.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
+                    3
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700">Ajuste inicial de EC SEGURO</p>
+                    <p className="text-sm text-slate-600">Usar EC baja (600-800 µS/cm) durante los primeros 3-5 días tras el trasplante.</p>
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                  <p className="text-sm font-bold text-blue-700">💡 Consejo Pro Seguro:</p>
+                  <p className="text-sm text-blue-800">
+                    Los primeros 2 días mantener las plántulas en ambiente con humedad alta (70-80%) para reducir estrés del trasplante.
+                  </p>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-700">Frecuencia:</span>
-                <span className="font-bold text-blue-600">Cada 2 horas (luz)</span>
-              </div>
             </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="mt-8 p-6 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl border-2 border-cyan-200">
-        <h3 className="font-bold text-cyan-800 mb-4">📋 Recomendaciones de Riego</h3>
-        <div className="space-y-3">
-          {irrigationData.recommendations.map((rec, index) => (
-            <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg">
-              <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold">
-                {index + 1}
-              </div>
-              <p className="text-slate-700">{rec}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <div className="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200">
-        <h3 className="font-bold text-amber-800 mb-4">🌡️ Factores Climáticos Aplicados</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-3 bg-white rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-700">Temperatura:</span>
-              <span className="font-bold text-amber-600">{measurements.manualTemp}°C</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              {parseFloat(measurements.manualTemp) > 25 ? "Aumenta riego +30%" :
-               parseFloat(measurements.manualTemp) > 20 ? "Aumenta riego +10%" :
-               parseFloat(measurements.manualTemp) < 15 ? "Reduce riego -20%" :
-               "Condición normal"}
-            </p>
-          </div>
-          
-          <div className="p-3 bg-white rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-700">Humedad:</span>
-              <span className="font-bold text-cyan-600">{measurements.manualHumidity}%</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              {parseFloat(measurements.manualHumidity) < 40 ? "Aumenta riego +20%" :
-               parseFloat(measurements.manualHumidity) > 70 ? "Reduce riego -10%" :
-               "Condición ideal"}
-            </p>
-          </div>
-          
-          <div className="p-3 bg-white rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-700">Estación:</span>
-              <span className="font-bold text-emerald-600">
-                {season === "summer" ? "Verano" :
-                 season === "winter" ? "Invierno" :
-                 "Primavera/Otoño"}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              {season === "summer" ? "Aumenta riego +40%" :
-               season === "winter" ? "Reduce riego -30%" :
-               "Condición normal"}
-            </p>
-          </div>
-        </div>
-      </div>
-    </Card>
-  </div>
-);
-
-const TipsTab = () => (
-  <div className="space-y-8 animate-fade-in">
-    <div>
-      <h2 className="text-2xl font-bold text-slate-800">Consejos y Mejores Prácticas</h2>
-      <p className="text-slate-600">Aprende a optimizar tu sistema hidropónico</p>
-    </div>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-            <Calculator className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Cálculo EC Escalonado</h3>
-            <p className="text-sm text-slate-600">3 métodos inteligentes</p>
           </div>
         </div>
         
-        <div className="space-y-4">
-          <div className="p-3 bg-emerald-50 rounded-lg">
-            <p className="text-sm text-emerald-800">
-              <strong>Método escalonado:</strong> Da más peso a plantas maduras. Ideal cuando hay plantas en diferentes etapas.
-            </p>
-          </div>
-          
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Método promedio:</strong> Simple y efectivo cuando todas las plantas están en etapas similares.
-            </p>
-          </div>
-          
-          <div className="p-3 bg-purple-50 rounded-lg">
-            <p className="text-sm text-purple-800">
-              <strong>Método conservador:</strong> Usa el EC más bajo. Ideal para plántulas o plantas sensibles.
-            </p>
+        <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
+          <h4 className="font-bold text-slate-700 mb-3">⏰ Cronología Recomendada con EC Seguro</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-3 bg-white rounded-lg">
+              <p className="font-bold text-cyan-700">Día 1</p>
+              <p className="text-sm text-slate-600">Preparación dados y limpieza plántulas</p>
+              <p className="text-xs text-cyan-600">EC: 600 µS/cm</p>
+            </div>
+            <div className="p-3 bg-white rounded-lg">
+              <p className="font-bold text-emerald-700">Día 2-5</p>
+              <p className="text-sm text-slate-600">Trasplante y adaptación</p>
+              <p className="text-xs text-emerald-600">EC: 600-800 µS/cm</p>
+            </div>
+            <div className="p-3 bg-white rounded-lg">
+              <p className="font-bold text-amber-700">Día 6+</p>
+              <p className="text-sm text-slate-600">Crecimiento progresivo</p>
+              <p className="text-xs text-amber-600">EC: +100/semana hasta 1500</p>
+            </div>
           </div>
         </div>
       </Card>
       
+      {/* Sección de Problemas y Soluciones */}
       <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-            <Filter className="text-white" size={24} />
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center">
+            <AlertOctagonIcon className="text-white" size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800">Agua de Ósmosis</h3>
-            <p className="text-sm text-slate-600">Protocolo especial</p>
+            <h3 className="font-bold text-slate-800">Diagnóstico Rápido de Problemas - EC Optimizado</h3>
+            <p className="text-slate-600">Identifica y soluciona problemas comunes con valores seguros</p>
           </div>
         </div>
         
-        <div className="space-y-4">
-          <div className="p-3 bg-cyan-50 rounded-lg">
-            <p className="text-sm text-cyan-800">
-              <strong>CalMag obligatorio:</strong> El agua de ósmosis no tiene calcio ni magnesio. Añadir siempre antes de los nutrientes.
-            </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl border-2 border-red-200">
+              <h4 className="font-bold text-red-700 mb-2">🍃 Hojas Amarillas</h4>
+              <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Deficiencia de nitrógeno o pH alto</p>
+              <p className="text-sm text-slate-700"><strong>Solución:</strong> Ajustar pH a 6.0 y aumentar AQUA VEGA gradualmente</p>
+              <p className="text-xs text-red-600 mt-1"><strong>EC seguro:</strong> Aumentar a 1000-1200 µS/cm</p>
+            </div>
+            
+            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+              <h4 className="font-bold text-amber-700 mb-2">🔥 Puntas Quemadas</h4>
+              <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Exceso de nutrientes (EC &gt;1500 µS/cm)</p>
+              <p className="text-sm text-slate-700"><strong>Solución:</strong> Diluir con agua pura hasta EC 1200-1300</p>
+              <p className="text-xs text-amber-600 mt-1"><strong>EC seguro:</strong> Nunca superar 1500 µS/cm</p>
+            </div>
           </div>
           
-          <div className="p-3 bg-amber-50 rounded-lg">
-            <p className="text-sm text-amber-800">
-              <strong>pH inestable:</strong> El agua pura tiene bajo poder tampón. Monitorizar pH cada 12 horas.
-            </p>
-          </div>
-          
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Ventaja:</strong> Base perfectamente conocida (EC 0). Control total sobre los nutrientes.
-            </p>
-          </div>
-        </div>
-      </Card>
-      
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-            <TreePine className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">6 Variedades de Lechuga</h3>
-            <p className="text-sm text-slate-600">Parámetros específicos</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-3 bg-cyan-50 rounded-lg">
-            <p className="text-sm text-cyan-800">
-              <strong>Iceberg:</strong> Sensible al exceso de sales. Usar EC conservador.
-            </p>
-          </div>
-          
-          <div className="p-3 bg-purple-50 rounded-lg">
-            <p className="text-sm text-purple-800">
-              <strong>Lollo Rosso:</strong> Color intenso con EC algo más alta.
-            </p>
-          </div>
-          
-          <div className="p-3 bg-red-50 rounded-lg">
-            <p className="text-sm text-red-800">
-              <strong>Hoja de Roble Rojo:</strong> Crecimiento rápido, tolera EC alta.
-            </p>
-          </div>
-        </div>
-      </Card>
-      
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-            <FlaskConical className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Nutrición AQUA VEGA</h3>
-            <p className="text-sm text-slate-600">AQUA VEGA A+B</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-3 bg-emerald-50 rounded-lg">
-            <p className="text-sm text-emerald-800">
-              <strong>Orden correcto:</strong> Agua → CalMag → AQUA VEGA A → Mezclar → AQUA VEGA B → Mezclar → pH-.
-            </p>
-          </div>
-          
-          <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Dosificación:</strong> Partiendo de EC 0 (ósmosis) usar dosis completas. Para agua con minerales, restar EC base.
-            </p>
-          </div>
-          
-          <div className="p-3 bg-purple-50 rounded-lg">
-            <p className="text-sm text-purple-800">
-              <strong>pH objetivo:</strong> 6.0 para máxima absorción de nutrientes en lechugas.
-            </p>
+          <div className="space-y-4">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+              <h4 className="font-bold text-blue-700 mb-2">💧 Raíces Marrones</h4>
+              <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Podredumbre radicular (temperatura &gt;25°C)</p>
+              <p className="text-sm text-slate-700"><strong>Solución:</strong> Bajar temperatura a 20°C, añadir oxígeno, reducir EC</p>
+              <p className="text-xs text-blue-600 mt-1"><strong>EC seguro:</strong> Reducir a 800-1000 µS/cm temporalmente</p>
+            </div>
+            
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+              <h4 className="font-bold text-purple-700 mb-2">🐌 Crecimiento Lento</h4>
+              <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Temperatura baja o EC muy baja</p>
+              <p className="text-sm text-slate-700"><strong>Solución:</strong> Aumentar temperatura a 22°C, incrementar EC gradualmente</p>
+              <p className="text-xs text-purple-600 mt-1"><strong>EC seguro:</strong> Aumentar 100 µS/cm cada 3 días</p>
+            </div>
           </div>
         </div>
       </Card>
     </div>
-  </div>
-);
-
-const ProfessionalTipsTab = () => (
-  <div className="space-y-8 animate-fade-in">
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Consejos Profesionales</h2>
-        <p className="text-slate-600">Técnicas avanzadas para cultivo hidropónico</p>
-      </div>
-      <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white">
-        Nivel: Avanzado
-      </Badge>
-    </div>
-    
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Consejo 1 */}
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
-            <Brain className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Optimización de EC</h3>
-            <p className="text-sm text-slate-600">Técnicas profesionales</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-4 bg-blue-50 rounded-xl">
-            <h4 className="font-bold text-blue-700 mb-2">🔬 EC Dinámica</h4>
-            <p className="text-sm text-slate-700">
-              Ajusta la EC según la tasa de absorción de agua. Si las plantas beben más agua que nutrientes (EC sube), reduce la concentración.
-            </p>
-          </div>
-          
-          <div className="p-4 bg-cyan-50 rounded-xl">
-            <h4 className="font-bold text-cyan-700 mb-2">📊 Monitorización Continua</h4>
-            <p className="text-sm text-slate-700">
-              Instala sensores de EC continuos para detectar tendencias antes de que se conviertan en problemas.
-            </p>
-          </div>
-          
-          <div className="p-4 bg-purple-50 rounded-xl">
-            <h4 className="font-bold text-purple-700 mb-2">🌡️ EC vs Temperatura</h4>
-            <p className="text-sm text-slate-700">
-              En temperaturas altas (&gt;25°C), reduce la EC un 15-20% para compensar la mayor transpiración.
-            </p>
-          </div>
-        </div>
-      </Card>
-      
-      {/* Consejo 2 */}
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-            <FlaskConical className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Gestión de Nutrientes</h3>
-            <p className="text-sm text-slate-600">AQUA VEGA profesional</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-4 bg-emerald-50 rounded-xl">
-            <h4 className="font-bold text-emerald-700 mb-2">⚗️ Mezcla Perfecta</h4>
-            <p className="text-sm text-slate-700">
-              Siempre añadir AQUA VEGA A primero, mezclar 2 minutos, luego B. Nunca mezclar A y B directamente.
-            </p>
-          </div>
-          
-          <div className="p-4 bg-green-50 rounded-xl">
-            <h4 className="font-bold text-green-700 mb-2">💧 Prevención de Precipitados</h4>
-            <p className="text-sm text-slate-700">
-              Mantener pH entre 5.8-6.2 para evitar precipitación de calcio. Si el agua se enturbia, ajustar pH inmediatamente.
-            </p>
-          </div>
-          
-          <div className="p-4 bg-lime-50 rounded-xl">
-            <h4 className="font-bold text-lime-700 mb-2">🔄 Renovación de Solución</h4>
-            <p className="text-sm text-slate-700">
-              Cambiar completamente la solución cada 2-3 semanas para evitar acumulación de sales y desequilibrios.
-            </p>
-          </div>
-        </div>
-      </Card>
-      
-      {/* Consejo 3 */}
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-            <Thermometer className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Control de Temperatura</h3>
-            <p className="text-sm text-slate-600">Técnicas avanzadas</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-4 bg-amber-50 rounded-xl">
-            <h4 className="font-bold text-amber-700 mb-2">❄️ Enfriamiento Pasivo</h4>
-            <p className="text-sm text-slate-700">
-              Usar botellas de hielo en el depósito durante olas de calor. Cambiar cada 6 horas para mantener 18-22°C.
-            </p>
-          </div>
-          
-          <div className="p-4 bg-orange-50 rounded-xl">
-            <h4 className="font-bold text-orange-700 mb-2">🌊 Oxigenación</h4>
-            <p className="text-sm text-slate-700">
-              En agua caliente, el oxígeno disminuye. Añadir piedra difusora adicional o aumentar frecuencia de bombeo.
-            </p>
-          </div>
-          
-          <div className="p-4 bg-red-50 rounded-xl">
-            <h4 className="font-bold text-red-700 mb-2">⚠️ Temperaturas Críticas</h4>
-            <p className="text-sm text-slate-700">
-              Por encima de 28°C: riesgo de Pythium. Por debajo de 15°C: crecimiento muy lento. Monitorizar continuamente.
-            </p>
-          </div>
-        </div>
-      </Card>
-      
-      {/* Consejo 4 */}
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-            <GitCompare className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Sistema Escalonado</h3>
-            <p className="text-sm text-slate-600">Optimización 5-5-5</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-4 bg-purple-50 rounded-xl">
-            <h4 className="font-bold text-purple-700 mb-2">🌱 Rotación Perfecta</h4>
-            <p className="text-sm text-slate-700">
-              Rotar plantas cada 7 días exactamente. Mantener ciclo continuo para cosecha semanal constante.
-            </p>
-          </div>
-          
-          <div className="p-4 bg-pink-50 rounded-xl">
-            <h4 className="font-bold text-pink-700 mb-2">🎯 EC por Etapa</h4>
-            <p className="text-sm text-slate-700">
-              Plántulas: EC baja (800-1000). Crecimiento: EC media (1200-1400). Maduración: EC alta (1400-1800).
-            </p>
-          </div>
-          
-          <div className="p-4 bg-rose-50 rounded-xl">
-            <h4 className="font-bold text-rose-700 mb-2">📈 Optimización de Espacio</h4>
-            <p className="text-sm text-slate-700">
-              Variedades de hoja pequeña en niveles altos, variedades grandes en niveles bajos. Maximiza producción.
-            </p>
-          </div>
-        </div>
-      </Card>
-    </div>
-    
-    {/* NUEVA SECCIÓN: Preparación de Plántulas y Lana de Roca */}
-    <Card className="p-6 rounded-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-          <Plant className="text-white" size={24} />
-        </div>
-        <div>
-          <h3 className="font-bold text-slate-800">🌱 Preparación Profesional de Plántulas y Lana de Roca</h3>
-          <p className="text-slate-600">Protocolo completo desde la germinación hasta la torre</p>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
-            <h4 className="font-bold text-cyan-700 mb-3">🧼 Paso 1: Limpieza y Preparación de Plántulas</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  1
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Limpieza de raíces</p>
-                  <p className="text-sm text-slate-600">Enjuagar suavemente las raíces con agua templada para eliminar restos de tierra o sustrato.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  2
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Desinfección (opcional pero recomendado)</p>
-                  <p className="text-sm text-slate-600">Sumergir raíces en solución de agua oxigenada al 3% (1ml por litro) durante 5 minutos.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  3
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Recorte de raíces dañadas</p>
-                  <p className="text-sm text-slate-600">Con tijeras esterilizadas, cortar raíces marrones o dañadas. Dejar solo raíces blancas y sanas.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-            <h4 className="font-bold text-emerald-700 mb-3">📏 Paso 2: Preparación de Dados de Lana de Roca 2.5cm</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  1
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Acondicionamiento del pH</p>
-                  <p className="text-sm text-slate-600">Remojar los dados en agua con pH 5.5 durante 24 horas para estabilizar su pH natural (alcalino).</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  2
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Humedecimiento uniforme</p>
-                  <p className="text-sm text-slate-600">Exprimir suavemente para eliminar exceso de agua, dejando el dado húmedo pero no encharcado.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  3
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Creación del orificio</p>
-                  <p className="text-sm text-slate-600">Hacer un orificio central de 1-1.5cm de profundidad usando un lápiz o herramienta similar.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-            <h4 className="font-bold text-amber-700 mb-3">🌿 Paso 3: Inserción y Colocación Correcta</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  1
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Inserción de la plántula</p>
-                  <p className="text-sm text-slate-600">Colocar las raíces en el orificio, asegurando que el cuello de la planta quede justo en la superficie del dado.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  2
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Sujeción suave</p>
-                  <p className="text-sm text-slate-600">Apretar suavemente el dado alrededor del tallo para fijar la planta, sin aplastar el tejido vegetal.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  3
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Colocación en la cesta</p>
-                  <p className="text-sm text-slate-600">Insertar el dado en la cesta de la torre, asegurando que quede firme pero sin comprimirlo excesivamente.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-            <h4 className="font-bold text-purple-700 mb-3">🎯 Paso 4: Consideraciones Especiales para Torre Vertical</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  1
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Orientación de las raíces</p>
-                  <p className="text-sm text-slate-600">Asegurar que las raíces apunten hacia abajo, facilitando su crecimiento hacia el flujo de nutrientes.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  2
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Espaciado correcto</p>
-                  <p className="text-sm text-slate-600">Dejar al menos 2cm entre el borde del dado y la pared de la cesta para permitir expansión radicular.</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-2">
-                <div className="w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
-                  3
-                </div>
-                <div>
-                  <p className="font-bold text-slate-700">Ajuste inicial de EC</p>
-                  <p className="text-sm text-slate-600">Usar EC más baja (800-1000 µS/cm) durante los primeros 3-5 días tras el trasplante.</p>
-                </div>
-              </div>
-              
-              <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-                <p className="text-sm font-bold text-blue-700">💡 Consejo Pro:</p>
-                <p className="text-sm text-blue-800">
-                  Los primeros 2 días mantener las plántulas en ambiente con humedad alta (70-80%) para reducir estrés del trasplante.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
-        <h4 className="font-bold text-slate-700 mb-3">⏰ Cronología Recomendada</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-3 bg-white rounded-lg">
-            <p className="font-bold text-cyan-700">Día 1</p>
-            <p className="text-sm text-slate-600">Preparación dados y limpieza plántulas</p>
-          </div>
-          <div className="p-3 bg-white rounded-lg">
-            <p className="font-bold text-emerald-700">Día 2</p>
-            <p className="text-sm text-slate-600">Trasplante a dados y colocación en nivel 1</p>
-          </div>
-          <div className="p-3 bg-white rounded-lg">
-            <p className="font-bold text-amber-700">Días 3-5</p>
-            <p className="text-sm text-slate-600">EC baja y monitoreo de adaptación</p>
-          </div>
-        </div>
-      </div>
-    </Card>
-    
-    {/* Sección de Problemas y Soluciones */}
-    <Card className="p-6 rounded-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center">
-          <AlertOctagonIcon className="text-white" size={24} />
-        </div>
-        <div>
-          <h3 className="font-bold text-slate-800">Diagnóstico Rápido de Problemas</h3>
-          <p className="text-slate-600">Identifica y soluciona problemas comunes</p>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl border-2 border-red-200">
-            <h4 className="font-bold text-red-700 mb-2">🍃 Hojas Amarillas</h4>
-            <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Deficiencia de nitrógeno o pH alto</p>
-            <p className="text-sm text-slate-700"><strong>Solución:</strong> Ajustar pH a 6.0 y aumentar AQUA VEGA</p>
-          </div>
-          
-          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-            <h4 className="font-bold text-amber-700 mb-2">🔥 Puntas Quemadas</h4>
-            <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Exceso de nutrientes (EC muy alta)</p>
-            <p className="text-sm text-slate-700"><strong>Solución:</strong> Diluir con agua pura hasta EC 1200</p>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-            <h4 className="font-bold text-blue-700 mb-2">💧 Raíces Marrones</h4>
-            <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Podredumbre radicular (temperatura alta)</p>
-            <p className="text-sm text-slate-700"><strong>Solución:</strong> Bajar temperatura a 20°C, añadir oxígeno</p>
-          </div>
-          
-          <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-            <h4 className="font-bold text-purple-700 mb-2">🐌 Crecimiento Lento</h4>
-            <p className="text-sm text-slate-700 mb-2"><strong>Causa:</strong> Temperatura baja o luz insuficiente</p>
-            <p className="text-sm text-slate-700"><strong>Solución:</strong> Aumentar temperatura a 22°C, verificar iluminación</p>
-          </div>
-        </div>
-      </div>
-    </Card>
-  </div>
-);
+  );
 
   // =================== RENDER PRINCIPAL ===================
 
@@ -4610,8 +4793,8 @@ const ProfessionalTipsTab = () => (
                 <Sprout className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="font-bold text-slate-800">HydroCaru</h1>
-                <p className="text-xs text-slate-600">Cálculo EC Escalonado • 6 Variedades • 3 Métodos</p>
+                <h1 className="font-bold text-slate-800">HydroCaru Optimizado</h1>
+                <p className="text-xs text-slate-600">Cálculo EC Seguro • 6 Variedades • Valores Optimizados</p>
               </div>
             </div>
             
@@ -4630,9 +4813,9 @@ const ProfessionalTipsTab = () => (
                           totalVol: "20", 
                           currentVol: "20", 
                           ph: "6.0", 
-                          ec: "1200",
+                          ec: "1000",
                           temp: "22", 
-                          targetEC: "1400",
+                          targetEC: "1100",
                           targetPH: "6.0",
                           waterType: "bajo_mineral",
                           hasHeater: true,
@@ -4643,7 +4826,7 @@ const ProfessionalTipsTab = () => (
                         });
                         setMeasurements({
                           manualPH: "6.0",
-                          manualEC: "1200",
+                          manualEC: "1000",
                           manualTemp: "22",
                           manualWaterTemp: "22",
                           manualVolume: "20",
@@ -4670,7 +4853,7 @@ const ProfessionalTipsTab = () => (
                       ? `${alerts.filter(a => a.priority === 1).length} ALERTAS` 
                       : alerts.filter(a => a.priority === 2).length > 0
                       ? `${alerts.filter(a => a.priority === 2).length} advertencias`
-                      : "Todo OK"}
+                      : "✅ Sistema OK"}
                   </Badge>
                 </>
               ) : (
@@ -4684,7 +4867,7 @@ const ProfessionalTipsTab = () => (
         </div>
       </header>
 
-      {/* Navegación por pestañas - MODIFICADO para centrar iconos y colores */}
+      {/* Navegación por pestañas */}
       {step >= 5 && (
         <div className="sticky top-16 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
           <div className="container mx-auto p-4 max-w-6xl">
@@ -4693,13 +4876,13 @@ const ProfessionalTipsTab = () => (
                 { 
                   key: "dashboard", 
                   icon: <Home size={20} />, 
-                  title: "Panel de Control",
+                  title: "Panel",
                   color: "from-blue-500 to-cyan-600"
                 },
                 { 
                   key: "tower", 
                   icon: <TreePine size={20} />, 
-                  title: "Gestión de Torre",
+                  title: "Torre",
                   color: "from-emerald-500 to-green-600"
                 },
                 { 
@@ -4735,7 +4918,7 @@ const ProfessionalTipsTab = () => (
                 { 
                   key: "proTips", 
                   icon: <Brain size={20} />, 
-                  title: "Consejos Pro",
+                  title: "Consejos",
                   color: "from-violet-500 to-purple-600"
                 },
               ].map((item) => (
@@ -4759,8 +4942,7 @@ const ProfessionalTipsTab = () => (
           </div>
         </div>
       )
-
-}
+      }
 
       <main className="container mx-auto p-4 max-w-6xl">
         {step < 5 ? (
@@ -4863,7 +5045,7 @@ const ProfessionalTipsTab = () => (
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="text-sm text-slate-600">
-              HydroCaru • Cálculo EC Escalonado • 6 Variedades • 3 Métodos • AQUA VEGA
+              HydroCaru Optimizado • EC Seguro para Lechugas • 6 Variedades • Valores 600-1500 µS/cm
             </div>
             
             <div className="flex items-center gap-4">
@@ -4876,7 +5058,7 @@ const ProfessionalTipsTab = () => (
                     <span className="text-sm text-slate-600">
                       {alerts.filter(a => a.priority === 1).length > 0 
                         ? `${alerts.filter(a => a.priority === 1).length} alertas críticas` 
-                        : "Sistema estable"}
+                        : "✅ Sistema estable"}
                     </span>
                   </div>
                   
