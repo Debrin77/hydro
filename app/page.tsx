@@ -819,15 +819,21 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
 // COMPONENTES REUTILIZABLES
 // ============================================================================
 
-const StagedECCalculator = ({ plants, waterType, onECCalculated }) => {
+const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod, onMethodChange }) => {
   const ecMethods = calculateSmartEC(plants, waterType);
   const ecByLevel = calculateECByLevel(plants, waterType);
   
+  // Usar el método seleccionado manualmente o el automático
+  const currentMethod = selectedMethod || ecMethods.method;
+  const currentEC = selectedMethod 
+    ? ecMethods.allMethods[selectedMethod]?.targetEC || ecMethods.targetEC
+    : ecMethods.targetEC;
+  
   useEffect(() => {
     if (onECCalculated) {
-      onECCalculated(ecMethods.targetEC);
+      onECCalculated(currentEC);
     }
-  }, [ecMethods.targetEC, onECCalculated]);
+  }, [currentEC, onECCalculated]);
   
   return (
     <Card className="p-6 rounded-2xl mb-8">
@@ -844,8 +850,13 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="p-4 bg-gradient-to-b from-blue-50 to-white rounded-xl border-2 border-blue-200">
           <h4 className="font-bold text-blue-700 mb-2">Método Seleccionado</h4>
-          <div className="text-3xl font-bold text-blue-600 mb-2">{ecMethods.targetEC} µS/cm</div>
-          <Badge className="bg-blue-100 text-blue-800">{ecMethods.method}</Badge>
+          <div className="text-3xl font-bold text-blue-600 mb-2">{currentEC} µS/cm</div>
+          <Badge className="bg-blue-100 text-blue-800">
+            {selectedMethod || ecMethods.method}
+          </Badge>
+          {selectedMethod && selectedMethod !== ecMethods.method && (
+            <p className="text-xs text-slate-500 mt-1">Modificado manualmente</p>
+          )}
         </div>
         
         <div className="p-4 bg-gradient-to-b from-green-50 to-white rounded-xl border-2 border-green-200">
@@ -896,33 +907,61 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated }) => {
       
       <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
         <h4 className="font-bold text-blue-700 mb-3">Comparación de Métodos</h4>
+        <p className="text-sm text-slate-600 mb-4">Selecciona manualmente el método de cálculo o deja que el sistema elija automáticamente</p>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className={`p-3 rounded-lg ${ecMethods.method === "escalonado" ? 'bg-blue-100 border-2 border-blue-300' : 'bg-white border border-slate-200'}`}>
+          <div 
+            className={`p-3 rounded-lg cursor-pointer transition-all hover:scale-[1.02] ${currentMethod === "escalonado" ? 'bg-blue-100 border-2 border-blue-300' : 'bg-white border border-slate-200 hover:border-blue-300'}`}
+            onClick={() => onMethodChange && onMethodChange("escalonado")}
+          >
             <div className="flex items-center justify-between mb-2">
               <p className="font-bold text-slate-800">Escalonado</p>
-              {ecMethods.method === "escalonado" && <Check className="text-blue-600" size={18} />}
+              {currentMethod === "escalonado" && <Check className="text-blue-600" size={18} />}
             </div>
             <p className="text-sm text-slate-600 mb-3">Peso por nivel de desarrollo</p>
             <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.escalonado?.targetEC || "1200"} µS/cm</p>
           </div>
           
-          <div className={`p-3 rounded-lg ${ecMethods.method === "promedio" ? 'bg-blue-100 border-2 border-blue-300' : 'bg-white border border-slate-200'}`}>
+          <div 
+            className={`p-3 rounded-lg cursor-pointer transition-all hover:scale-[1.02] ${currentMethod === "promedio" ? 'bg-blue-100 border-2 border-blue-300' : 'bg-white border border-slate-200 hover:border-blue-300'}`}
+            onClick={() => onMethodChange && onMethodChange("promedio")}
+          >
             <div className="flex items-center justify-between mb-2">
               <p className="font-bold text-slate-800">Promedio</p>
-              {ecMethods.method === "promedio" && <Check className="text-blue-600" size={18} />}
+              {currentMethod === "promedio" && <Check className="text-blue-600" size={18} />}
             </div>
             <p className="text-sm text-slate-600 mb-3">Media aritmética simple</p>
             <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.promedio?.targetEC || "1200"} µS/cm</p>
           </div>
           
-          <div className={`p-3 rounded-lg ${ecMethods.method === "conservador" ? 'bg-blue-100 border-2 border-blue-300' : 'bg-white border border-slate-200'}`}>
+          <div 
+            className={`p-3 rounded-lg cursor-pointer transition-all hover:scale-[1.02] ${currentMethod === "conservador" ? 'bg-blue-100 border-2 border-blue-300' : 'bg-white border border-slate-200 hover:border-blue-300'}`}
+            onClick={() => onMethodChange && onMethodChange("conservador")}
+          >
             <div className="flex items-center justify-between mb-2">
               <p className="font-bold text-slate-800">Conservador</p>
-              {ecMethods.method === "conservador" && <Check className="text-blue-600" size={18} />}
+              {currentMethod === "conservador" && <Check className="text-blue-600" size={18} />}
             </div>
             <p className="text-sm text-slate-600 mb-3">Mínimo de las plantas</p>
             <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.conservador?.targetEC || "1200"} µS/cm</p>
           </div>
+        </div>
+        
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-slate-600">
+            {selectedMethod 
+              ? `Método seleccionado manualmente: ${selectedMethod}` 
+              : `Método automático recomendado: ${ecMethods.method}`}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onMethodChange && onMethodChange(null)}
+            disabled={!selectedMethod}
+          >
+            <RotateCcw size={14} className="mr-1" />
+            Restaurar automático
+          </Button>
         </div>
       </div>
     </Card>
@@ -1066,6 +1105,280 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
 };
 
 // ============================================================================
+// COMPONENTES PARA MODALES
+// ============================================================================
+
+const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
+  const [newSeedlings, setNewSeedlings] = useState([]);
+  const [selectedVariety, setSelectedVariety] = useState("Iceberg");
+  const [selectedPositions, setSelectedPositions] = useState([]);
+  
+  // Posiciones disponibles en el nivel 1 (1-5)
+  const availablePositions = Array.from({ length: 5 }, (_, i) => i + 1);
+  
+  // Obtener posiciones ocupadas actualmente
+  const occupiedPositions = plants.filter(p => p.l === 1).map(p => p.p);
+  
+  // Posiciones libres en el nivel 1
+  const freePositions = availablePositions.filter(pos => !occupiedPositions.includes(pos));
+  
+  const addSeedling = () => {
+    if (newSeedlings.length >= 5) {
+      alert("Ya has seleccionado 5 plántulas (máximo para el nivel 1)");
+      return;
+    }
+    
+    // Encontrar la siguiente posición disponible
+    let nextPosition = 1;
+    while (selectedPositions.includes(nextPosition) || newSeedlings.some(s => s.position === nextPosition)) {
+      nextPosition++;
+      if (nextPosition > 5) break;
+    }
+    
+    if (nextPosition > 5) {
+      alert("No hay posiciones disponibles en el nivel 1");
+      return;
+    }
+    
+    const newSeedling = {
+      id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      variety: selectedVariety,
+      position: nextPosition,
+      level: 1
+    };
+    
+    setNewSeedlings([...newSeedlings, newSeedling]);
+    setSelectedPositions([...selectedPositions, nextPosition]);
+  };
+  
+  const removeSeedling = (id) => {
+    const seedling = newSeedlings.find(s => s.id === id);
+    if (seedling) {
+      setNewSeedlings(newSeedlings.filter(s => s.id !== id));
+      setSelectedPositions(selectedPositions.filter(p => p !== seedling.position));
+    }
+  };
+  
+  const handleConfirm = () => {
+    if (newSeedlings.length === 0) {
+      alert("Debes añadir al menos una plántula para el nivel 1");
+      return;
+    }
+    
+    onConfirm(newSeedlings);
+    setNewSeedlings([]);
+    setSelectedPositions([]);
+    onClose();
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="p-6 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="font-bold text-slate-800 text-xl">Rotación de Niveles y Nuevas Plántulas</h3>
+            <p className="text-slate-600">Selecciona las 5 nuevas plántulas para el nivel 1</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="space-y-4">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+              <h4 className="font-bold text-blue-700 mb-3">📋 Proceso de Rotación</h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-rose-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    1
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800">Nivel 3 → Cosecha</p>
+                    <p className="text-sm text-slate-600">Plantas maduras se cosechan</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    2
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800">Nivel 2 → Nivel 3</p>
+                    <p className="text-sm text-slate-600">Plantas en crecimiento pasan a maduración</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    3
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800">Nivel 1 → Nivel 2</p>
+                    <p className="text-sm text-slate-600">Plántulas pasan a crecimiento</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    4
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800">Añadir nuevas plántulas</p>
+                    <p className="text-sm text-slate-600">Nuevas plantas en nivel 1 (5 máximo)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+              <h4 className="font-bold text-emerald-700 mb-3">🌱 Seleccionar Nueva Plántula</h4>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Variedad
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.keys(VARIETIES).map(variety => (
+                    <button
+                      key={variety}
+                      type="button"
+                      onClick={() => setSelectedVariety(variety)}
+                      className={`py-2 px-3 rounded-lg text-center text-sm font-medium transition-all ${
+                        selectedVariety === variety 
+                          ? `${VARIETIES[variety].color} text-white`
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {variety}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <Button
+                onClick={addSeedling}
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
+                disabled={newSeedlings.length >= 5}
+              >
+                <Plus className="mr-2" />
+                Añadir Plántula {selectedVariety}
+              </Button>
+              
+              <p className="text-xs text-slate-500 mt-3 text-center">
+                {newSeedlings.length}/5 plántulas seleccionadas
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+              <h4 className="font-bold text-purple-700 mb-3">📊 Resumen de Rotación</h4>
+              
+              <div className="space-y-4">
+                <div className="p-3 bg-white rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-slate-700">Plantas actuales:</span>
+                    <span className="font-bold text-slate-800">{plants.length} plantas</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-700">Después de rotar:</span>
+                    <span className="font-bold text-emerald-600">
+                      {plants.filter(p => p.l !== 3).length + newSeedlings.length} plantas
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-white rounded-lg">
+                  <h5 className="font-bold text-slate-800 mb-2">Nueva distribución:</h5>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Nivel 1 (nuevas):</span>
+                      <span className="font-bold text-cyan-600">{newSeedlings.length} plantas</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Nivel 2 (ex nivel 1):</span>
+                      <span className="font-bold text-green-600">{plants.filter(p => p.l === 1).length} plantas</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Nivel 3 (ex nivel 2):</span>
+                      <span className="font-bold text-emerald-600">{plants.filter(p => p.l === 2).length} plantas</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-white rounded-xl border-2 border-slate-200">
+              <h4 className="font-bold text-slate-800 mb-3">🌿 Plántulas Seleccionadas</h4>
+              
+              {newSeedlings.length === 0 ? (
+                <div className="text-center py-6">
+                  <TreePine className="mx-auto text-slate-300 mb-2" size={32} />
+                  <p className="text-slate-500">No hay plántulas seleccionadas</p>
+                  <p className="text-sm text-slate-400">Añade plántulas usando el botón de la izquierda</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {newSeedlings.map(seedling => (
+                    <div key={seedling.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${VARIETIES[seedling.variety]?.color || 'bg-slate-200'}`}>
+                          <span className="text-white text-xs font-bold">{seedling.position}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-800">{seedling.variety}</p>
+                          <p className="text-xs text-slate-500">Posición {seedling.position} • Nivel 1</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSeedling(seedling.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-between pt-4 border-t border-slate-200">
+          <Button
+            variant="outline"
+            onClick={onClose}
+          >
+            Cancelar
+          </Button>
+          
+          <div className="flex items-center gap-3">
+            <Badge className="bg-amber-100 text-amber-800">
+              {newSeedlings.length} / 5 plántulas
+            </Badge>
+            
+            <Button
+              onClick={handleConfirm}
+              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+              disabled={newSeedlings.length === 0}
+            >
+              <RotateCcw className="mr-2" />
+              Confirmar Rotación
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+// ============================================================================
 // COMPONENTE PRINCIPAL
 // ============================================================================
 
@@ -1080,6 +1393,8 @@ export default function HydroAppFinal() {
   const [selPos, setSelPos] = useState(null);
   const [showWaterSelector, setShowWaterSelector] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showRotationModal, setShowRotationModal] = useState(false);
+  const [selectedECMethod, setSelectedECMethod] = useState(null);
   
   // Configuración del sistema
   const [config, setConfig] = useState({ 
@@ -1154,13 +1469,14 @@ export default function HydroAppFinal() {
             history, 
             lastRot, 
             lastClean,
-            measurements 
+            measurements,
+            selectedECMethod 
           }));
       } catch (error) {
         console.error("Error guardando:", error);
       }
     }
-  }, [plants, config, history, lastRot, lastClean, measurements, step]);
+  }, [plants, config, history, lastRot, lastClean, measurements, step, selectedECMethod]);
 
   // =================== FUNCIONES UTILITARIAS ===================
 
@@ -1173,18 +1489,80 @@ export default function HydroAppFinal() {
   };
 
   const handleRotation = () => {
-    if (confirm("¿ROTAR NIVELES?\n• Nivel 3 → Cosecha\n• Nivel 2 → Nivel 3 (maduración)\n• Nivel 1 → Nivel 2 (crecimiento)\n• Nivel 1 vacío para nuevas plántulas")) {
-      const withoutMature = plants.filter(p => p.l !== 3);
-      const moved = withoutMature.map(p => ({ ...p, l: p.l + 1 }));
-      setPlants(moved);
-      setLastRot(new Date().toISOString());
-      alert("✅ Rotación completada\n\nAhora añade NUEVAS PLÁNTULAS en el nivel 1.");
-      setTab("tower");
-    }
+    setShowRotationModal(true);
+  };
+
+  const handleRotationConfirm = (newSeedlings) => {
+    // 1. Eliminar plantas del nivel 3 (cosecha)
+    const withoutMature = plants.filter(p => p.l !== 3);
+    
+    // 2. Mover plantas del nivel 2 al 3
+    const movedToMature = withoutMature.map(p => {
+      if (p.l === 2) {
+        return { ...p, l: 3 };
+      }
+      return p;
+    });
+    
+    // 3. Mover plantas del nivel 1 al 2
+    const movedToGrowth = movedToMature.map(p => {
+      if (p.l === 1) {
+        return { ...p, l: 2 };
+      }
+      return p;
+    });
+    
+    // 4. Añadir las nuevas plántulas al nivel 1
+    const newPlants = newSeedlings.map(seedling => ({
+      id: seedling.id,
+      l: 1,
+      v: seedling.variety,
+      p: seedling.position,
+      date: new Date().toISOString()
+    }));
+    
+    // 5. Actualizar el estado de plantas
+    setPlants([...movedToGrowth, ...newPlants]);
+    
+    // 6. Actualizar fecha de última rotación
+    setLastRot(new Date().toISOString());
+    
+    // 7. Cerrar modal y mostrar confirmación
+    setShowRotationModal(false);
+    
+    alert(`✅ Rotación completada exitosamente:
+• ${plants.filter(p => p.l === 3).length} plantas cosechadas (nivel 3)
+• ${plants.filter(p => p.l === 2).length} plantas movidas a nivel 3
+• ${plants.filter(p => p.l === 1).length} plantas movidas a nivel 2
+• ${newSeedlings.length} nuevas plántulas añadidas al nivel 1`);
+    
+    setTab("tower");
   };
 
   const handleECCalculated = (ec) => {
     setConfig(prev => ({ ...prev, targetEC: ec }));
+  };
+
+  const handleECMethodChange = (method) => {
+    setSelectedECMethod(method);
+    
+    // Calcular el EC usando el método seleccionado
+    if (method) {
+      let newEC = "1400"; // Valor por defecto
+      
+      if (method === "escalonado") {
+        const result = calculateStagedEC(plants, config.waterType);
+        newEC = result.targetEC;
+      } else if (method === "promedio") {
+        const result = calculateAverageEC(plants, config.waterType);
+        newEC = result.targetEC;
+      } else if (method === "conservador") {
+        const result = calculateConservativeEC(plants, config.waterType);
+        newEC = result.targetEC;
+      }
+      
+      setConfig(prev => ({ ...prev, targetEC: newEC }));
+    }
   };
 
   const saveManualMeasurement = () => {
@@ -2182,6 +2560,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         plants={plants}
         waterType={config.waterType}
         onECCalculated={handleECCalculated}
+        selectedMethod={selectedECMethod}
+        onMethodChange={handleECMethodChange}
       />
       
       {/* Alertas */}
@@ -2924,6 +3304,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       <StagedECCalculator 
         plants={plants}
         waterType={config.waterType}
+        onECCalculated={handleECCalculated}
+        selectedMethod={selectedECMethod}
+        onMethodChange={handleECMethodChange}
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -4267,6 +4650,7 @@ const ProfessionalTipsTab = () => (
                           manualHumidity: "65",
                           lastMeasurement: new Date().toISOString()
                         });
+                        setSelectedECMethod(null);
                         setTab("dashboard");
                       }
                     }}
@@ -4374,7 +4758,9 @@ const ProfessionalTipsTab = () => (
             </div>
           </div>
         </div>
-      )}
+      )
+
+}
 
       <main className="container mx-auto p-4 max-w-6xl">
         {step < 5 ? (
@@ -4464,6 +4850,14 @@ const ProfessionalTipsTab = () => (
         </div>
       )}
 
+      {/* Modal de Rotación */}
+      <RotationModal 
+        isOpen={showRotationModal}
+        onClose={() => setShowRotationModal(false)}
+        onConfirm={handleRotationConfirm}
+        plants={plants}
+      />
+
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 py-3">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -4487,7 +4881,7 @@ const ProfessionalTipsTab = () => (
                   </div>
                   
                   <div className="text-sm text-slate-600">
-                    {plants.length} plantas • EC objetivo: {config.targetEC} µS/cm
+                    {plants.length} plantas • EC objetivo: {config.targetEC} µS/cm • Método: {selectedECMethod || "automático"}
                   </div>
                 </>
               )}
