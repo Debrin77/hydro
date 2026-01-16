@@ -3526,59 +3526,59 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center">
                 <RefreshCw className="text-white" size={24} />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800">Ajuste de pH Optimizado</h3>
-                <p className="text-sm text-slate-600">De {config.ph} a {config.targetPH} - Tolerancia ampliada</p>
-              </div>
             </div>
-            
-            <div className={`p-4 rounded-xl border-2 ${
-              Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.8 
-                ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200' 
-                : Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5
-                ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
-                : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-            }`}>
-              <div className="text-center">
-                <p className="text-sm text-slate-700 mb-3">
-                  pH actual: <span className="font-bold">{config.ph}</span> → 
-                  Objetivo: <span className="font-bold">{config.targetPH}</span>
-                </p>
-                
-                {parseFloat(config.ph) > parseFloat(config.targetPH) + 0.3 ? (
-                  <div>
-                    <div className="text-3xl font-bold text-purple-600 mb-2">
-                      {phAdjustment.phMinus} ml
-                    </div>
-                    <p className="text-lg font-bold text-purple-700">pH- (Ácido)</p>
-                    <p className="text-sm text-slate-600 mt-2">Reducir pH - Ajuste necesario</p>
-                  </div>
-                ) : parseFloat(config.ph) < parseFloat(config.targetPH) - 0.3 ? (
-                  <div>
-                    <div className="text-3xl font-bold text-pink-600 mb-2">
-                      {phAdjustment.phPlus} ml
-                    </div>
-                    <p className="text-lg font-bold text-pink-700">pH+ (Alcalino)</p>
-                    <p className="text-sm text-slate-600 mt-2">Aumentar pH - Ajuste necesario</p>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="text-3xl font-bold text-green-600 mb-2">
-                      0 ml
-                    </div>
-                    <p className="text-lg font-bold text-green-700">✅ pH ÓPTIMO</p>
-                    <p className="text-sm text-slate-600 mt-2">No se requiere ajuste</p>
-                  </div>
-                )}
-              </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Ajuste de pH Optimizado</h3>
+              <p className="text-sm text-slate-600">De {config.ph} a {config.targetPH} - Tolerancia ampliada</p>
             </div>
-          </Card>
+          </div>
           
-          <Card className="p-6 rounded-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <Waves className="text-white" size={24} />
+          <div className={`p-4 rounded-xl border-2 ${
+            Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.8 
+              ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200' 
+              : Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5
+              ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
+              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+          }`}>
+            <div className="text-center">
+              <p className="text-sm text-slate-700 mb-3">
+                pH actual: <span className="font-bold">{config.ph}</span> → 
+                Objetivo: <span className="font-bold">{config.targetPH}</span>
+              </p>
+              
+              {parseFloat(config.ph) > parseFloat(config.targetPH) + 0.3 ? (
+                <div>
+                  <div className="text-3xl font-bold text-purple-600 mb-2">
+                    {phAdjustment.phMinus} ml
+                  </div>
+                  <p className="text-lg font-bold text-purple-700">pH- (Ácido)</p>
+                  <p className="text-sm text-slate-600 mt-2">Reducir pH - Ajuste necesario</p>
+                </div>
+              ) : parseFloat(config.ph) < parseFloat(config.targetPH) - 0.3 ? (
+                <div>
+                  <div className="text-3xl font-bold text-pink-600 mb-2">
+                    {phAdjustment.phPlus} ml
+                  </div>
+                  <p className="text-lg font-bold text-pink-700">pH+ (Alcalino)</p>
+                  <p className="text-sm text-slate-600 mt-2">Aumentar pH - Ajuste necesario</p>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    0 ml
+                  </div>
+                  <p className="text-lg font-bold text-green-700">✅ pH ÓPTIMO</p>
+                  <p className="text-sm text-slate-600 mt-2">No se requiere ajuste</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <Waves className="text-white" size={24} />
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Calculadora de CalMag</h3>
@@ -3612,7 +3612,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               )}
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
@@ -3795,7 +3795,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Calendario de Mantenimiento</h2>
-            <p className="text-slate-600">Planificación de tareas del sistema</p>
+            <p className="text-slate-600">Planificación de tareas del sistema - Optimizado para móvil</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -3820,16 +3820,16 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Calendario Inteligente</h3>
-              <p className="text-sm text-slate-600">Tareas programadas automáticamente según tus plantas</p>
+              <p className="text-sm text-slate-600">Tareas programadas automáticamente según tus plantas - Optimizado para iPhone</p>
             </div>
           </div>
           
-          {/* Días de la semana */}
+          {/* Días de la semana - Optimizado para móvil */}
           <div className="grid grid-cols-7 gap-1 mb-4">
             {dayNames.map((day, index) => (
               <div 
                 key={day} 
-                className={`text-center font-bold py-3 rounded-lg ${
+                className={`text-center font-bold py-2 rounded-lg text-xs sm:text-sm ${
                   index >= 5 
                     ? "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700" 
                     : "bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700"
@@ -3840,7 +3840,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             ))}
           </div>
           
-          {/* Días del mes */}
+          {/* Días del mes - Optimizado para iPhone */}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((day, index) => {
               const isToday = day.date.toDateString() === now.toDateString();
@@ -3850,7 +3850,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               return (
                 <div
                   key={index}
-                  className={`min-h-28 p-2 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
+                  className={`min-h-[70px] sm:min-h-28 p-1 sm:p-2 rounded-lg border-2 transition-all duration-200 ${
                     isToday
                       ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg'
                       : !day.isCurrentMonth
@@ -3860,8 +3860,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                       : 'border-slate-200 bg-white'
                   } ${hasEvents ? 'shadow-sm' : ''}`}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className={`text-lg font-bold ${
+                  <div className="flex justify-between items-start mb-1">
+                    <span className={`text-sm sm:text-lg font-bold ${
                       isToday 
                         ? 'text-blue-600' 
                         : !day.isCurrentMonth 
@@ -3872,20 +3872,20 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     </span>
                     
                     {isToday && (
-                      <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs px-2">
+                      <Badge className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs px-1 sm:px-2">
                         Hoy
                       </Badge>
                     )}
                   </div>
                   
-                  {/* Eventos */}
-                  <div className="space-y-1">
+                  {/* Eventos - Optimizados para pantallas pequeñas */}
+                  <div className="space-y-0.5 sm:space-y-1">
                     {day.events.includes('measure') && (
-                      <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg">
-                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
-                          <Activity size={12} className="text-white" />
+                      <div className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg">
+                        <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Activity size={10} className="text-white" />
                         </div>
-                        <div>
+                        <div className="hidden sm:block">
                           <p className="text-xs font-bold text-blue-800">Medir</p>
                           <p className="text-xs text-blue-600">pH, EC, temperatura</p>
                         </div>
@@ -3893,11 +3893,11 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     )}
                     
                     {day.events.includes('rotation') && (
-                      <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg">
-                        <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                          <RotateCcw size={12} className="text-white" />
+                      <div className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg">
+                        <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <RotateCcw size={10} className="text-white" />
                         </div>
-                        <div>
+                        <div className="hidden sm:block">
                           <p className="text-xs font-bold text-green-800">Rotar</p>
                           <p className="text-xs text-green-600">Niveles de plantas</p>
                         </div>
@@ -3905,11 +3905,11 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     )}
                     
                     {day.events.includes('clean') && (
-                      <div className="flex items-center gap-2 p-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
-                        <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
-                          <ShieldAlert size={12} className="text-white" />
+                      <div className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
+                        <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <ShieldAlert size={10} className="text-white" />
                         </div>
-                        <div>
+                        <div className="hidden sm:block">
                           <p className="text-xs font-bold text-purple-800">Limpiar</p>
                           <p className="text-xs text-purple-600">Sistema completo</p>
                         </div>
@@ -3917,10 +3917,27 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                     )}
                   </div>
                   
+                  {/* Indicador móvil de eventos */}
+                  {hasEvents && (
+                    <div className="sm:hidden mt-1 flex justify-center">
+                      <div className="flex gap-1">
+                        {day.events.includes('measure') && (
+                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        )}
+                        {day.events.includes('rotation') && (
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        )}
+                        {day.events.includes('clean') && (
+                          <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Indicador si no hay eventos */}
                   {!hasEvents && day.isCurrentMonth && (
-                    <div className="mt-2 text-center">
-                      <p className="text-xs text-slate-400 italic">Sin tareas</p>
+                    <div className="mt-1 sm:mt-2 text-center">
+                      <p className="text-xs text-slate-400 italic hidden sm:block">Sin tareas</p>
                     </div>
                   )}
                 </div>
@@ -3928,40 +3945,40 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             })}
           </div>
           
-          {/* Leyenda */}
-          <div className="mt-8 p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
-            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Info size={18} className="text-blue-600" />
-              Leyenda de Tareas
+          {/* Leyenda - Optimizada para móvil */}
+          <div className="mt-8 p-4 sm:p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
+            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm sm:text-base">
+              <Info size={16} className="text-blue-600" />
+              Leyenda de Tareas - iPhone Optimizado
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                  <Activity size={18} className="text-white" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-slate-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Activity size={14} className="text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Medición</p>
-                  <p className="text-xs text-slate-600">pH, EC, temperatura</p>
+                  <p className="font-bold text-slate-800 text-sm sm:text-base">Medición</p>
+                  <p className="text-xs text-slate-600 hidden sm:block">pH, EC, temperatura</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                  <RotateCcw size={18} className="text-white" />
+              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-slate-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <RotateCcw size={14} className="text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Rotación</p>
-                  <p className="text-xs text-slate-600">Mover niveles de plantas</p>
+                  <p className="font-bold text-slate-800 text-sm sm:text-base">Rotación</p>
+                  <p className="text-xs text-slate-600 hidden sm:block">Mover niveles de plantas</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                  <ShieldAlert size={18} className="text-white" />
+              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-xl border border-slate-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <ShieldAlert size={14} className="text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Limpieza</p>
-                  <p className="text-xs text-slate-600">Depósito y tuberías</p>
+                  <p className="font-bold text-slate-800 text-sm sm:text-base">Limpieza</p>
+                  <p className="text-xs text-slate-600 hidden sm:block">Depósito y tuberías</p>
                 </div>
               </div>
             </div>
@@ -4866,7 +4883,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         </div>
       </header>
 
-      {/* Navegación por pestañas */}
+      {/* Navegación por pestañas - MODIFICADO: Sin texto, solo iconos coloridos */}
       {step >= 5 && (
         <div className="sticky top-16 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
           <div className="container mx-auto p-4 max-w-6xl">
@@ -4875,66 +4892,71 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                 { 
                   key: "dashboard", 
                   icon: <Home size={20} />, 
-                  title: "Panel",
-                  color: "from-blue-500 to-cyan-600"
+                  activeColor: "from-blue-500 to-cyan-600",
+                  inactiveColor: "from-blue-100 to-cyan-100",
+                  colorName: "blue"
                 },
                 { 
                   key: "tower", 
                   icon: <TreePine size={20} />, 
-                  title: "Torre",
-                  color: "from-emerald-500 to-green-600"
+                  activeColor: "from-emerald-500 to-green-600",
+                  inactiveColor: "from-emerald-100 to-green-100",
+                  colorName: "emerald"
                 },
                 { 
                   key: "calculator", 
                   icon: <Calculator size={20} />, 
-                  title: "Calculadora",
-                  color: "from-purple-500 to-pink-600"
+                  activeColor: "from-purple-500 to-pink-600",
+                  inactiveColor: "from-purple-100 to-pink-100",
+                  colorName: "purple"
                 },
                 { 
                   key: "measurements", 
                   icon: <Activity size={20} />, 
-                  title: "Mediciones",
-                  color: "from-amber-500 to-orange-600"
+                  activeColor: "from-amber-500 to-orange-600",
+                  inactiveColor: "from-amber-100 to-orange-100",
+                  colorName: "amber"
                 },
                 { 
                   key: "irrigation", 
                   icon: <WaterDroplets size={20} />, 
-                  title: "Riego",
-                  color: "from-cyan-500 to-blue-600"
+                  activeColor: "from-cyan-500 to-blue-600",
+                  inactiveColor: "from-cyan-100 to-blue-100",
+                  colorName: "cyan"
                 },
                 { 
                   key: "calendar", 
                   icon: <Calendar size={20} />, 
-                  title: "Calendario",
-                  color: "from-indigo-500 to-violet-600"
+                  activeColor: "from-indigo-500 to-violet-600",
+                  inactiveColor: "from-indigo-100 to-violet-100",
+                  colorName: "indigo"
                 },
                 { 
                   key: "history", 
                   icon: <BarChart size={20} />, 
-                  title: "Historial",
-                  color: "from-rose-500 to-pink-600"
+                  activeColor: "from-rose-500 to-pink-600",
+                  inactiveColor: "from-rose-100 to-pink-100",
+                  colorName: "rose"
                 },
                 { 
                   key: "proTips", 
                   icon: <Brain size={20} />, 
-                  title: "Consejos",
-                  color: "from-violet-500 to-purple-600"
+                  activeColor: "from-violet-500 to-purple-600",
+                  inactiveColor: "from-violet-100 to-purple-100",
+                  colorName: "violet"
                 },
               ].map((item) => (
                 <button
                   key={item.key}
                   onClick={() => setTab(item.key)}
-                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 ${
+                  className={`flex items-center justify-center p-3 sm:p-4 rounded-xl transition-all duration-300 ${
                     tab === item.key 
-                      ? `bg-gradient-to-r ${item.color} text-white shadow-lg scale-105` 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:scale-105'
+                      ? `bg-gradient-to-r ${item.activeColor} text-white shadow-lg scale-105` 
+                      : `bg-gradient-to-r ${item.inactiveColor} text-${item.colorName}-600 hover:scale-105 hover:shadow-md`
                   }`}
-                  title={item.title}
+                  title={item.key.charAt(0).toUpperCase() + item.key.slice(1)}
                 >
-                  <div className={`mb-1 ${tab === item.key ? 'text-white' : ''}`}>
-                    {item.icon}
-                  </div>
-                  <span className="text-xs font-medium">{item.title}</span>
+                  {item.icon}
                 </button>
               ))}
             </div>
