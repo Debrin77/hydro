@@ -2102,11 +2102,11 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
                   <ul className="space-y-2 text-slate-700">
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> usar EC > 1500 µS/cm para lechugas (quemaduras garantizadas)</span>
+                      <span><strong>Nunca</strong> usar EC &gt; 1500 µS/cm para lechugas (quemaduras garantizadas)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> dar EC > 800 µS/cm a plántulas (estrés salino)</span>
+                      <span><strong>Nunca</strong> dar EC &gt; 800 µS/cm a plántulas (estrés salino)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
@@ -3579,40 +3579,39 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
                 <Waves className="text-white" size={24} />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800">Calculadora de CalMag</h3>
-                <p className="text-sm text-slate-600">Para agua de ósmosis y mezclas</p>
-              </div>
             </div>
-            
-            <div className={`p-4 rounded-xl border-2 ${
-              calmagNeeded.required 
-                ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200' 
-                : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-            }`}>
-              <div className="text-center">
-                <div className={`text-3xl font-bold mb-2 ${
-                  calmagNeeded.required ? 'text-blue-600' : 'text-green-600'
-                }`}>
-                  {calmagNeeded.required ? `${calmagNeeded.dosage} ml` : 'No necesario'}
+            <div>
+              <h3 className="font-bold text-slate-800">Calculadora de CalMag</h3>
+              <p className="text-sm text-slate-600">Para agua de ósmosis y mezclas</p>
+            </div>
+          </div>
+          
+          <div className={`p-4 rounded-xl border-2 ${
+            calmagNeeded.required 
+              ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200' 
+              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+          }`}>
+            <div className="text-center">
+              <div className={`text-3xl font-bold mb-2 ${
+                calmagNeeded.required ? 'text-blue-600' : 'text-green-600'
+              }`}>
+                {calmagNeeded.required ? `${calmagNeeded.dosage} ml` : 'No necesario'}
+              </div>
+              <p className="text-lg font-bold text-slate-700">CalMag</p>
+              <p className="text-sm text-slate-600 mt-2">
+                Para {config.currentVol}L de agua
+              </p>
+              
+              {calmagNeeded.required && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">{calmagNeeded.reason}</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    {calmagNeeded.instructions}
+                  </p>
                 </div>
-                <p className="text-lg font-bold text-slate-700">CalMag</p>
-                <p className="text-sm text-slate-600 mt-2">
-                  Para {config.currentVol}L de agua
-                </p>
-                
-                {calmagNeeded.required && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">{calmagNeeded.reason}</p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      {calmagNeeded.instructions}
-                    </p>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
@@ -4415,7 +4414,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             <div className="p-4 bg-blue-50 rounded-xl">
               <h4 className="font-bold text-blue-700 mb-2">🔬 EC Dinámica Segura</h4>
               <p className="text-sm text-slate-700">
-                Ajusta la EC según la tasa de absorción. Si las plantas beben más agua que nutrientes (EC sube >1500), reducir inmediatamente.
+                Ajusta la EC según la tasa de absorción. Si las plantas beben más agua que nutrientes (EC sube &gt;1500), reducir inmediatamente.
               </p>
             </div>
             
