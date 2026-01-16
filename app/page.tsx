@@ -3419,113 +3419,113 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
   };
 
   const CalculatorTab = () => (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Calculadora Completa - EC Optimizado</h2>
-        <p className="text-slate-600">Cálculos exactos para tu sistema hidropónico con valores seguros</p>
-      </div>
-      
-      {/* Cálculo EC escalonado */}
-      <StagedECCalculator 
-        plants={plants}
-        waterType={config.waterType}
-        onECCalculated={handleECCalculated}
-        selectedMethod={selectedECMethod}
-        onMethodChange={handleECMethodChange}
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Cálculo AQUA VEGA */}
-        <Card className="p-6 rounded-2xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-              <FlaskConical className="text-white" size={24} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Dosis AQUA VEGA Optimizada</h3>
-              <p className="text-sm text-slate-600">Para {config.currentVol}L de agua - Valores seguros</p>
-            </div>
+  <div className="space-y-8 animate-fade-in">
+    <div>
+      <h2 className="text-2xl font-bold text-slate-800">Calculadora Completa - EC Optimizado</h2>
+      <p className="text-slate-600">Cálculos exactos para tu sistema hidropónico con valores seguros</p>
+    </div>
+    
+    {/* Cálculo EC escalonado */}
+    <StagedECCalculator 
+      plants={plants}
+      waterType={config.waterType}
+      onECCalculated={handleECCalculated}
+      selectedMethod={selectedECMethod}
+      onMethodChange={handleECMethodChange}
+    />
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Cálculo AQUA VEGA */}
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+            <FlaskConical className="text-white" size={24} />
           </div>
-          
-          {plants.length > 0 ? (
-            <div className="space-y-6">
-              <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-                <div className="text-center mb-4">
-                  <p className="text-sm text-emerald-700">Dosis total para el depósito</p>
-                  <div className="flex items-center justify-center gap-6 mt-3">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-emerald-600">{aquaVegaDosage.a}</div>
-                      <p className="text-sm text-emerald-700">ml AQUA VEGA A</p>
-                    </div>
-                    <div className="text-2xl text-emerald-500">+</div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-emerald-600">{aquaVegaDosage.b}</div>
-                      <p className="text-sm text-emerald-700">ml AQUA VEGA B</p>
-                    </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Dosis AQUA VEGA Optimizada</h3>
+            <p className="text-sm text-slate-600">Para {config.currentVol}L de agua - Valores seguros</p>
+          </div>
+        </div>
+        
+        {plants.length > 0 ? (
+          <div className="space-y-6">
+            <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+              <div className="text-center mb-4">
+                <p className="text-sm text-emerald-700">Dosis total para el depósito</p>
+                <div className="flex items-center justify-center gap-6 mt-3">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-emerald-600">{aquaVegaDosage.a}</div>
+                    <p className="text-sm text-emerald-700">ml AQUA VEGA A</p>
                   </div>
-                </div>
-                
-                <div className="p-3 bg-white rounded-lg">
-                  <p className="text-center text-sm text-slate-700">
-                    Equivalente a <span className="font-bold text-emerald-600">{aquaVegaDosage.per10L.a}ml A</span> y 
-                    <span className="font-bold text-emerald-600"> {aquaVegaDosage.per10L.b}ml B</span> por cada 10L
-                  </p>
-                  <p className="text-center text-xs text-slate-500 mt-1">
-                    {aquaVegaDosage.note}
-                  </p>
+                  <div className="text-2xl text-emerald-500">+</div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-emerald-600">{aquaVegaDosage.b}</div>
+                    <p className="text-sm text-emerald-700">ml AQUA VEGA B</p>
+                  </div>
                 </div>
               </div>
               
-              <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <h4 className="font-bold text-blue-700 mb-3">📝 Instrucciones de mezcla optimizadas</h4>
-                <ol className="space-y-2 text-sm text-slate-700">
-                  <li className="flex items-start gap-2">
-                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
-                    <span>Llena el depósito con <strong>{config.currentVol}L</strong> de agua</span>
-                  </li>
-                  {calmagNeeded.required && (
-                    <li className="flex items-start gap-2">
-                      <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
-                      <span>Añadir <strong>{calmagNeeded.dosage}ml de CalMag</strong>, mezclar 2-3 minutos</span>
-                    </li>
-                  )}
-                  <li className="flex items-start gap-2">
-                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "3" : "2"}</span>
-                    <span>Añadir <strong>{aquaVegaDosage.a}ml de AQUA VEGA A</strong>, mezclar 1 minuto</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "4" : "3"}</span>
-                    <span>Añadir <strong>{aquaVegaDosage.b}ml de AQUA VEGA B</strong>, mezclar 2 minutos</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "5" : "4"}</span>
-                    <span>Esperar 15-30 minutos para estabilización</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "6" : "5"}</span>
-                    <span>Medir EC: objetivo <strong>{config.targetEC} µS/cm</strong></span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "7" : "6"}</span>
-                    <span>Ajustar pH a <strong>{config.targetPH}</strong></span>
-                  </li>
-                </ol>
+              <div className="p-3 bg-white rounded-lg">
+                <p className="text-center text-sm text-slate-700">
+                  Equivalente a <span className="font-bold text-emerald-600">{aquaVegaDosage.per10L.a}ml A</span> y 
+                  <span className="font-bold text-emerald-600"> {aquaVegaDosage.per10L.b}ml B</span> por cada 10L
+                </p>
+                <p className="text-center text-xs text-slate-500 mt-1">
+                  {aquaVegaDosage.note}
+                </p>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <FlaskConical className="mx-auto text-slate-300 mb-3" size={48} />
-              <p className="text-slate-500">Añade plantas a la torre para calcular dosis</p>
+            
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <h4 className="font-bold text-blue-700 mb-3">📝 Instrucciones de mezcla optimizadas</h4>
+              <ol className="space-y-2 text-sm text-slate-700">
+                <li className="flex items-start gap-2">
+                  <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</span>
+                  <span>Llena el depósito con <strong>{config.currentVol}L</strong> de agua</span>
+                </li>
+                {calmagNeeded.required && (
+                  <li className="flex items-start gap-2">
+                    <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
+                    <span>Añadir <strong>{calmagNeeded.dosage}ml de CalMag</strong>, mezclar 2-3 minutos</span>
+                  </li>
+                )}
+                <li className="flex items-start gap-2">
+                  <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "3" : "2"}</span>
+                  <span>Añadir <strong>{aquaVegaDosage.a}ml de AQUA VEGA A</strong>, mezclar 1 minuto</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "4" : "3"}</span>
+                  <span>Añadir <strong>{aquaVegaDosage.b}ml de AQUA VEGA B</strong>, mezclar 2 minutos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "5" : "4"}</span>
+                  <span>Esperar 15-30 minutos para estabilización</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "6" : "5"}</span>
+                  <span>Medir EC: objetivo <strong>{config.targetEC} µS/cm</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-blue-100 text-blue-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">{calmagNeeded.required ? "7" : "6"}</span>
+                  <span>Ajustar pH a <strong>{config.targetPH}</strong></span>
+                </li>
+              </ol>
             </div>
-          )}
-        </Card>
-        
-        {/* Cálculo pH y CalMag */}
-        <div className="space-y-6">
-          <Card className="p-6 rounded-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center">
-                <RefreshCw className="text-white" size={24} />
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <FlaskConical className="mx-auto text-slate-300 mb-3" size={48} />
+            <p className="text-slate-500">Añade plantas a la torre para calcular dosis</p>
+          </div>
+        )}
+      </Card>
+      
+      {/* Cálculo pH y CalMag */}
+      <div className="space-y-6">
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center">
+              <RefreshCw className="text-white" size={24} />
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Ajuste de pH Optimizado</h3>
@@ -3573,7 +3573,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
               )}
             </div>
           </div>
-        </div>
+        </Card>
         
         <Card className="p-6 rounded-2xl">
           <div className="flex items-center gap-3 mb-6">
@@ -3615,8 +3615,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         </Card>
       </div>
     </div>
-  );
-
+  </div>
+);
   const TowerTab = () => (
     <div className="space-y-8 animate-fade-in">
       <div>
