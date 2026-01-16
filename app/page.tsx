@@ -1204,6 +1204,360 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
 };
 
 // ============================================================================
+// COMPONENTE DE MEDIDORES CIRCULARES (VELOCÍMETROS)
+// ============================================================================
+
+const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size = "md" }) => {
+  const sizes = {
+    sm: "w-24 h-24",
+    md: "w-32 h-32",
+    lg: "w-40 h-40"
+  };
+  
+  const colors = {
+    blue: "text-blue-600",
+    green: "text-green-600",
+    red: "text-red-600",
+    purple: "text-purple-600",
+    amber: "text-amber-600",
+    cyan: "text-cyan-600",
+    emerald: "text-emerald-600"
+  };
+  
+  const bgColors = {
+    blue: "stroke-blue-200",
+    green: "stroke-green-200",
+    red: "stroke-red-200",
+    purple: "stroke-purple-200",
+    amber: "stroke-amber-200",
+    cyan: "stroke-cyan-200",
+    emerald: "stroke-emerald-200"
+  };
+  
+  const fillColors = {
+    blue: "stroke-blue-600",
+    green: "stroke-green-600",
+    red: "stroke-red-600",
+    purple: "stroke-purple-600",
+    amber: "stroke-amber-600",
+    cyan: "stroke-cyan-600",
+    emerald: "stroke-emerald-600"
+  };
+  
+  const percentage = Math.min(100, ((value - min) / (max - min)) * 100);
+  const strokeDasharray = 2 * Math.PI * 40; // radio del círculo
+  const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
+  
+  // Determinar color del valor según el rango
+  const getValueColor = () => {
+    if (label === "pH") {
+      if (value >= 5.5 && value <= 6.5) return "text-green-600";
+      if (value < 5.0 || value > 7.0) return "text-red-600";
+      return "text-amber-600";
+    } else if (label === "EC") {
+      if (value >= 800 && value <= 1500) return "text-green-600";
+      if (value > 1500) return "text-red-600";
+      return "text-amber-600";
+    } else if (label === "Temperatura") {
+      if (value >= 18 && value <= 25) return "text-green-600";
+      if (value > 28) return "text-red-600";
+      if (value < 15) return "text-blue-600";
+      return "text-amber-600";
+    } else if (label === "Volumen") {
+      const volumePercentage = (value / max) * 100;
+      if (volumePercentage >= 45) return "text-green-600";
+      if (volumePercentage >= 25) return "text-amber-600";
+      return "text-red-600";
+    }
+    return colors[color];
+  };
+  
+  return (
+    <div className={`flex flex-col items-center ${sizes[size]}`}>
+      <div className="relative">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+          {/* Fondo del círculo */}
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            strokeWidth="8"
+            className={bgColors[color]}
+            strokeLinecap="round"
+          />
+          
+          {/* Indicador de progreso */}
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            strokeWidth="8"
+            className={fillColors[color]}
+            strokeLinecap="round"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            style={{
+              transition: "stroke-dashoffset 0.5s ease-in-out"
+            }}
+          />
+        </svg>
+        
+        {/* Valor central */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className={`text-2xl font-bold ${getValueColor()}`}>
+            {value}
+          </div>
+          <div className="text-xs text-slate-500 mt-1">{unit}</div>
+        </div>
+      </div>
+      
+      {/* Etiqueta */}
+      <div className="mt-2 text-center">
+        <div className="text-sm font-bold text-slate-800">{label}</div>
+        {label === "pH" && (
+          <div className="text-xs text-slate-500">Ideal: 5.5-6.5</div>
+        )}
+        {label === "EC" && (
+          <div className="text-xs text-slate-500">Ideal: 800-1500</div>
+        )}
+        {label === "Temperatura" && (
+          <div className="text-xs text-slate-500">Ideal: 18-25°C</div>
+        )}
+        {label === "Volumen" && (
+          <div className="text-xs text-slate-500">Máx: {max}L</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const DashboardMetricsPanel = ({ config, measurements }) => {
+  return (
+    <Card className="p-6 rounded-2xl mb-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+          <Activity className="text-white" size={24} />
+        </div>
+        <div>
+          <h2 className="font-bold text-slate-800 text-xl">Parámetros Actuales del Sistema</h2>
+          <p className="text-slate-600">Últimos valores medidos - Monitoreo en tiempo real</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Medidor de pH */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+              <Activity className="text-white" size={16} />
+            </div>
+            <span className="font-bold text-purple-700">pH del Agua</span>
+          </div>
+          <CircularGauge 
+            value={parseFloat(measurements.manualPH || config.ph)} 
+            min={4} 
+            max={9} 
+            label="pH" 
+            unit="" 
+            color="purple"
+            size="md"
+          />
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
+              parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5 
+                ? "text-green-600" 
+                : "text-amber-600"
+            }`}>
+              {parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5 
+                ? "✅ ÓPTIMO" 
+                : "⚠️ AJUSTAR"}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Objetivo: {config.targetPH}
+            </p>
+          </div>
+        </div>
+        
+        {/* Medidor de EC */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+              <Zap className="text-white" size={16} />
+            </div>
+            <span className="font-bold text-blue-700">Conductividad (EC)</span>
+          </div>
+          <CircularGauge 
+            value={parseFloat(measurements.manualEC || config.ec)} 
+            min={0} 
+            max={3000} 
+            label="EC" 
+            unit="µS/cm" 
+            color="blue"
+            size="md"
+          />
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
+              parseFloat(measurements.manualEC || config.ec) >= 800 && parseFloat(measurements.manualEC || config.ec) <= 1500 
+                ? "text-green-600" 
+                : parseFloat(measurements.manualEC || config.ec) > 1500 
+                ? "text-red-600" 
+                : "text-amber-600"
+            }`}>
+              {parseFloat(measurements.manualEC || config.ec) > 1500 ? "🚨 ALTA" :
+               parseFloat(measurements.manualEC || config.ec) < 800 ? "⚠️ BAJA" : 
+               "✅ ÓPTIMA"}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Objetivo: {config.targetEC} µS/cm
+            </p>
+          </div>
+        </div>
+        
+        {/* Medidor de Temperatura */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <Thermometer className="text-white" size={16} />
+            </div>
+            <span className="font-bold text-amber-700">Temperatura</span>
+          </div>
+          <CircularGauge 
+            value={parseFloat(measurements.manualTemp || config.temp)} 
+            min={0} 
+            max={40} 
+            label="Temperatura" 
+            unit="°C" 
+            color="amber"
+            size="md"
+          />
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
+              parseFloat(measurements.manualTemp || config.temp) >= 18 && parseFloat(measurements.manualTemp || config.temp) <= 25 
+                ? "text-green-600" 
+                : parseFloat(measurements.manualTemp || config.temp) > 28 
+                ? "text-red-600" 
+                : parseFloat(measurements.manualTemp || config.temp) < 15 
+                ? "text-blue-600" 
+                : "text-amber-600"
+            }`}>
+              {parseFloat(measurements.manualTemp || config.temp) > 28 ? "🚨 ALTA" :
+               parseFloat(measurements.manualTemp || config.temp) < 15 ? "❄️ BAJA" : 
+               "✅ ÓPTIMA"}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Ideal: 18-25°C
+            </p>
+          </div>
+        </div>
+        
+        {/* Medidor de Volumen */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+              <Droplets className="text-white" size={16} />
+            </div>
+            <span className="font-bold text-emerald-700">Volumen Agua</span>
+          </div>
+          <CircularGauge 
+            value={parseFloat(measurements.manualVolume || config.currentVol)} 
+            min={0} 
+            max={parseFloat(config.totalVol)} 
+            label="Volumen" 
+            unit="L" 
+            color="emerald"
+            size="md"
+          />
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
+              (parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100 >= 45 
+                ? "text-green-600" 
+                : (parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100 >= 25 
+                ? "text-amber-600" 
+                : "text-red-600"
+            }`}>
+              {((parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100).toFixed(0)}% 
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {config.currentVol}L / {config.totalVol}L
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Resumen de estado */}
+      <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
+        <h4 className="font-bold text-slate-700 mb-3">📊 Resumen del Estado del Sistema</h4>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="p-3 bg-white rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-700">Última medición:</span>
+              <span className="font-bold text-blue-600">
+                {new Date(measurements.lastMeasurement).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {new Date(measurements.lastMeasurement).toLocaleDateString()}
+            </p>
+          </div>
+          
+          <div className="p-3 bg-white rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-700">Tipo de agua:</span>
+              <span className="font-bold text-cyan-600">
+                {WATER_TYPES[config.waterType]?.name || "Baja Mineralización"}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              EC base: {WATER_TYPES[config.waterType]?.ecBase || "200"} µS/cm
+            </p>
+          </div>
+          
+          <div className="p-3 bg-white rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-700">Temperatura agua:</span>
+              <span className={`font-bold ${
+                parseFloat(measurements.manualWaterTemp || "22") >= 18 && parseFloat(measurements.manualWaterTemp || "22") <= 22 
+                  ? "text-green-600" 
+                  : parseFloat(measurements.manualWaterTemp || "22") > 22 
+                  ? "text-red-600" 
+                  : "text-blue-600"
+              }`}>
+                {measurements.manualWaterTemp || "22"}°C
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {parseFloat(measurements.manualWaterTemp || "22") > 22 ? "⚠️ Demasiado caliente" : 
+               parseFloat(measurements.manualWaterTemp || "22") < 18 ? "❄️ Demasiado fría" : 
+               "✅ Ideal"}
+            </p>
+          </div>
+          
+          <div className="p-3 bg-white rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-700">Humedad ambiente:</span>
+              <span className={`font-bold ${
+                parseFloat(measurements.manualHumidity || "65") >= 40 && parseFloat(measurements.manualHumidity || "65") <= 70 
+                  ? "text-green-600" 
+                  : "text-amber-600"
+              }`}>
+                {measurements.manualHumidity || "65"}%
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              {parseFloat(measurements.manualHumidity || "65") < 40 ? "⚠️ Demasiado seca" : 
+               parseFloat(measurements.manualHumidity || "65") > 70 ? "⚠️ Demasiado húmeda" : 
+               "✅ Ideal"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// ============================================================================
 // COMPONENTES PARA MODALES
 // ============================================================================
 
@@ -2671,14 +3025,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         aquaVegaDosage={aquaVegaDosage}
       />
       
-      {/* Cálculo EC escalonado */}
-      <StagedECCalculator 
-        plants={plants}
-        waterType={config.waterType}
-        onECCalculated={handleECCalculated}
-        selectedMethod={selectedECMethod}
-        onMethodChange={handleECMethodChange}
-      />
+      {/* Panel de medidores de parámetros actuales */}
+      <DashboardMetricsPanel config={config} measurements={measurements} />
       
       {/* Alertas */}
       {alerts.length > 0 && (
