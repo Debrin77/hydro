@@ -19,7 +19,7 @@ import {
   Flower2, Sparkles, Shield, Zap as Lightning,
   Flask, Thermometer as ThermometerIcon, GitBranch,
   Package, Hash, AlertOctagon as AlertOctagonIcon,
-  Sprout as Plant, Wind as Air
+  Sprout as Plant
 } from "lucide-react"
 
 // ============================================================================
@@ -762,11 +762,10 @@ const getSeason = (currentTime = new Date()) => {
 };
 
 /**
- * Calcula riego para torre vertical en Castellón optimizado CON BOMBA DE 6L/H
+ * Calcula riego para torre vertical en Castellón optimizado
  */
-const calculateIrrigation = (plants, temp, humidity, season, useAirDiffuser = true) => {
+const calculateIrrigation = (plants, temp, humidity, season) => {
   const pumpPower = 7; // 7W
-  const pumpFlowRate = 6; // ¡MODIFICADO! 6 litros por hora (antes 5)
   const rockwoolCubes = 2.5; // cm
   const castellonAltitude = 30; // metros sobre el mar
   
@@ -780,11 +779,8 @@ const calculateIrrigation = (plants, temp, humidity, season, useAirDiffuser = tr
       cyclesPerDay: 0,
       minutesPerCycle: "0.0",
       pumpPower,
-      pumpFlowRate,
       rockwoolCubes,
       location: "Castellón de la Plana",
-      useAirDiffuser,
-      diffuserBenefits: ["Mezcla uniforme de nutrientes", "Evita agua estancada", "Aumenta oxígeno disuelto"],
       recommendations: ["Añade plantas al sistema para calcular riego"]
     };
   }
@@ -825,12 +821,8 @@ const calculateIrrigation = (plants, temp, humidity, season, useAirDiffuser = tr
   
   totalWaterNeeds = totalWaterNeeds * tempFactor * humidityFactor * seasonFactor;
   
-  // Beneficio del difusor de aire: mejor distribución reduce necesidad de riego
-  if (useAirDiffuser) {
-    totalWaterNeeds *= 0.95; // 5% menos agua gracias a mejor distribución de nutrientes
-  }
-  
-  // Calcular tiempo de riego (bomba de 7W, ahora 6L/h)
+  // Calcular tiempo de riego (bomba de 7W, aprox 5L/h)
+  const pumpFlowRate = 5; // litros por hora
   const dailyPumpMinutes = (totalWaterNeeds / pumpFlowRate) * 60;
   
   // Dividir en ciclos (cada 2 horas durante luz)
@@ -843,83 +835,14 @@ const calculateIrrigation = (plants, temp, humidity, season, useAirDiffuser = tr
     cyclesPerDay,
     minutesPerCycle: minutesPerCycle.toFixed(1),
     pumpPower,
-    pumpFlowRate,
     rockwoolCubes,
     location: "Castellón de la Plana",
-    useAirDiffuser,
-    diffuserBenefits: [
-      "Mezcla uniforme de nutrientes en toda la solución",
-      "Evita estratificación y agua estancada",
-      "Aumenta oxígeno disuelto para las raíces",
-      "Reduce riesgo de patógenos anaeróbicos",
-      "Mejora absorción de nutrientes"
-    ],
     recommendations: [
       `Regar ${cyclesPerDay} veces al día durante ${minutesPerCycle} minutos cada ciclo`,
-      useAirDiffuser ? "✅ Difusor activo: Mejor mezcla y oxigenación" : "⚠️ Considera añadir difusor de aire",
-      `Bomba de ${pumpFlowRate}L/h: ${pumpMinutesPerDay} minutos/día total`,
       "En verano aumentar frecuencia un 30%",
       "En invierno reducir frecuencia un 20%",
       "Los dados de lana de roca de 2.5cm retienen bien la humedad"
     ]
-  };
-};
-
-/**
- * Calcula beneficios del difusor de aire
- */
-const getAirDiffuserBenefits = (useDiffuser, waterTemp, volume) => {
-  if (!useDiffuser) {
-    return {
-      active: false,
-      title: "❌ Difusor de aire NO activo",
-      recommendations: [
-        "Recomendado añadir difusor de aire para:",
-        "• Mejor mezcla de nutrientes",
-        "• Mayor oxígeno disuelto",
-        "• Prevención de agua estancada",
-        "• Reducción de patógenos"
-      ],
-      oxygenIncrease: "0%",
-      mixingImprovement: "0%",
-      riskReduction: "0%"
-    };
-  }
-  
-  let oxygenIncrease = "30-50%";
-  let mixingImprovement = "40%";
-  let riskReduction = "60%";
-  
-  // Ajustar por temperatura del agua
-  if (waterTemp > 22) {
-    oxygenIncrease = "40-60%"; // Agua caliente contiene menos oxígeno, el difusor es más crítico
-    riskReduction = "70%";
-  }
-  
-  // Ajustar por volumen del depósito
-  if (volume > 30) {
-    mixingImprovement = "50%"; // En depósitos grandes, la mezcla es más importante
-  }
-  
-  return {
-    active: true,
-    title: "✅ Difusor de aire ACTIVO",
-    recommendations: [
-      "✅ Mezcla uniforme de nutrientes alcanzada",
-      "✅ Oxígeno disuelto óptimo para raíces",
-      "✅ Evita estratificación de la solución",
-      "✅ Reduce riesgo de patógenos anaeróbicos",
-      `⏰ Recomendado: 24h/día o mínimo 15min/hora`
-    ],
-    oxygenIncrease,
-    mixingImprovement,
-    riskReduction,
-    optimalSettings: {
-      flowRate: "1-2 L/min",
-      bubbleSize: "Fino (1-3mm)",
-      placement: "Fondo del depósito, cerca de entrada bomba",
-      schedule: "Continuo o 15min/hora mínimo"
-    }
   };
 };
 
@@ -1281,19 +1204,51 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
 };
 
 // ============================================================================
-// COMPONENTE DE MEDIDORES CIRCULARES (VELOCÍMETROS) - CORREGIDO PARA IPHONE
+// COMPONENTE DE MEDIDORES CIRCULARES (VELOCÍMETROS)
 // ============================================================================
 
 const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size = "md" }) => {
-  // PROTECCIÓN CRÍTICA: Evitar división por cero
-  const safeMax = max === 0 ? 1 : max;
-  const safeValue = isNaN(value) ? min : value;
+  const sizes = {
+    sm: "w-24 h-24",
+    md: "w-32 h-32",
+    lg: "w-40 h-40"
+  };
   
-  const percentage = Math.min(100, ((safeValue - min) / (safeMax - min)) * 100);
-  const strokeDasharray = 2 * Math.PI * 32;
+  const colors = {
+    blue: "text-blue-600",
+    green: "text-green-600",
+    red: "text-red-600",
+    purple: "text-purple-600",
+    amber: "text-amber-600",
+    cyan: "text-cyan-600",
+    emerald: "text-emerald-600"
+  };
+  
+  const bgColors = {
+    blue: "stroke-blue-200",
+    green: "stroke-green-200",
+    red: "stroke-red-200",
+    purple: "stroke-purple-200",
+    amber: "stroke-amber-200",
+    cyan: "stroke-cyan-200",
+    emerald: "stroke-emerald-200"
+  };
+  
+  const fillColors = {
+    blue: "stroke-blue-600",
+    green: "stroke-green-600",
+    red: "stroke-red-600",
+    purple: "stroke-purple-600",
+    amber: "stroke-amber-600",
+    cyan: "stroke-cyan-600",
+    emerald: "stroke-emerald-600"
+  };
+  
+  const percentage = Math.min(100, ((value - min) / (max - min)) * 100);
+  const strokeDasharray = 2 * Math.PI * 40; // radio del círculo
   const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
   
-  // Determinar color del valor según el rango - CON PROTECCIÓN
+  // Determinar color del valor según el rango
   const getValueColor = () => {
     if (label === "pH") {
       if (value >= 5.5 && value <= 6.5) return "text-green-600";
@@ -1309,8 +1264,6 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
       if (value < 15) return "text-blue-600";
       return "text-amber-600";
     } else if (label === "Volumen") {
-      // PROTECCIÓN: Verificar que max no sea 0
-      if (max <= 0) return "text-slate-600";
       const volumePercentage = (value / max) * 100;
       if (volumePercentage >= 45) return "text-green-600";
       if (volumePercentage >= 25) return "text-amber-600";
@@ -1319,40 +1272,28 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
     return colors[color];
   };
   
-  // ... resto del componente sin cambios
-};
-  
-  // Formatear valor para iPhone (más pequeño)
-  const formatValue = (val) => {
-    if (label === "pH") return val.toFixed(1);
-    if (label === "EC") return val >= 1000 ? `${(val/1000).toFixed(1)}k` : val.toString();
-    if (label === "Temperatura") return val.toFixed(0);
-    if (label === "Volumen") return val.toFixed(0);
-    return val;
-  };
-  
   return (
     <div className={`flex flex-col items-center ${sizes[size]}`}>
-      <div className="relative w-full h-full">
-        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+      <div className="relative">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           {/* Fondo del círculo */}
           <circle
-            cx="40"
-            cy="40"
-            r="32"
+            cx="50"
+            cy="50"
+            r="40"
             fill="none"
-            strokeWidth="6"
+            strokeWidth="8"
             className={bgColors[color]}
             strokeLinecap="round"
           />
           
           {/* Indicador de progreso */}
           <circle
-            cx="40"
-            cy="40"
-            r="32"
+            cx="50"
+            cy="50"
+            r="40"
             fill="none"
-            strokeWidth="6"
+            strokeWidth="8"
             className={fillColors[color]}
             strokeLinecap="round"
             strokeDasharray={strokeDasharray}
@@ -1363,83 +1304,36 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
           />
         </svg>
         
-        {/* Valor central - REORGANIZADO para evitar superposición */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-1">
-          <div className={`text-lg font-bold ${getValueColor()} leading-tight text-center`}>
-            {formatValue(value)}
+        {/* Valor central */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className={`text-2xl font-bold ${getValueColor()}`}>
+            {value}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5">{unit}</div>
+          <div className="text-xs text-slate-500 mt-1">{unit}</div>
         </div>
       </div>
       
-      {/* Etiqueta - REORGANIZADO con mejor espaciado */}
-      <div className="mt-3 text-center space-y-0.5 w-full px-1">
-        <div className="text-xs font-bold text-slate-800 truncate">{label}</div>
-        <div className="text-[10px] text-slate-500 space-y-0">
-          {label === "pH" && (
-            <div className="leading-none">
-              <div>Ideal: 5.5-6.5</div>
-              <div>Actual: {value.toFixed(1)}</div>
-            </div>
-          )}
-          {label === "EC" && (
-            <div className="leading-none">
-              <div>Ideal: 800-1500</div>
-              <div>Actual: {value}</div>
-            </div>
-          )}
-          {label === "Temperatura" && (
-            <div className="leading-none">
-              <div>Ideal: 18-25°C</div>
-              <div>Actual: {value}°C</div>
-            </div>
-          )}
-          {label === "Volumen" && (
-            <div className="leading-none">
-              <div>Máx: {max}L</div>
-              <div>Actual: {value}L</div>
-            </div>
-          )}
-        </div>
+      {/* Etiqueta */}
+      <div className="mt-2 text-center">
+        <div className="text-sm font-bold text-slate-800">{label}</div>
+        {label === "pH" && (
+          <div className="text-xs text-slate-500">Ideal: 5.5-6.5</div>
+        )}
+        {label === "EC" && (
+          <div className="text-xs text-slate-500">Ideal: 800-1500</div>
+        )}
+        {label === "Temperatura" && (
+          <div className="text-xs text-slate-500">Ideal: 18-25°C</div>
+        )}
+        {label === "Volumen" && (
+          <div className="text-xs text-slate-500">Máx: {max}L</div>
+        )}
       </div>
     </div>
   );
 };
 
-const getStatusText = (label, value) => {
-  if (label === "pH") {
-    if (value >= 5.5 && value <= 6.5) return "✅ ÓPTIMO";
-    if (value < 5.0 || value > 7.0) return "⚠️ AJUSTAR";
-    return "⚠️ AJUSTAR";
-  } else if (label === "EC") {
-    if (value >= 800 && value <= 1500) return "✅ ÓPTIMA";
-    if (value > 1500) return "🚨 ALTA";
-    return "⚠️ BAJA";
-  } else if (label === "Temperatura") {
-    if (value >= 18 && value <= 25) return "✅ ÓPTIMA";
-    if (value > 28) return "🚨 ALTA";
-    if (value < 15) return "❄️ BAJA";
-    return "⚠️ AJUSTAR";
-  } else if (label === "Volumen") {
-    // PROTECCIÓN: Verificar que config.totalVol no sea 0
-    const totalVol = parseFloat(config.totalVol || "20");
-    if (totalVol <= 0) return "CONFIGURAR";
-    
-    const volumePercentage = (value / totalVol) * 100;
-    if (volumePercentage >= 45) return "✅ ADECUADO";
-    if (volumePercentage >= 25) return "⚠️ BAJO";
-    return "🚨 MUY BAJO";
-  }
-  return "";
-};
-  
-  // Beneficios del difusor de aire
-  const diffuserBenefits = getAirDiffuserBenefits(
-    useAirDiffuser, 
-    parseFloat(measurements.manualWaterTemp || "22"), 
-    parseFloat(measurements.manualVolume || config.currentVol)
-  );
-  
+const DashboardMetricsPanel = ({ config, measurements }) => {
   return (
     <Card className="p-6 rounded-2xl mb-8">
       <div className="flex items-center gap-3 mb-6">
@@ -1448,18 +1342,18 @@ const getStatusText = (label, value) => {
         </div>
         <div>
           <h2 className="font-bold text-slate-800 text-xl">Parámetros Actuales del Sistema</h2>
-          <p className="text-slate-600">Últimos valores medidos - Optimizado para iPhone</p>
+          <p className="text-slate-600">Últimos valores medidos - Monitoreo en tiempo real</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {/* Medidor de pH - CORREGIDO para iPhone */}
-        <div className="flex flex-col items-center p-3 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-              <Activity className="text-white" size={12} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Medidor de pH */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+              <Activity className="text-white" size={16} />
             </div>
-            <span className="font-bold text-purple-700 text-xs">pH Agua</span>
+            <span className="font-bold text-purple-700">pH del Agua</span>
           </div>
           <CircularGauge 
             value={parseFloat(measurements.manualPH || config.ph)} 
@@ -1468,29 +1362,31 @@ const getStatusText = (label, value) => {
             label="pH" 
             unit="" 
             color="purple"
-            size="sm"
+            size="md"
           />
-          <div className="mt-3 text-center space-y-0.5">
-            <div className={`text-xs font-bold ${
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
               parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5 
                 ? "text-green-600" 
                 : "text-amber-600"
             }`}>
-              {getStatusText("pH", parseFloat(measurements.manualPH || config.ph))}
+              {parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5 
+                ? "✅ ÓPTIMO" 
+                : "⚠️ AJUSTAR"}
             </div>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-xs text-slate-500 mt-1">
               Objetivo: {config.targetPH}
             </p>
           </div>
         </div>
         
-        {/* Medidor de EC - CORREGIDO para iPhone */}
-        <div className="flex flex-col items-center p-3 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Zap className="text-white" size={12} />
+        {/* Medidor de EC */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+              <Zap className="text-white" size={16} />
             </div>
-            <span className="font-bold text-blue-700 text-xs">Conductividad</span>
+            <span className="font-bold text-blue-700">Conductividad (EC)</span>
           </div>
           <CircularGauge 
             value={parseFloat(measurements.manualEC || config.ec)} 
@@ -1499,66 +1395,70 @@ const getStatusText = (label, value) => {
             label="EC" 
             unit="µS/cm" 
             color="blue"
-            size="sm"
+            size="md"
           />
-          <div className="mt-3 text-center space-y-0.5">
-            <div className={`text-xs font-bold ${
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
               parseFloat(measurements.manualEC || config.ec) >= 800 && parseFloat(measurements.manualEC || config.ec) <= 1500 
                 ? "text-green-600" 
                 : parseFloat(measurements.manualEC || config.ec) > 1500 
                 ? "text-red-600" 
                 : "text-amber-600"
             }`}>
-              {getStatusText("EC", parseFloat(measurements.manualEC || config.ec))}
+              {parseFloat(measurements.manualEC || config.ec) > 1500 ? "🚨 ALTA" :
+               parseFloat(measurements.manualEC || config.ec) < 800 ? "⚠️ BAJA" : 
+               "✅ ÓPTIMA"}
             </div>
-            <p className="text-[10px] text-slate-500">
-              Objetivo: {config.targetEC}
+            <p className="text-xs text-slate-500 mt-1">
+              Objetivo: {config.targetEC} µS/cm
             </p>
           </div>
         </div>
         
-        {/* Medidor de Temperatura Agua - CORREGIDO para iPhone */}
-        <div className="flex flex-col items-center p-3 bg-gradient-to-b from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <Thermometer className="text-white" size={12} />
+        {/* Medidor de Temperatura */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <Thermometer className="text-white" size={16} />
             </div>
-            <span className="font-bold text-amber-700 text-xs">Temp Agua</span>
+            <span className="font-bold text-amber-700">Temperatura</span>
           </div>
           <CircularGauge 
-            value={parseFloat(measurements.manualWaterTemp || "22")} 
+            value={parseFloat(measurements.manualTemp || config.temp)} 
             min={0} 
             max={40} 
-            label="Temp Agua" 
+            label="Temperatura" 
             unit="°C" 
             color="amber"
-            size="sm"
+            size="md"
           />
-          <div className="mt-3 text-center space-y-0.5">
-            <div className={`text-xs font-bold ${
-              parseFloat(measurements.manualWaterTemp || "22") >= 18 && parseFloat(measurements.manualWaterTemp || "22") <= 22 
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
+              parseFloat(measurements.manualTemp || config.temp) >= 18 && parseFloat(measurements.manualTemp || config.temp) <= 25 
                 ? "text-green-600" 
-                : parseFloat(measurements.manualWaterTemp || "22") > 22 
+                : parseFloat(measurements.manualTemp || config.temp) > 28 
                 ? "text-red-600" 
-                : parseFloat(measurements.manualWaterTemp || "22") < 18 
+                : parseFloat(measurements.manualTemp || config.temp) < 15 
                 ? "text-blue-600" 
                 : "text-amber-600"
             }`}>
-              {getStatusText("Temperatura", parseFloat(measurements.manualWaterTemp || "22"))}
+              {parseFloat(measurements.manualTemp || config.temp) > 28 ? "🚨 ALTA" :
+               parseFloat(measurements.manualTemp || config.temp) < 15 ? "❄️ BAJA" : 
+               "✅ ÓPTIMA"}
             </div>
-            <p className="text-[10px] text-slate-500">
-              Ideal: 18-22°C
+            <p className="text-xs text-slate-500 mt-1">
+              Ideal: 18-25°C
             </p>
           </div>
         </div>
         
-        {/* Medidor de Volumen - CORREGIDO para iPhone */}
-        <div className="flex flex-col items-center p-3 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-              <Droplets className="text-white" size={12} />
+        {/* Medidor de Volumen */}
+        <div className="flex flex-col items-center p-4 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+              <Droplets className="text-white" size={16} />
             </div>
-            <span className="font-bold text-emerald-700 text-xs">Volumen</span>
+            <span className="font-bold text-emerald-700">Volumen Agua</span>
           </div>
           <CircularGauge 
             value={parseFloat(measurements.manualVolume || config.currentVol)} 
@@ -1567,133 +1467,77 @@ const getStatusText = (label, value) => {
             label="Volumen" 
             unit="L" 
             color="emerald"
-            size="sm"
+            size="md"
           />
-          <div className="mt-3 text-center space-y-0.5">
-            <div className={`text-xs font-bold ${
+          <div className="mt-4 text-center">
+            <div className={`text-sm font-bold ${
               (parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100 >= 45 
                 ? "text-green-600" 
                 : (parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100 >= 25 
                 ? "text-amber-600" 
                 : "text-red-600"
             }`}>
-              {getStatusText("Volumen", parseFloat(measurements.manualVolume || config.currentVol))}
+              {((parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100).toFixed(0)}% 
             </div>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-xs text-slate-500 mt-1">
               {config.currentVol}L / {config.totalVol}L
             </p>
           </div>
         </div>
       </div>
       
-      {/* Panel de Difusor de Aire - NUEVO */}
-      <div className="mt-6 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-            <Air className="text-white" size={20} />
-          </div>
-          <div>
-            <h4 className="font-bold text-cyan-800 text-sm">Difusor de Aire en Depósito</h4>
-            <p className="text-xs text-cyan-600">Mezcla y oxigenación del agua</p>
-          </div>
-        </div>
-        
-        <div className={`p-3 rounded-lg ${diffuserBenefits.active ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
-          <div className="flex items-center justify-between mb-2">
-            <span className={`font-bold ${diffuserBenefits.active ? 'text-green-700' : 'text-amber-700'}`}>
-              {diffuserBenefits.title}
-            </span>
-            <Badge className={diffuserBenefits.active ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}>
-              {diffuserBenefits.active ? "ACTIVO" : "INACTIVO"}
-            </Badge>
-          </div>
-          
-          <div className="space-y-2">
-            {diffuserBenefits.recommendations.map((rec, index) => (
-              <div key={index} className="flex items-start gap-2">
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center mt-0.5 ${
-                  diffuserBenefits.active ? 'bg-green-200 text-green-700' : 'bg-amber-200 text-amber-700'
-                }`}>
-                  <span className="text-xs">•</span>
-                </div>
-                <p className="text-xs text-slate-700">{rec}</p>
-              </div>
-            ))}
-          </div>
-          
-          {diffuserBenefits.active && (
-            <div className="mt-3 pt-3 border-t border-slate-200">
-              <div className="grid grid-cols-3 gap-2">
-                <div className="text-center p-2 bg-white rounded">
-                  <p className="text-xs font-bold text-cyan-700">Oxígeno +</p>
-                  <p className="text-sm font-bold text-slate-800">{diffuserBenefits.oxygenIncrease}</p>
-                </div>
-                <div className="text-center p-2 bg-white rounded">
-                  <p className="text-xs font-bold text-cyan-700">Mezcla +</p>
-                  <p className="text-sm font-bold text-slate-800">{diffuserBenefits.mixingImprovement}</p>
-                </div>
-                <div className="text-center p-2 bg-white rounded">
-                  <p className="text-xs font-bold text-cyan-700">Riesgo -</p>
-                  <p className="text-sm font-bold text-slate-800">{diffuserBenefits.riskReduction}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Resumen de estado - OPTIMIZADO para iPhone */}
+      {/* Resumen de estado */}
       <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
-        <h4 className="font-bold text-slate-700 mb-3 text-sm">📊 Resumen del Sistema</h4>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-2 bg-white rounded-lg">
+        <h4 className="font-bold text-slate-700 mb-3">📊 Resumen del Estado del Sistema</h4>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-700">Medición:</span>
-              <span className="text-xs font-bold text-blue-600">
+              <span className="text-slate-700">Última medición:</span>
+              <span className="font-bold text-blue-600">
                 {new Date(measurements.lastMeasurement).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-1">
               {new Date(measurements.lastMeasurement).toLocaleDateString()}
             </p>
           </div>
           
-          <div className="p-2 bg-white rounded-lg">
+          <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-700">Tipo agua:</span>
-              <span className="text-xs font-bold text-cyan-600 truncate">
-                {WATER_TYPES[config.waterType]?.name?.split(" ")[0] || "Baja"}
+              <span className="text-slate-700">Tipo de agua:</span>
+              <span className="font-bold text-cyan-600">
+                {WATER_TYPES[config.waterType]?.name || "Baja Mineralización"}
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 mt-0.5">
-              EC base: {WATER_TYPES[config.waterType]?.ecBase || "200"}
+            <p className="text-xs text-slate-500 mt-1">
+              EC base: {WATER_TYPES[config.waterType]?.ecBase || "200"} µS/cm
             </p>
           </div>
           
-          <div className="p-2 bg-white rounded-lg">
+          <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-700">Temp aire:</span>
-              <span className={`text-xs font-bold ${
-                parseFloat(measurements.manualTemp || "22") >= 18 && parseFloat(measurements.manualTemp || "22") <= 25 
+              <span className="text-slate-700">Temperatura agua:</span>
+              <span className={`font-bold ${
+                parseFloat(measurements.manualWaterTemp || "22") >= 18 && parseFloat(measurements.manualWaterTemp || "22") <= 22 
                   ? "text-green-600" 
-                  : parseFloat(measurements.manualTemp || "22") > 25 
+                  : parseFloat(measurements.manualWaterTemp || "22") > 22 
                   ? "text-red-600" 
                   : "text-blue-600"
               }`}>
-                {measurements.manualTemp || "22"}°C
+                {measurements.manualWaterTemp || "22"}°C
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 mt-0.5">
-              {parseFloat(measurements.manualTemp || "22") > 25 ? "⚠️ Caliente" : 
-               parseFloat(measurements.manualTemp || "22") < 18 ? "❄️ Frío" : 
+            <p className="text-xs text-slate-500 mt-1">
+              {parseFloat(measurements.manualWaterTemp || "22") > 22 ? "⚠️ Demasiado caliente" : 
+               parseFloat(measurements.manualWaterTemp || "22") < 18 ? "❄️ Demasiado fría" : 
                "✅ Ideal"}
             </p>
           </div>
           
-          <div className="p-2 bg-white rounded-lg">
+          <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-700">Humedad:</span>
-              <span className={`text-xs font-bold ${
+              <span className="text-slate-700">Humedad ambiente:</span>
+              <span className={`font-bold ${
                 parseFloat(measurements.manualHumidity || "65") >= 40 && parseFloat(measurements.manualHumidity || "65") <= 70 
                   ? "text-green-600" 
                   : "text-amber-600"
@@ -1701,9 +1545,9 @@ const getStatusText = (label, value) => {
                 {measurements.manualHumidity || "65"}%
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 mt-0.5">
-              {parseFloat(measurements.manualHumidity || "65") < 40 ? "⚠️ Seca" : 
-               parseFloat(measurements.manualHumidity || "65") > 70 ? "⚠️ Húmeda" : 
+            <p className="text-xs text-slate-500 mt-1">
+              {parseFloat(measurements.manualHumidity || "65") < 40 ? "⚠️ Demasiado seca" : 
+               parseFloat(measurements.manualHumidity || "65") > 70 ? "⚠️ Demasiado húmeda" : 
                "✅ Ideal"}
             </p>
           </div>
@@ -1988,18 +1832,18 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL - CON LAS MEJORAS
+// COMPONENTE PRINCIPAL
 // ============================================================================
 
 export default function HydroAppFinal() {
-  // Estados principales - CORREGIDO: selPos inicializado como objeto vacío
+  // Estados principales
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
   const [history, setHistory] = useState([]);
   const [lastRot, setLastRot] = useState(new Date().toISOString());
   const [lastClean, setLastClean] = useState(new Date().toISOString());
   const [tab, setTab] = useState("dashboard");
-  const [selPos, setSelPos] = useState({}); // CORREGIDO: Cambiado de null a {}
+  const [selPos, setSelPos] = useState(null);
   const [showWaterSelector, setShowWaterSelector] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showRotationModal, setShowRotationModal] = useState(false);
@@ -2010,24 +1854,22 @@ export default function HydroAppFinal() {
     totalVol: "20", 
     currentVol: "20", 
     ph: "6.0", 
-    ec: "1000",
+    ec: "1000", // Reducido de 1200
     temp: "22", 
-    targetEC: "1100",
+    targetEC: "1100", // Reducido de 1400
     targetPH: "6.0",
     waterType: "bajo_mineral",
     hasHeater: true,
     useOsmosisMix: false,
     osmosisMixPercentage: 0,
     waterNotes: "",
-    calculationMethod: "escalonado",
-    useAirDiffuser: true, // NUEVO: Difusor de aire activado por defecto
-    pumpFlowRate: 6 // NUEVO: Caudal de bomba 6L/h
+    calculationMethod: "escalonado"
   });
   
   // Configuración de mediciones manuales con valores iniciales optimizados
   const [measurements, setMeasurements] = useState({
     manualPH: "6.0",
-    manualEC: "1000",
+    manualEC: "1000", // Reducido de 1200
     manualTemp: "22",
     manualWaterTemp: "22",
     manualVolume: "20",
@@ -2052,7 +1894,7 @@ export default function HydroAppFinal() {
         const savedMeasurements = data.measurements || {};
         setMeasurements({
           manualPH: savedMeasurements.manualPH || "6.0",
-          manualEC: savedMeasurements.manualEC || "1000",
+          manualEC: savedMeasurements.manualEC || "1000", // Reducido de 1200
           manualTemp: savedMeasurements.manualTemp || "22",
           manualWaterTemp: savedMeasurements.manualWaterTemp || "22",
           manualVolume: savedMeasurements.manualVolume || (data.config?.currentVol || "20"),
@@ -2159,7 +2001,7 @@ export default function HydroAppFinal() {
     
     // Calcular el EC usando el método seleccionado
     if (method) {
-      let newEC = "1100";
+      let newEC = "1100"; // Valor por defecto optimizado
       
       if (method === "escalonado") {
         const result = calculateStagedEC(plants, config.waterType);
@@ -2267,10 +2109,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       plants,
       parseFloat(measurements.manualTemp),
       parseFloat(measurements.manualHumidity),
-      season,
-      config.useAirDiffuser
+      season
     );
-  }, [plants, measurements.manualTemp, measurements.manualHumidity, season, config.useAirDiffuser]);
+  }, [plants, measurements.manualTemp, measurements.manualHumidity, season]);
 
   // =================== ALERTAS OPTIMIZADAS ===================
 
@@ -2310,7 +2151,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     }
 
     // Alertas existentes optimizadas
-    if (vAct < vTot * 0.25) {
+    if (vAct < vTot * 0.25) { // Reducido de 0.3
       res.push({ 
         title: "¡AGUA MUY BAJA!", 
         value: `${(vTot - vAct).toFixed(1)}L`, 
@@ -2320,7 +2161,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 1
       });
     } 
-    else if (vAct < vTot * 0.45) {
+    else if (vAct < vTot * 0.45) { // Reducido de 0.5
       res.push({ 
         title: "RELLENAR AGUA", 
         value: `${(vTot - vAct).toFixed(1)}L`, 
@@ -2352,7 +2193,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       });
     }
 
-    if (ph > tPh + 0.8 || ph < tPh - 0.8) {
+    if (ph > tPh + 0.8 || ph < tPh - 0.8) { // Aumentado de 0.5
       const action = ph > tPh ? "pH-" : "pH+";
       const ml = ph > tPh ? phAdjustment.phMinus : phAdjustment.phPlus;
       res.push({ 
@@ -2365,7 +2206,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         details: phAdjustment.critical ? "CRÍTICO: Fuera del rango seguro para absorción de nutrientes" : "Ajustar gradualmente"
       });
     } 
-    else if (ph > tPh + 0.5 || ph < tPh - 0.5) {
+    else if (ph > tPh + 0.5 || ph < tPh - 0.5) { // Aumentado de 0.2
       const action = ph > tPh ? "pH-" : "pH+";
       const ml = ph > tPh ? phAdjustment.phMinus : phAdjustment.phPlus;
       res.push({ 
@@ -2379,9 +2220,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       });
     }
 
-    if (ec < tEc - 300 && ec > 0) {
+    if (ec < tEc - 300 && ec > 0) { // Reducido de 400
       const mlPerLiter = aquaVegaDosage.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4;
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4; // Reducido de 0.5
       res.push({ 
         title: "¡FALTAN NUTRIENTES!", 
         value: `${Math.round(mlToAdd)}ml A+B`, 
@@ -2391,9 +2232,9 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 1
       });
     } 
-    else if (ec < tEc - 150 && ec > 0) {
+    else if (ec < tEc - 150 && ec > 0) { // Reducido de 200
       const mlPerLiter = aquaVegaDosage.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4;
+      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4; // Reducido de 0.5
       res.push({ 
         title: "AÑADIR NUTRIENTES", 
         value: `${Math.round(mlToAdd)}ml A+B`, 
@@ -2403,7 +2244,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 2
       });
     } 
-    else if (ec > tEc + 400) {
+    else if (ec > tEc + 400) { // Reducido de 500
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         title: "¡EC PELIGROSAMENTE ALTA!", 
@@ -2414,7 +2255,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         priority: 1
       });
     } 
-    else if (ec > tEc + 250) {
+    else if (ec > tEc + 250) { // Reducido de 300
       const water = ((ec - tEc) / tEc * vAct).toFixed(1);
       res.push({ 
         title: "DILUIR CON AGUA", 
@@ -2441,59 +2282,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       });
     }
 
-    // Alerta para difusor de aire desactivado
-    if (!config.useAirDiffuser) {
-      res.push({
-        title: "DIFUSOR DE AIRE INACTIVO",
-        value: "Recomendado",
-        description: "Activar difusor para mejor mezcla y oxigenación",
-        color: "bg-gradient-to-r from-cyan-600 to-blue-700",
-        icon: <Air className="text-white" size={28} />,
-        priority: 3
-      });
-    }
-
     return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean, plants, calmagNeeded, phAdjustment, aquaVegaDosage]);
-
-  // =================== FUNCIÓN PARA REGISTRAR LIMPIEZA ===================
-
-  const handleRegisterClean = () => {
-    const now = new Date().toISOString();
-    setLastClean(now);
-    
-    // Guardar en historial
-    const cleanRecord = {
-      id: generatePlantId(),
-      date: now,
-      type: "clean",
-      description: "Limpieza del sistema completada",
-      notes: "Limpieza registrada manualmente"
-    };
-    
-    setHistory([cleanRecord, ...history.slice(0, 49)]);
-    
-    alert(`✅ Limpieza registrada exitosamente:
-Fecha: ${new Date(now).toLocaleDateString()}
-Hora: ${new Date(now).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-
-Próxima limpieza recomendada: en 14 días`);
-  };
-
-  // =================== FUNCIÓN PARA ACTIVAR/DESACTIVAR DIFUSOR DE AIRE ===================
-
-  const toggleAirDiffuser = () => {
-    setConfig(prev => ({
-      ...prev,
-      useAirDiffuser: !prev.useAirDiffuser
-    }));
-    
-    const newState = !config.useAirDiffuser;
-    alert(newState 
-      ? "✅ Difusor de aire ACTIVADO\n\nBeneficios:\n• Mezcla uniforme de nutrientes\n• Mayor oxígeno disuelto\n• Previene agua estancada\n• Reduce patógenos"
-      : "⚠️ Difusor de aire DESACTIVADO\n\nRecomendado mantener activo 24/7 o mínimo 15min/hora"
-    );
-  };
 
   // =================== RENDER POR PASOS ===================
 
@@ -3028,7 +2818,7 @@ Próxima limpieza recomendada: en 14 días`);
                             type="button"
                             onClick={() => setSelPos(prev => ({...prev, l: level}))}
                             className={`flex-1 py-3 rounded-lg text-center font-medium transition-all ${
-                              selPos.l === level 
+                              selPos?.l === level 
                                 ? level === 1 ? 'bg-cyan-500 text-white' :
                                   level === 2 ? 'bg-green-500 text-white' :
                                   'bg-emerald-500 text-white'
@@ -3057,7 +2847,7 @@ Próxima limpieza recomendada: en 14 días`);
                             type="button"
                             onClick={() => setSelPos(prev => ({...prev, v: variety}))}
                             className={`py-2 px-3 rounded-lg text-center text-sm font-medium transition-all ${
-                              selPos.v === variety 
+                              selPos?.v === variety 
                                 ? `${VARIETIES[variety].color} text-white`
                                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
@@ -3083,7 +2873,7 @@ Próxima limpieza recomendada: en 14 días`);
                               className={`aspect-square rounded-lg flex items-center justify-center font-medium transition-all ${
                                 ocupada 
                                   ? 'bg-red-100 text-red-700'
-                                  : selPos.p === pos
+                                  : selPos?.p === pos
                                   ? 'bg-blue-500 text-white'
                                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                               }`}
@@ -3100,7 +2890,7 @@ Próxima limpieza recomendada: en 14 días`);
                   
                   <Button
                     onClick={() => {
-                      if (selPos.l && selPos.v && selPos.p) {
+                      if (selPos?.l && selPos?.v && selPos?.p) {
                         setPlants([...plants, {
                           id: generatePlantId(),
                           l: selPos.l,
@@ -3108,10 +2898,10 @@ Próxima limpieza recomendada: en 14 días`);
                           p: selPos.p,
                           date: new Date().toISOString()
                         }]);
-                        setSelPos({});
+                        setSelPos(null);
                       }
                     }}
-                    disabled={!selPos.l || !selPos.v || !selPos.p}
+                    disabled={!(selPos?.l && selPos?.v && selPos?.p)}
                     className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl"
                   >
                     <Plus className="mr-2" />
@@ -3235,12 +3025,8 @@ Próxima limpieza recomendada: en 14 días`);
         aquaVegaDosage={aquaVegaDosage}
       />
       
-      {/* Panel de medidores de parámetros actuales - CON DIFUSOR DE AIRE */}
-      <DashboardMetricsPanel 
-        config={config} 
-        measurements={measurements}
-        useAirDiffuser={config.useAirDiffuser}
-      />
+      {/* Panel de medidores de parámetros actuales */}
+      <DashboardMetricsPanel config={config} measurements={measurements} />
       
       {/* Alertas */}
       {alerts.length > 0 && (
@@ -3397,7 +3183,7 @@ Próxima limpieza recomendada: en 14 días`);
         </Card>
       </div>
       
-      {/* Botones de Acción - CON BOTÓN DE DIFUSOR */}
+      {/* Botones de Acción */}
       <div className="flex flex-wrap gap-3">
         <Button
           onClick={handleRotation}
@@ -3416,16 +3202,7 @@ Próxima limpieza recomendada: en 14 días`);
         </Button>
         
         <Button
-          onClick={toggleAirDiffuser}
-          variant={config.useAirDiffuser ? "default" : "outline"}
-          className={config.useAirDiffuser ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white" : ""}
-        >
-          <Air className="mr-2" />
-          {config.useAirDiffuser ? "Difusor ON" : "Difusor OFF"}
-        </Button>
-        
-        <Button
-          onClick={handleRegisterClean}
+          onClick={() => setLastClean(new Date().toISOString())}
           variant="outline"
         >
           <ShieldAlert className="mr-2" />
@@ -4376,7 +4153,7 @@ Próxima limpieza recomendada: en 14 días`);
             <Button
               variant="outline"
               size="sm"
-              onClick={handleRegisterClean}
+              onClick={() => setLastClean(new Date().toISOString())}
             >
               <ShieldAlert className="mr-2" size={16} />
               Limpieza Hecha
@@ -4660,7 +4437,7 @@ Próxima limpieza recomendada: en 14 días`);
     <div className="space-y-8 animate-fade-in">
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Cálculo de Riego Optimizado</h2>
-        <p className="text-slate-600">Torre vertical hidropónica en Castellón de la Plana - Bomba 6L/h</p>
+        <p className="text-slate-600">Torre vertical hidropónica en Castellón de la Plana</p>
       </div>
       
       <Card className="p-6 rounded-2xl">
@@ -4670,7 +4447,7 @@ Próxima limpieza recomendada: en 14 días`);
           </div>
           <div>
             <h3 className="font-bold text-slate-800">Configuración del Sistema</h3>
-            <p className="text-sm text-slate-600">Bomba de 7W • 6L/h • Dados de lana de roca 2.5cm</p>
+            <p className="text-sm text-slate-600">Bomba de 7W • Dados de lana de roca 2.5cm</p>
           </div>
         </div>
         
@@ -4680,7 +4457,7 @@ Próxima limpieza recomendada: en 14 días`);
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">{irrigationData.pumpPower}W</div>
               <p className="text-sm text-slate-600">Potencia de la bomba</p>
-              <p className="text-xs text-slate-500 mt-2">{irrigationData.pumpFlowRate}L/hora de caudal</p>
+              <p className="text-xs text-slate-500 mt-2">Aprox. 5L/hora de caudal</p>
             </div>
           </div>
           
@@ -4724,12 +4501,6 @@ Próxima limpieza recomendada: en 14 días`);
                   <span className="text-slate-700">Tiempo bomba:</span>
                   <span className="font-bold text-amber-600">{irrigationData.pumpMinutesPerDay} min/día</span>
                 </div>
-                {irrigationData.useAirDiffuser && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-700">Con difusor:</span>
-                    <span className="font-bold text-cyan-600">-5% agua</span>
-                  </div>
-                )}
               </div>
             </div>
             
@@ -4747,10 +4518,6 @@ Próxima limpieza recomendada: en 14 días`);
                 <div className="flex justify-between items-center">
                   <span className="text-slate-700">Frecuencia:</span>
                   <span className="font-bold text-blue-600">Cada 2 horas (luz)</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-700">Caudal bomba:</span>
-                  <span className="font-bold text-blue-600">{irrigationData.pumpFlowRate} L/h</span>
                 </div>
               </div>
             </div>
@@ -5419,9 +5186,7 @@ Próxima limpieza recomendada: en 14 días`);
                           useOsmosisMix: false,
                           osmosisMixPercentage: 0,
                           waterNotes: "",
-                          calculationMethod: "escalonado",
-                          useAirDiffuser: true,
-                          pumpFlowRate: 6
+                          calculationMethod: "escalonado"
                         });
                         setMeasurements({
                           manualPH: "6.0",
@@ -5466,7 +5231,7 @@ Próxima limpieza recomendada: en 14 días`);
         </div>
       </header>
 
-      {/* Navegación por pestañas */}
+      {/* Navegación por pestañas - MODIFICADO: Sin texto, solo iconos coloridos */}
       {step >= 5 && (
         <div className="sticky top-16 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
           <div className="container mx-auto p-4 max-w-6xl">
@@ -5648,28 +5413,29 @@ Próxima limpieza recomendada: en 14 días`);
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 py-3">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="text-sm text-slate-600 flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                alerts.some(a => a.priority === 1) ? 'bg-red-500 animate-pulse' : 'bg-green-500'
-              }`} />
-              <span>
-                {alerts.filter(a => a.priority === 1).length > 0 
-                  ? `${alerts.filter(a => a.priority === 1).length} alertas` 
-                  : "Sistema estable"}
-              </span>
+            <div className="text-sm text-slate-600">
+              HydroCaru Optimizado • EC Seguro para Lechugas • 6 Variedades • Valores 600-1500 µS/cm
             </div>
             
-            <div className="flex items-center gap-4 text-sm text-slate-600">
-              <span>{plants.length} plantas</span>
-              <span>•</span>
-              <span>EC: {config.targetEC} µS/cm</span>
-              <span>•</span>
-              <span>Método: {selectedECMethod || "automático"}</span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Air size={12} />
-                {config.useAirDiffuser ? "Difusor ON" : "Difusor OFF"}
-              </span>
+            <div className="flex items-center gap-4">
+              {step >= 5 && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      alerts.some(a => a.priority === 1) ? 'bg-red-500 animate-pulse' : 'bg-green-500'
+                    }`} />
+                    <span className="text-sm text-slate-600">
+                      {alerts.filter(a => a.priority === 1).length > 0 
+                        ? `${alerts.filter(a => a.priority === 1).length} alertas críticas` 
+                        : "✅ Sistema estable"}
+                    </span>
+                  </div>
+                  
+                  <div className="text-sm text-slate-600">
+                    {plants.length} plantas • EC objetivo: {config.targetEC} µS/cm • Método: {selectedECMethod || "automático"}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
