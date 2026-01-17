@@ -1204,7 +1204,7 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
 };
 
 // ============================================================================
-// COMPONENTE DE MEDIDORES CIRCULARES (VELOCÍMETROS)
+// COMPONENTE DE MEDIDORES CIRCULARES (VELOCÍMETROS) - MEJORADO
 // ============================================================================
 
 const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size = "md" }) => {
@@ -1313,27 +1313,64 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
         </div>
       </div>
       
-      {/* Etiqueta */}
-      <div className="mt-2 text-center">
+      {/* Etiqueta - MEJORADO: Separación clara */}
+      <div className="mt-3 text-center space-y-1">
         <div className="text-sm font-bold text-slate-800">{label}</div>
-        {label === "pH" && (
-          <div className="text-xs text-slate-500">Ideal: 5.5-6.5</div>
-        )}
-        {label === "EC" && (
-          <div className="text-xs text-slate-500">Ideal: 800-1500</div>
-        )}
-        {label === "Temperatura" && (
-          <div className="text-xs text-slate-500">Ideal: 18-25°C</div>
-        )}
-        {label === "Volumen" && (
-          <div className="text-xs text-slate-500">Máx: {max}L</div>
-        )}
+        <div className="text-xs text-slate-500 space-y-0.5">
+          {label === "pH" && (
+            <>
+              <div>Ideal: 5.5-6.5</div>
+              <div>Actual: {value}</div>
+            </>
+          )}
+          {label === "EC" && (
+            <>
+              <div>Ideal: 800-1500</div>
+              <div>Actual: {value}</div>
+            </>
+          )}
+          {label === "Temperatura" && (
+            <>
+              <div>Ideal: 18-25°C</div>
+              <div>Actual: {value}°C</div>
+            </>
+          )}
+          {label === "Volumen" && (
+            <>
+              <div>Máximo: {max}L</div>
+              <div>Actual: {value}L</div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 const DashboardMetricsPanel = ({ config, measurements }) => {
+  const getStatusText = (label, value) => {
+    if (label === "pH") {
+      if (value >= 5.5 && value <= 6.5) return "✅ ÓPTIMO";
+      if (value < 5.0 || value > 7.0) return "⚠️ AJUSTAR";
+      return "⚠️ AJUSTAR";
+    } else if (label === "EC") {
+      if (value >= 800 && value <= 1500) return "✅ ÓPTIMA";
+      if (value > 1500) return "🚨 ALTA";
+      return "⚠️ BAJA";
+    } else if (label === "Temperatura") {
+      if (value >= 18 && value <= 25) return "✅ ÓPTIMA";
+      if (value > 28) return "🚨 ALTA";
+      if (value < 15) return "❄️ BAJA";
+      return "⚠️ AJUSTAR";
+    } else if (label === "Volumen") {
+      const volumePercentage = (value / parseFloat(config.totalVol)) * 100;
+      if (volumePercentage >= 45) return "✅ ADECUADO";
+      if (volumePercentage >= 25) return "⚠️ BAJO";
+      return "🚨 MUY BAJO";
+    }
+    return "";
+  };
+  
   return (
     <Card className="p-6 rounded-2xl mb-8">
       <div className="flex items-center gap-3 mb-6">
@@ -1364,17 +1401,15 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="purple"
             size="md"
           />
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-1">
             <div className={`text-sm font-bold ${
               parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5 
                 ? "text-green-600" 
                 : "text-amber-600"
             }`}>
-              {parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5 
-                ? "✅ ÓPTIMO" 
-                : "⚠️ AJUSTAR"}
+              {getStatusText("pH", parseFloat(measurements.manualPH || config.ph))}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500">
               Objetivo: {config.targetPH}
             </p>
           </div>
@@ -1397,7 +1432,7 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="blue"
             size="md"
           />
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-1">
             <div className={`text-sm font-bold ${
               parseFloat(measurements.manualEC || config.ec) >= 800 && parseFloat(measurements.manualEC || config.ec) <= 1500 
                 ? "text-green-600" 
@@ -1405,11 +1440,9 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
                 ? "text-red-600" 
                 : "text-amber-600"
             }`}>
-              {parseFloat(measurements.manualEC || config.ec) > 1500 ? "🚨 ALTA" :
-               parseFloat(measurements.manualEC || config.ec) < 800 ? "⚠️ BAJA" : 
-               "✅ ÓPTIMA"}
+              {getStatusText("EC", parseFloat(measurements.manualEC || config.ec))}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500">
               Objetivo: {config.targetEC} µS/cm
             </p>
           </div>
@@ -1432,7 +1465,7 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="amber"
             size="md"
           />
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-1">
             <div className={`text-sm font-bold ${
               parseFloat(measurements.manualTemp || config.temp) >= 18 && parseFloat(measurements.manualTemp || config.temp) <= 25 
                 ? "text-green-600" 
@@ -1442,11 +1475,9 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
                 ? "text-blue-600" 
                 : "text-amber-600"
             }`}>
-              {parseFloat(measurements.manualTemp || config.temp) > 28 ? "🚨 ALTA" :
-               parseFloat(measurements.manualTemp || config.temp) < 15 ? "❄️ BAJA" : 
-               "✅ ÓPTIMA"}
+              {getStatusText("Temperatura", parseFloat(measurements.manualTemp || config.temp))}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500">
               Ideal: 18-25°C
             </p>
           </div>
@@ -1469,7 +1500,7 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="emerald"
             size="md"
           />
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-1">
             <div className={`text-sm font-bold ${
               (parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100 >= 45 
                 ? "text-green-600" 
@@ -1477,9 +1508,9 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
                 ? "text-amber-600" 
                 : "text-red-600"
             }`}>
-              {((parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100).toFixed(0)}% 
+              {getStatusText("Volumen", parseFloat(measurements.manualVolume || config.currentVol))}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500">
               {config.currentVol}L / {config.totalVol}L
             </p>
           </div>
@@ -1832,7 +1863,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL - CON LAS MEJORAS
 // ============================================================================
 
 export default function HydroAppFinal() {
@@ -2284,6 +2315,30 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
 
     return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean, plants, calmagNeeded, phAdjustment, aquaVegaDosage]);
+
+  // =================== FUNCIÓN PARA REGISTRAR LIMPIEZA ===================
+
+  const handleRegisterClean = () => {
+    const now = new Date().toISOString();
+    setLastClean(now);
+    
+    // Guardar en historial
+    const cleanRecord = {
+      id: generatePlantId(),
+      date: now,
+      type: "clean",
+      description: "Limpieza del sistema completada",
+      notes: "Limpieza registrada manualmente"
+    };
+    
+    setHistory([cleanRecord, ...history.slice(0, 49)]);
+    
+    alert(`✅ Limpieza registrada exitosamente:
+Fecha: ${new Date(now).toLocaleDateString()}
+Hora: ${new Date(now).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+
+Próxima limpieza recomendada: en 14 días`);
+  };
 
   // =================== RENDER POR PASOS ===================
 
@@ -3202,7 +3257,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         </Button>
         
         <Button
-          onClick={() => setLastClean(new Date().toISOString())}
+          onClick={handleRegisterClean}
           variant="outline"
         >
           <ShieldAlert className="mr-2" />
@@ -4153,7 +4208,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setLastClean(new Date().toISOString())}
+              onClick={handleRegisterClean}
             >
               <ShieldAlert className="mr-2" size={16} />
               Limpieza Hecha
@@ -5409,33 +5464,27 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
         plants={plants}
       />
 
-      {/* Footer */}
+      {/* Footer - SIMPLIFICADO */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 py-3">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="text-sm text-slate-600">
-              HydroCaru Optimizado • EC Seguro para Lechugas • 6 Variedades • Valores 600-1500 µS/cm
+            <div className="text-sm text-slate-600 flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${
+                alerts.some(a => a.priority === 1) ? 'bg-red-500 animate-pulse' : 'bg-green-500'
+              }`} />
+              <span>
+                {alerts.filter(a => a.priority === 1).length > 0 
+                  ? `${alerts.filter(a => a.priority === 1).length} alertas` 
+                  : "Sistema estable"}
+              </span>
             </div>
             
-            <div className="flex items-center gap-4">
-              {step >= 5 && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      alerts.some(a => a.priority === 1) ? 'bg-red-500 animate-pulse' : 'bg-green-500'
-                    }`} />
-                    <span className="text-sm text-slate-600">
-                      {alerts.filter(a => a.priority === 1).length > 0 
-                        ? `${alerts.filter(a => a.priority === 1).length} alertas críticas` 
-                        : "✅ Sistema estable"}
-                    </span>
-                  </div>
-                  
-                  <div className="text-sm text-slate-600">
-                    {plants.length} plantas • EC objetivo: {config.targetEC} µS/cm • Método: {selectedECMethod || "automático"}
-                  </div>
-                </>
-              )}
+            <div className="flex items-center gap-4 text-sm text-slate-600">
+              <span>{plants.length} plantas</span>
+              <span>•</span>
+              <span>EC: {config.targetEC} µS/cm</span>
+              <span>•</span>
+              <span>Método: {selectedECMethod || "automático"}</span>
             </div>
           </div>
         </div>
