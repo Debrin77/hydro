@@ -2016,14 +2016,14 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 // ============================================================================
 
 export default function HydroAppFinal() {
-  // Estados principales
+  // Estados principales - CORREGIDO: selPos inicializado como objeto vacío
   const [step, setStep] = useState(0);
   const [plants, setPlants] = useState([]);
   const [history, setHistory] = useState([]);
   const [lastRot, setLastRot] = useState(new Date().toISOString());
   const [lastClean, setLastClean] = useState(new Date().toISOString());
   const [tab, setTab] = useState("dashboard");
-  const [selPos, setSelPos] = useState(null);
+  const [selPos, setSelPos] = useState({}); // CORREGIDO: Cambiado de null a {}
   const [showWaterSelector, setShowWaterSelector] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showRotationModal, setShowRotationModal] = useState(false);
@@ -3052,7 +3052,7 @@ Próxima limpieza recomendada: en 14 días`);
                             type="button"
                             onClick={() => setSelPos(prev => ({...prev, l: level}))}
                             className={`flex-1 py-3 rounded-lg text-center font-medium transition-all ${
-                              selPos?.l === level 
+                              selPos.l === level 
                                 ? level === 1 ? 'bg-cyan-500 text-white' :
                                   level === 2 ? 'bg-green-500 text-white' :
                                   'bg-emerald-500 text-white'
@@ -3081,7 +3081,7 @@ Próxima limpieza recomendada: en 14 días`);
                             type="button"
                             onClick={() => setSelPos(prev => ({...prev, v: variety}))}
                             className={`py-2 px-3 rounded-lg text-center text-sm font-medium transition-all ${
-                              selPos?.v === variety 
+                              selPos.v === variety 
                                 ? `${VARIETIES[variety].color} text-white`
                                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                             }`}
@@ -3107,7 +3107,7 @@ Próxima limpieza recomendada: en 14 días`);
                               className={`aspect-square rounded-lg flex items-center justify-center font-medium transition-all ${
                                 ocupada 
                                   ? 'bg-red-100 text-red-700'
-                                  : selPos?.p === pos
+                                  : selPos.p === pos
                                   ? 'bg-blue-500 text-white'
                                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                               }`}
@@ -3124,7 +3124,7 @@ Próxima limpieza recomendada: en 14 días`);
                   
                   <Button
                     onClick={() => {
-                      if (selPos?.l && selPos?.v && selPos?.p) {
+                      if (selPos.l && selPos.v && selPos.p) {
                         setPlants([...plants, {
                           id: generatePlantId(),
                           l: selPos.l,
@@ -3132,10 +3132,10 @@ Próxima limpieza recomendada: en 14 días`);
                           p: selPos.p,
                           date: new Date().toISOString()
                         }]);
-                        setSelPos(null);
+                        setSelPos({});
                       }
                     }}
-                    disabled={!(selPos?.l && selPos?.v && selPos?.p)}
+                    disabled={!selPos.l || !selPos.v || !selPos.p}
                     className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl"
                   >
                     <Plus className="mr-2" />
