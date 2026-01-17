@@ -2050,7 +2050,7 @@ const Step3PlantsSetup = ({ config, plants, setPlants, prevStep, nextStep }) => 
   );
 };
 
-const Step4SummarySetup = ({ config, plants, prevStep, completeSetup }) => {
+const Step4SummarySetup = ({ config, plants, prevStep, completeSetup, setConfig }) => {
   const [hasAeration, setHasAeration] = useState(config.hasAeration);
   
   const waterCharacteristics = getWaterCharacteristics(
@@ -2068,12 +2068,21 @@ const Step4SummarySetup = ({ config, plants, prevStep, completeSetup }) => {
   const smartEC = calculateSmartEC(plants, config.waterType);
   
   const handleComplete = () => {
-    setConfig({
+    // Actualizar la configuración antes de completar
+    const updatedConfig = {
       ...config,
       hasAeration: hasAeration,
       targetEC: smartEC.targetEC,
-      ec: smartEC.targetEC
-    });
+      ec: smartEC.targetEC,
+      // Asegurarnos de que todos los valores necesarios estén presentes
+      totalVol: config.totalVol || "20",
+      currentVol: config.currentVol || "20",
+      ph: config.ph || "6.0",
+      temp: config.temp || "22",
+      targetPH: config.targetPH || "6.0"
+    };
+    
+    setConfig(updatedConfig);
     completeSetup();
   };
   
@@ -2710,7 +2719,7 @@ const CalculatorTab = ({ config, plants, aquaVegaDosage, phAdjustment, calmagNee
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL COMPLETO
+// COMPONENTE PRINCIPAL COMPLETO - CORREGIDO
 // ============================================================================
 
 export default function HydroAppFinal() {
@@ -3294,6 +3303,7 @@ Próxima limpieza recomendada: en 14 días`);
               setStep(5);
               setTab("dashboard");
             }}
+            setConfig={setConfig}
           />
         );
       
