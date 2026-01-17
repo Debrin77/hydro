@@ -1285,47 +1285,15 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
 // ============================================================================
 
 const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size = "md" }) => {
-  const sizes = {
-    sm: "w-20 h-20",      // Reducido para iPhone
-    md: "w-28 h-28",      // Reducido para iPhone
-    lg: "w-36 h-36"       // Reducido para iPhone
-  };
+  // PROTECCIÓN CRÍTICA: Evitar división por cero
+  const safeMax = max === 0 ? 1 : max;
+  const safeValue = isNaN(value) ? min : value;
   
-  const colors = {
-    blue: "text-blue-600",
-    green: "text-green-600",
-    red: "text-red-600",
-    purple: "text-purple-600",
-    amber: "text-amber-600",
-    cyan: "text-cyan-600",
-    emerald: "text-emerald-600"
-  };
-  
-  const bgColors = {
-    blue: "stroke-blue-200",
-    green: "stroke-green-200",
-    red: "stroke-red-200",
-    purple: "stroke-purple-200",
-    amber: "stroke-amber-200",
-    cyan: "stroke-cyan-200",
-    emerald: "stroke-emerald-200"
-  };
-  
-  const fillColors = {
-    blue: "stroke-blue-600",
-    green: "stroke-green-600",
-    red: "stroke-red-600",
-    purple: "stroke-purple-600",
-    amber: "stroke-amber-600",
-    cyan: "stroke-cyan-600",
-    emerald: "stroke-emerald-600"
-  };
-  
-  const percentage = Math.min(100, ((value - min) / (max - min)) * 100);
-  const strokeDasharray = 2 * Math.PI * 32; // radio reducido para iPhone
+  const percentage = Math.min(100, ((safeValue - min) / (safeMax - min)) * 100);
+  const strokeDasharray = 2 * Math.PI * 32;
   const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
   
-  // Determinar color del valor según el rango
+  // Determinar color del valor según el rango - CON PROTECCIÓN
   const getValueColor = () => {
     if (label === "pH") {
       if (value >= 5.5 && value <= 6.5) return "text-green-600";
@@ -1341,6 +1309,8 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
       if (value < 15) return "text-blue-600";
       return "text-amber-600";
     } else if (label === "Volumen") {
+      // PROTECCIÓN: Verificar que max no sea 0
+      if (max <= 0) return "text-slate-600";
       const volumePercentage = (value / max) * 100;
       if (volumePercentage >= 45) return "text-green-600";
       if (volumePercentage >= 25) return "text-amber-600";
@@ -1348,6 +1318,9 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
     }
     return colors[color];
   };
+  
+  // ... resto del componente sin cambios
+};
   
   // Formatear valor para iPhone (más pequeño)
   const formatValue = (val) => {
@@ -1433,29 +1406,32 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
   );
 };
 
-const DashboardMetricsPanel = ({ config, measurements, useAirDiffuser }) => {
-  const getStatusText = (label, value) => {
-    if (label === "pH") {
-      if (value >= 5.5 && value <= 6.5) return "✅ ÓPTIMO";
-      if (value < 5.0 || value > 7.0) return "⚠️ AJUSTAR";
-      return "⚠️ AJUSTAR";
-    } else if (label === "EC") {
-      if (value >= 800 && value <= 1500) return "✅ ÓPTIMA";
-      if (value > 1500) return "🚨 ALTA";
-      return "⚠️ BAJA";
-    } else if (label === "Temperatura") {
-      if (value >= 18 && value <= 25) return "✅ ÓPTIMA";
-      if (value > 28) return "🚨 ALTA";
-      if (value < 15) return "❄️ BAJA";
-      return "⚠️ AJUSTAR";
-    } else if (label === "Volumen") {
-      const volumePercentage = (value / parseFloat(config.totalVol)) * 100;
-      if (volumePercentage >= 45) return "✅ ADECUADO";
-      if (volumePercentage >= 25) return "⚠️ BAJO";
-      return "🚨 MUY BAJO";
-    }
-    return "";
-  };
+const getStatusText = (label, value) => {
+  if (label === "pH") {
+    if (value >= 5.5 && value <= 6.5) return "✅ ÓPTIMO";
+    if (value < 5.0 || value > 7.0) return "⚠️ AJUSTAR";
+    return "⚠️ AJUSTAR";
+  } else if (label === "EC") {
+    if (value >= 800 && value <= 1500) return "✅ ÓPTIMA";
+    if (value > 1500) return "🚨 ALTA";
+    return "⚠️ BAJA";
+  } else if (label === "Temperatura") {
+    if (value >= 18 && value <= 25) return "✅ ÓPTIMA";
+    if (value > 28) return "🚨 ALTA";
+    if (value < 15) return "❄️ BAJA";
+    return "⚠️ AJUSTAR";
+  } else if (label === "Volumen") {
+    // PROTECCIÓN: Verificar que config.totalVol no sea 0
+    const totalVol = parseFloat(config.totalVol || "20");
+    if (totalVol <= 0) return "CONFIGURAR";
+    
+    const volumePercentage = (value / totalVol) * 100;
+    if (volumePercentage >= 45) return "✅ ADECUADO";
+    if (volumePercentage >= 25) return "⚠️ BAJO";
+    return "🚨 MUY BAJO";
+  }
+  return "";
+};
   
   // Beneficios del difusor de aire
   const diffuserBenefits = getAirDiffuserBenefits(
