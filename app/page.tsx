@@ -251,7 +251,7 @@ const calculatePlantStats = (plants) => {
   plants.forEach(plant => {
     if (plant.l === 1) stats.seedlingCount++;
     else if (plant.l === 2) stats.growthCount++;
-    else stats.matureCount++;
+    else if (plant.l === 3) stats.matureCount++;
     
     stats.varietyCount[plant.v] = (stats.varietyCount[plant.v] || 0) + 1;
   });
@@ -852,7 +852,7 @@ const getAirDiffuserBenefits = (useDiffuser, waterTemp, volume) => {
 // COMPONENTES REUTILIZABLES CORREGIDOS
 // ============================================================================
 
-const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size = "md" }) => {
+const CircularGauge = ({ value, max = 100, min = 0, label, unit = "", color = "blue", size = "md" }) => {
   const sizes = {
     sm: "w-20 h-20",
     md: "w-28 h-28",
@@ -889,14 +889,24 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
     emerald: "stroke-emerald-600"
   };
   
-  // PROTECCIÓN CONTRA ERRORES
-  const safeMax = max === 0 ? 1 : max;
-  const safeValue = isNaN(value) ? min : Math.max(min, Math.min(value, max || 100));
-  const safeMin = min;
+  // PROTECCIÓN CONTRA ERRORES - CORREGIDO
+  const safeMax = max === 0 || isNaN(max) ? 1 : max;
+  const safeMin = min === undefined || isNaN(min) ? 0 : min;
+  let safeValue = parseFloat(value);
   
-  const percentage = Math.min(100, Math.max(0, ((safeValue - safeMin) / (safeMax - safeMin)) * 100));
-  const strokeDasharray = 2 * Math.PI * 32;
-  const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
+  if (isNaN(safeValue)) {
+    safeValue = safeMin;
+  } else {
+    safeValue = Math.max(safeMin, Math.min(safeValue, safeMax));
+  }
+  
+  const range = safeMax - safeMin;
+  const percentage = range === 0 ? 100 : ((safeValue - safeMin) / range) * 100;
+  const clampedPercentage = Math.min(100, Math.max(0, percentage));
+  
+  const circleRadius = 32;
+  const circleCircumference = 2 * Math.PI * circleRadius;
+  const strokeDashoffset = circleCircumference - (circleCircumference * clampedPercentage) / 100;
   
   // Determinar color del valor según el rango
   const getValueColor = () => {
@@ -914,7 +924,6 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
       if (safeValue < 15) return "text-blue-600";
       return "text-amber-600";
     } else if (label === "Volumen") {
-      if (safeMax <= 0) return "text-slate-600";
       const volumePercentage = (safeValue / safeMax) * 100;
       if (volumePercentage >= 45) return "text-green-600";
       if (volumePercentage >= 25) return "text-amber-600";
@@ -923,7 +932,7 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
     return colors[color];
   };
   
-  // Formatear valor
+  // Formatear valor - CORREGIDO
   const formatValue = (val) => {
     if (label === "pH") return val.toFixed(1);
     if (label === "EC") return val >= 1000 ? `${(val/1000).toFixed(1)}k` : Math.round(val).toString();
@@ -933,17 +942,17 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
   };
   
   return (
-    <div className={`flex flex-col items-center ${sizes[size]}`}>
+    <div className={`flex flex-col items-center justify-center ${sizes[size]}`}>
       <div className="relative w-full h-full">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
           {/* Fondo del círculo */}
           <circle
             cx="40"
             cy="40"
-            r="32"
+            r={circleRadius}
             fill="none"
             strokeWidth="6"
-            className={bgColors[color]}
+            className={bgColors[color] || bgColors.blue}
             strokeLinecap="round"
           />
           
@@ -951,12 +960,12 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
           <circle
             cx="40"
             cy="40"
-            r="32"
+            r={circleRadius}
             fill="none"
             strokeWidth="6"
-            className={fillColors[color]}
+            className={fillColors[color] || fillColors.blue}
             strokeLinecap="round"
-            strokeDasharray={strokeDasharray}
+            strokeDasharray={circleCircumference}
             strokeDashoffset={strokeDashoffset}
             style={{
               transition: "stroke-dashoffset 0.5s ease-in-out"
@@ -964,12 +973,14 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
           />
         </svg>
         
-        {/* Valor central - CORREGIDO PARA EVITAR SUPERPOCISIÓN */}
+        {/* Valor central - CORREGIDO COMPLETAMENTE */}
         <div className="absolute inset-0 flex flex-col items-center justify-center px-1">
           <div className={`text-lg font-bold ${getValueColor()} leading-tight text-center`}>
             {formatValue(safeValue)}
           </div>
-          <div className="text-[10px] text-slate-500 mt-0.5 truncate w-full text-center">{unit}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5 truncate w-full text-center">
+            {unit}
+          </div>
         </div>
       </div>
       
@@ -3093,13 +3104,15 @@ Próxima limpieza recomendada: en 14 días`);
         </div>
       </div>
       
-      <OsmosisDiagnosisPanel 
-        waterType={config.waterType}
-        osmosisMix={config.useOsmosisMix ? config.osmosisMixPercentage : 0}
-        calmagNeeded={calmagNeeded}
-        volume={parseFloat(config.currentVol || "20")}
-        aquaVegaDosage={aquaVegaDosage}
-      />
+      {config.waterType === "osmosis" || (config.useOsmosisMix && config.osmosisMixPercentage > 50) ? (
+        <OsmosisDiagnosisPanel 
+          waterType={config.waterType}
+          osmosisMix={config.useOsmosisMix ? config.osmosisMixPercentage : 0}
+          calmagNeeded={calmagNeeded}
+          volume={parseFloat(config.currentVol || "20")}
+          aquaVegaDosage={aquaVegaDosage}
+        />
+      ) : null}
       
       <DashboardMetricsPanel 
         config={config} 
