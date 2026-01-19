@@ -1204,7 +1204,7 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
 };
 
 // ============================================================================
-// COMPONENTE DE MEDIDORES CIRCULARES (VELOCÍMETROS) - MEJORADO Y CORREGIDO
+// COMPONENTE DE MEDIDORES CIRCULARES (VELOCÍMETROS) - MEJORADO
 // ============================================================================
 
 const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size = "md" }) => {
@@ -1245,7 +1245,7 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
   };
   
   const percentage = Math.min(100, ((value - min) / (max - min)) * 100);
-  const strokeDasharray = 2 * Math.PI * 40;
+  const strokeDasharray = 2 * Math.PI * 40; // radio del círculo
   const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
   
   // Determinar color del valor según el rango
@@ -1306,40 +1306,40 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
         
         {/* Valor central */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className={`text-lg sm:text-2xl font-bold ${getValueColor()}`}>
+          <div className={`text-2xl font-bold ${getValueColor()}`}>
             {value}
           </div>
-          <div className="text-xs text-slate-500 mt-0.5">{unit}</div>
+          <div className="text-xs text-slate-500 mt-1">{unit}</div>
         </div>
       </div>
       
-      {/* Etiqueta - CORREGIDO: Mejor espaciado y estructura */}
-      <div className="mt-4 text-center min-h-[60px]">
-        <div className="text-xs sm:text-sm font-bold text-slate-800 mb-1">{label}</div>
-        <div className="text-[10px] sm:text-xs text-slate-500 space-y-0.5">
+      {/* Etiqueta - MEJORADO: Separación clara */}
+      <div className="mt-3 text-center space-y-1">
+        <div className="text-sm font-bold text-slate-800">{label}</div>
+        <div className="text-xs text-slate-500 space-y-0.5">
           {label === "pH" && (
-            <div className="space-y-0.5">
+            <>
               <div>Ideal: 5.5-6.5</div>
               <div>Actual: {value}</div>
-            </div>
+            </>
           )}
           {label === "EC" && (
-            <div className="space-y-0.5">
+            <>
               <div>Ideal: 800-1500</div>
               <div>Actual: {value}</div>
-            </div>
+            </>
           )}
           {label === "Temperatura" && (
-            <div className="space-y-0.5">
+            <>
               <div>Ideal: 18-25°C</div>
               <div>Actual: {value}°C</div>
-            </div>
+            </>
           )}
           {label === "Volumen" && (
-            <div className="space-y-0.5">
+            <>
               <div>Máximo: {max}L</div>
               <div>Actual: {value}L</div>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -1383,15 +1383,14 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
         </div>
       </div>
       
-      {/* CORREGIDO: Ajustado grid gap y padding para evitar solapamiento */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Medidor de pH */}
         <div className="flex flex-col items-center p-4 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-              <Activity className="text-white" size={18} />
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+              <Activity className="text-white" size={16} />
             </div>
-            <span className="font-bold text-purple-700 text-sm sm:text-base">pH del Agua</span>
+            <span className="font-bold text-purple-700">pH del Agua</span>
           </div>
           <CircularGauge 
             value={parseFloat(measurements.manualPH || config.ph)} 
@@ -1402,8 +1401,8 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="purple"
             size="md"
           />
-          <div className="mt-6 text-center space-y-2">
-            <div className={`text-xs sm:text-sm font-bold ${
+          <div className="mt-4 text-center space-y-1">
+            <div className={`text-sm font-bold ${
               parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5 
                 ? "text-green-600" 
                 : "text-amber-600"
@@ -1418,11 +1417,11 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
         
         {/* Medidor de EC */}
         <div className="flex flex-col items-center p-4 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Zap className="text-white" size={18} />
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+              <Zap className="text-white" size={16} />
             </div>
-            <span className="font-bold text-blue-700 text-sm sm:text-base">Conductividad (EC)</span>
+            <span className="font-bold text-blue-700">Conductividad (EC)</span>
           </div>
           <CircularGauge 
             value={parseFloat(measurements.manualEC || config.ec)} 
@@ -1433,8 +1432,8 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="blue"
             size="md"
           />
-          <div className="mt-6 text-center space-y-2">
-            <div className={`text-xs sm:text-sm font-bold ${
+          <div className="mt-4 text-center space-y-1">
+            <div className={`text-sm font-bold ${
               parseFloat(measurements.manualEC || config.ec) >= 800 && parseFloat(measurements.manualEC || config.ec) <= 1500 
                 ? "text-green-600" 
                 : parseFloat(measurements.manualEC || config.ec) > 1500 
@@ -1451,11 +1450,11 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
         
         {/* Medidor de Temperatura */}
         <div className="flex flex-col items-center p-4 bg-gradient-to-b from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <Thermometer className="text-white" size={18} />
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <Thermometer className="text-white" size={16} />
             </div>
-            <span className="font-bold text-amber-700 text-sm sm:text-base">Temperatura</span>
+            <span className="font-bold text-amber-700">Temperatura</span>
           </div>
           <CircularGauge 
             value={parseFloat(measurements.manualTemp || config.temp)} 
@@ -1466,8 +1465,8 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="amber"
             size="md"
           />
-          <div className="mt-6 text-center space-y-2">
-            <div className={`text-xs sm:text-sm font-bold ${
+          <div className="mt-4 text-center space-y-1">
+            <div className={`text-sm font-bold ${
               parseFloat(measurements.manualTemp || config.temp) >= 18 && parseFloat(measurements.manualTemp || config.temp) <= 25 
                 ? "text-green-600" 
                 : parseFloat(measurements.manualTemp || config.temp) > 28 
@@ -1486,11 +1485,11 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
         
         {/* Medidor de Volumen */}
         <div className="flex flex-col items-center p-4 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-              <Droplets className="text-white" size={18} />
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+              <Droplets className="text-white" size={16} />
             </div>
-            <span className="font-bold text-emerald-700 text-sm sm:text-base">Volumen Agua</span>
+            <span className="font-bold text-emerald-700">Volumen Agua</span>
           </div>
           <CircularGauge 
             value={parseFloat(measurements.manualVolume || config.currentVol)} 
@@ -1501,8 +1500,8 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
             color="emerald"
             size="md"
           />
-          <div className="mt-6 text-center space-y-2">
-            <div className={`text-xs sm:text-sm font-bold ${
+          <div className="mt-4 text-center space-y-1">
+            <div className={`text-sm font-bold ${
               (parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100 >= 45 
                 ? "text-green-600" 
                 : (parseFloat(measurements.manualVolume || config.currentVol) / parseFloat(config.totalVol)) * 100 >= 25 
@@ -1519,13 +1518,13 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
       </div>
       
       {/* Resumen de estado */}
-      <div className="mt-8 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
+      <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
         <h4 className="font-bold text-slate-700 mb-3">📊 Resumen del Estado del Sistema</h4>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-slate-700 text-sm">Última medición:</span>
-              <span className="font-bold text-blue-600 text-sm">
+              <span className="text-slate-700">Última medición:</span>
+              <span className="font-bold text-blue-600">
                 {new Date(measurements.lastMeasurement).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </span>
             </div>
@@ -1536,8 +1535,8 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
           
           <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-slate-700 text-sm">Tipo de agua:</span>
-              <span className="font-bold text-cyan-600 text-sm">
+              <span className="text-slate-700">Tipo de agua:</span>
+              <span className="font-bold text-cyan-600">
                 {WATER_TYPES[config.waterType]?.name || "Baja Mineralización"}
               </span>
             </div>
@@ -1548,8 +1547,8 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
           
           <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-slate-700 text-sm">Temperatura agua:</span>
-              <span className={`font-bold text-sm ${
+              <span className="text-slate-700">Temperatura agua:</span>
+              <span className={`font-bold ${
                 parseFloat(measurements.manualWaterTemp || "22") >= 18 && parseFloat(measurements.manualWaterTemp || "22") <= 22 
                   ? "text-green-600" 
                   : parseFloat(measurements.manualWaterTemp || "22") > 22 
@@ -1568,8 +1567,8 @@ const DashboardMetricsPanel = ({ config, measurements }) => {
           
           <div className="p-3 bg-white rounded-lg">
             <div className="flex items-center justify-between">
-              <span className="text-slate-700 text-sm">Humedad ambiente:</span>
-              <span className={`font-bold text-sm ${
+              <span className="text-slate-700">Humedad ambiente:</span>
+              <span className={`font-bold ${
                 parseFloat(measurements.manualHumidity || "65") >= 40 && parseFloat(measurements.manualHumidity || "65") <= 70 
                   ? "text-green-600" 
                   : "text-amber-600"
@@ -5056,7 +5055,6 @@ Próxima limpieza recomendada: en 14 días`);
                 <div className="flex items-start gap-2">
                   <div className="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-sm font-bold mt-1">
                     1
-                  </
                   </div>
                   <div>
                     <p className="font-bold text-slate-700">Inserción de la plántula</p>
