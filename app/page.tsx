@@ -2912,8 +2912,7 @@ Próxima limpieza recomendada: en 14 días`);
                 </div>
                 <div>
                   <p className="font-bold text-slate-800">Observa la lana de roca 1 hora después del riego</p>
-                  <p
-                                    <p className="text-sm text-slate-600">Debe estar húmeda pero no chorreando agua</p>
+                 <p className="text-sm text-slate-600">Debe estar húmeda pero no chorreando agua</p>
                 </div>
               </div>
 
