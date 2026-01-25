@@ -2375,6 +2375,7 @@ Próxima limpieza recomendada: en 14 días`);
 
   // =================== COMPONENTES DE PESTAÑAS CORREGIDOS ===================
 
+  // CORRECCIÓN: DashboardMetricsPanel con layout mejorado para móvil
   const DashboardMetricsPanel = ({ config, measurements }) => {
     const getStatusText = (label, value) => {
       if (label === "pH") {
@@ -2416,9 +2417,22 @@ Próxima limpieza recomendada: en 14 días`);
         </div>
 
         <div className="space-y-8">
-          {/* Medidor de pH */}
-          <div className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-            <div className="flex-1">
+          {/* Medidor de pH - CORREGIDO: Layout mejorado para móvil */}
+          <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+            {/* Gráfico a la izquierda en móvil, a la derecha en escritorio */}
+            <div className="flex-shrink-0 order-1 md:order-2">
+              <CircularGauge
+                value={parseFloat(measurements.manualPH || config.ph)}
+                min={4}
+                max={9}
+                label="pH"
+                unit=""
+                color="purple"
+                size="md"
+              />
+            </div>
+            {/* Textos a la derecha en móvil, a la izquierda en escritorio */}
+            <div className="flex-1 min-w-0 order-2 md:order-1">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
                   <Activity className="text-white" size={20} />
@@ -2432,7 +2446,7 @@ Próxima limpieza recomendada: en 14 días`);
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-slate-700">Valor actual:</span>
-                    <span className="text-2xl font-bold text-purple-600">{parseFloat(measurements.manualPH || config.ph)}</span>
+                    <span className="text-xl md:text-2xl font-bold text-purple-600">{parseFloat(measurements.manualPH || config.ph)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-700">Estado:</span>
@@ -2457,36 +2471,38 @@ Próxima limpieza recomendada: en 14 días`);
                 </div>
               </div>
             </div>
-            <div className="flex-shrink-0">
+          </div>
+
+          {/* Medidor de EC - CORREGIDO: Layout mejorado para móvil */}
+          <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+            {/* Gráfico a la izquierda en móvil, a la derecha en escritorio */}
+            <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
-                value={parseFloat(measurements.manualPH || config.ph)}
-                min={4}
-                max={9}
-                label="pH"
-                unit=""
-                color="purple"
+                value={parseFloat(measurements.manualEC || config.ec)}
+                min={0}
+                max={3000}
+                label="EC"
+                unit="µS/cm"
+                color={ecAlert ? (ecAlert.severity === 1 ? "red" : "amber") : "blue"}
                 size="md"
               />
             </div>
-          </div>
-
-          {/* Medidor de EC - CORREGIDO: Con rangos específicos */}
-          <div className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-            <div className="flex-1">
+            {/* Textos a la derecha en móvil, a la izquierda en escritorio */}
+            <div className="flex-1 min-w-0 order-2 md:order-1">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
                   <Zap className="text-white" size={20} />
                 </div>
                 <div>
                   <h3 className="font-bold text-blue-700">Conductividad (EC)</h3>
-                  <p className="text-sm text-slate-600">Rango seguro basado en tus plantas: {systemRange.min}-{systemRange.max} µS/cm</p>
+                  <p className="text-sm text-slate-600">Rango seguro: {systemRange.min}-{systemRange.max} µS/cm</p>
                 </div>
               </div>
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-slate-700">Valor actual:</span>
-                    <span className={`text-2xl font-bold ${
+                    <span className={`text-xl md:text-2xl font-bold ${
                       ecAlert ? (ecAlert.severity === 1 ? 'text-red-600' : 'text-amber-600') : 'text-blue-600'
                     }`}>
                       {parseFloat(measurements.manualEC || config.ec)} µS/cm
@@ -2517,22 +2533,24 @@ Próxima limpieza recomendada: en 14 días`);
                 </div>
               </div>
             </div>
-            <div className="flex-shrink-0">
+          </div>
+
+          {/* Medidor de Temperatura - CORREGIDO: Layout mejorado para móvil */}
+          <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+            {/* Gráfico a la izquierda en móvil, a la derecha en escritorio */}
+            <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
-                value={parseFloat(measurements.manualEC || config.ec)}
+                value={parseFloat(measurements.manualTemp || config.temp)}
                 min={0}
-                max={3000}
-                label="EC"
-                unit="µS/cm"
-                color={ecAlert ? (ecAlert.severity === 1 ? "red" : "amber") : "blue"}
+                max={40}
+                label="Temperatura"
+                unit="°C"
+                color="amber"
                 size="md"
               />
             </div>
-          </div>
-
-          {/* Medidor de Temperatura */}
-          <div className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-gradient-to-b from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-            <div className="flex-1">
+            {/* Textos a la derecha en móvil, a la izquierda en escritorio */}
+            <div className="flex-1 min-w-0 order-2 md:order-1">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
                   <Thermometer className="text-white" size={20} />
@@ -2546,7 +2564,7 @@ Próxima limpieza recomendada: en 14 días`);
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-slate-700">Valor actual:</span>
-                    <span className="text-2xl font-bold text-amber-600">{parseFloat(measurements.manualTemp || config.temp)}°C</span>
+                    <span className="text-xl md:text-2xl font-bold text-amber-600">{parseFloat(measurements.manualTemp || config.temp)}°C</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-700">Estado:</span>
@@ -2577,22 +2595,24 @@ Próxima limpieza recomendada: en 14 días`);
                 </div>
               </div>
             </div>
-            <div className="flex-shrink-0">
+          </div>
+
+          {/* Medidor de Volumen - CORREGIDO: Layout mejorado para móvil */}
+          <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+            {/* Gráfico a la izquierda en móvil, a la derecha en escritorio */}
+            <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
-                value={parseFloat(measurements.manualTemp || config.temp)}
+                value={parseFloat(measurements.manualVolume || config.currentVol)}
                 min={0}
-                max={40}
-                label="Temperatura"
-                unit="°C"
-                color="amber"
+                max={parseFloat(config.totalVol)}
+                label="Volumen"
+                unit="L"
+                color="emerald"
                 size="md"
               />
             </div>
-          </div>
-
-          {/* Medidor de Volumen */}
-          <div className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-            <div className="flex-1">
+            {/* Textos a la derecha en móvil, a la izquierda en escritorio */}
+            <div className="flex-1 min-w-0 order-2 md:order-1">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
                   <Droplets className="text-white" size={20} />
@@ -2606,7 +2626,7 @@ Próxima limpieza recomendada: en 14 días`);
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-slate-700">Volumen actual:</span>
-                    <span className="text-2xl font-bold text-emerald-600">{parseFloat(measurements.manualVolume || config.currentVol)}L</span>
+                    <span className="text-xl md:text-2xl font-bold text-emerald-600">{parseFloat(measurements.manualVolume || config.currentVol)}L</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-700">Capacidad total:</span>
@@ -2637,17 +2657,6 @@ Próxima limpieza recomendada: en 14 días`);
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="flex-shrink-0">
-              <CircularGauge
-                value={parseFloat(measurements.manualVolume || config.currentVol)}
-                min={0}
-                max={parseFloat(config.totalVol)}
-                label="Volumen"
-                unit="L"
-                color="emerald"
-                size="md"
-              />
             </div>
           </div>
         </div>
@@ -5247,4 +5256,4 @@ Próxima limpieza recomendada: en 14 días`);
       </footer>
     </div>
   );
-}  
+}
