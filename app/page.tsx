@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from "react"
+import Image from 'next/image'
 import {
   Sprout, Activity, Layers, Beaker, Calendar,
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check,
@@ -2950,72 +2951,113 @@ Próxima limpieza recomendada: en 14 días`);
   const renderStep = () => {
     switch (step) {
       case 0:
-        return (
-          <div className="text-center space-y-8 animate-fade-in">
-            <div className="flex justify-center">
-              <div className="relative">
-                <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center animate-pulse">
-                  <Sprout size={64} className="text-white" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center">
-                  <Droplets size={32} className="text-white" />
-                </div>
-                <div className="absolute -bottom-2 -left-2 w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center">
-                  <FlaskConical size={32} className="text-white" />
-                </div>
+  return (
+    <div className="text-center space-y-8 animate-fade-in">
+      <div className="flex justify-center">
+        <div className="relative group">
+          {/* Contenedor principal con Image optimizado de Next.js */}
+          <div className="relative w-72 h-72 rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-105">
+            <Image 
+              src="/mi-imagen-hidroponia.jpg"  // CAMBIA ESTE NOMBRE POR TU IMAGEN
+              alt="Sistema Hidropónico HydroCaru"
+              width={400}
+              height={400}
+              className="w-full h-full object-cover"
+              priority
+              onError={(e) => {
+                // Fallback si la imagen no se carga
+                e.target.style.display = 'none';
+                const parent = e.target.parentElement;
+                parent.innerHTML = `
+                  <div class="w-full h-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
+                    <svg class="w-32 h-32 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                  </div>
+                `;
+              }}
+            />
+            
+            {/* Overlay para mejorar legibilidad */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            
+            {/* Logo/icono superpuesto */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30">
+                <Sprout size={48} className="text-white drop-shadow-lg" />
               </div>
             </div>
-
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
-              HydroCaru Optimizado
-            </h1>
-
-            <p className="text-xl text-slate-600 max-w-lg mx-auto">
-              Sistema experto para cultivo hidropónico con cálculo EC escalonado seguro para lechugas
-            </p>
-
-            <div className="space-y-4 max-w-md mx-auto">
-              <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-emerald-100">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <Calculator className="text-emerald-600" size={20} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-bold text-slate-800">Cálculo EC Optimizado</h3>
-                  <p className="text-sm text-slate-600">Valores seguros para lechugas: 800-1500 µS/cm</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-blue-100">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Filter className="text-blue-600" size={20} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-bold text-slate-800">Protección de Plántulas</h3>
-                  <p className="text-sm text-slate-600">EC reducido para plantas jóvenes: 600-800 µS/cm</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-purple-100">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <TreePine className="text-purple-600" size={20} />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-bold text-slate-800">6 Variedades Específicas</h3>
-                  <p className="text-sm text-slate-600">Parámetros optimizados por variedad</p>
-                </div>
-              </div>
+            
+            {/* Texto en la imagen */}
+            <div className="absolute bottom-6 left-0 right-0 text-center">
+              <p className="text-white font-bold text-lg drop-shadow-lg">Sistema 5-5-5</p>
+              <p className="text-white/90 text-sm drop-shadow">EC optimizado para lechugas</p>
             </div>
-
-            <Button
-              onClick={() => setStep(1)}
-              className="px-8 py-6 text-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-2xl shadow-lg"
-            >
-              Comenzar Configuración
-              <ChevronRight className="ml-2" />
-            </Button>
           </div>
-        );
+          
+          {/* Elementos flotantes alrededor */}
+          <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center shadow-xl animate-bounce">
+            <WaterDroplets size={32} className="text-white" />
+          </div>
+          <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center shadow-xl animate-bounce" style={{animationDelay: '0.2s'}}>
+            <FlaskConical size={32} className="text-white" />
+          </div>
+        </div>
+      </div>
 
+      <div className="space-y-4">
+        <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700 bg-clip-text text-transparent">
+          HydroCaru Pro
+        </h1>
+        <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+          Sistema inteligente de cultivo hidropónico con cálculo EC escalonado y 
+          valores seguros para 6 variedades de lechuga
+        </p>
+      </div>
+
+      <div className="space-y-4 max-w-md mx-auto">
+        <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-emerald-100">
+          <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+            <Calculator className="text-emerald-600" size={20} />
+          </div>
+          <div className="text-left">
+            <h3 className="font-bold text-slate-800">Cálculo EC Optimizado</h3>
+            <p className="text-sm text-slate-600">Valores seguros para lechugas: 800-1500 µS/cm</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-blue-100">
+          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <Filter className="text-blue-600" size={20} />
+          </div>
+          <div className="text-left">
+            <h3 className="font-bold text-slate-800">Protección de Plántulas</h3>
+            <p className="text-sm text-slate-600">EC reducido para plantas jóvenes: 600-800 µS/cm</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 p-4 bg-white rounded-2xl shadow-sm border border-purple-100">
+          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+            <TreePine className="text-purple-600" size={20} />
+          </div>
+          <div className="text-left">
+            <h3 className="font-bold text-slate-800">6 Variedades Específicas</h3>
+            <p className="text-sm text-slate-600">Parámetros optimizados por variedad</p>
+          </div>
+        </div>
+      </div>
+
+      <Button
+        onClick={() => setStep(1)}
+        className="px-8 py-6 text-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-2xl shadow-lg"
+      >
+        Comenzar Configuración
+        <ChevronRight className="ml-2" />
+      </Button>
+    </div>
+  );
+        
       case 1:
         return (
           <div className="space-y-8 animate-fade-in">
