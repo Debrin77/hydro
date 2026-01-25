@@ -117,7 +117,7 @@ const Slider = ({ value, min, max, step, onValueChange, className = "" }) => {
 }
 
 // ============================================================================
-// CONFIGURACIÓN BASE CON EC OPTIMIZADO
+// CONFIGURACIÓN BASE CON EC OPTIMIZADO (RANGOS ACTUALIZADOS SEGÚN INVESTIGACIÓN)
 // ============================================================================
 
 const WATER_TYPES = {
@@ -176,110 +176,112 @@ const CALMAG_CONFIG = {
   maxDosage: 5,
 };
 
-// VARIEDADES CON EC OPTIMIZADO (VALORES CORREGIDOS) - CON RANGOS ESPECÍFICOS
+// VARIEDADES CON EC OPTIMIZADO (RANGOS ACTUALIZADOS BASADOS EN INVESTIGACIÓN)[citation:5][citation:7]
+// Rango general para lechuga hidropónica: 1.2-1.8 mS/cm (1200-1800 µS/cm)
+// Estrategia: Comenzar bajo con plántulas, aumentar gradualmente.
 const VARIETIES = {
   "Iceberg": {
     color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
     textColor: "text-cyan-700",
-    ecMax: 1400,
+    ecMax: 1700, // Ajustado hacia el límite superior del rango investigado
     phIdeal: 6.0,
-    // Rangos específicos por etapa de crecimiento
+    // RANGOS ACTUALIZADOS: Escalado seguro desde plántula hasta maduración
     ecRanges: {
-      seedling: { min: 400, optimal: 600, max: 800 },
-      growth: { min: 700, optimal: 1000, max: 1200 },
-      mature: { min: 1000, optimal: 1300, max: 1400 }
+      seedling: { min: 400, optimal: 600, max: 800 },    // Inicio bajo para plántulas sensibles
+      growth:   { min: 800, optimal: 1200, max: 1500 },  // Incremento durante crecimiento
+      mature:   { min: 1200, optimal: 1500, max: 1700 }  // Óptimo para maduración[citation:5]
     },
     aquaVegaDosage: {
       seedling: { a: 12, b: 12, ec: 600 },
-      growth: { a: 18, b: 18, ec: 1000 },
-      mature: { a: 24, b: 24, ec: 1300 }
+      growth:   { a: 18, b: 18, ec: 1200 },
+      mature:   { a: 24, b: 24, ec: 1500 }
     },
-    info: "Variedad sensible. EC conservadora para evitar bordes quemados."
+    info: "Variedad sensible. Comenzar con EC baja y aumentar gradualmente."
   },
   "Lollo Rosso": {
     color: "bg-gradient-to-br from-purple-600 to-purple-700",
     textColor: "text-purple-700",
-    ecMax: 1500,
+    ecMax: 1800, // En el límite superior del rango general
     phIdeal: 6.0,
     ecRanges: {
       seedling: { min: 500, optimal: 700, max: 900 },
-      growth: { min: 800, optimal: 1100, max: 1300 },
-      mature: { min: 1100, optimal: 1400, max: 1500 }
+      growth:   { min: 900, optimal: 1300, max: 1600 },
+      mature:   { min: 1300, optimal: 1600, max: 1800 } // [citation:5]
     },
     aquaVegaDosage: {
       seedling: { a: 14, b: 14, ec: 700 },
-      growth: { a: 20, b: 20, ec: 1100 },
-      mature: { a: 26, b: 26, ec: 1400 }
+      growth:   { a: 20, b: 20, ec: 1300 },
+      mature:   { a: 26, b: 26, ec: 1600 }
     },
-    info: "Tolerancia media. Puede manejar EC ligeramente más alta para color."
+    info: "Tolerancia media-alta. Puede manejar EC más alta para mejor color."
   },
   "Maravilla": {
     color: "bg-gradient-to-br from-amber-600 to-amber-700",
     textColor: "text-amber-700",
-    ecMax: 1400,
+    ecMax: 1700,
     phIdeal: 6.0,
     ecRanges: {
       seedling: { min: 450, optimal: 650, max: 850 },
-      growth: { min: 750, optimal: 1050, max: 1250 },
-      mature: { min: 1000, optimal: 1350, max: 1400 }
+      growth:   { min: 850, optimal: 1250, max: 1500 },
+      mature:   { min: 1250, optimal: 1500, max: 1700 } // [citation:5]
     },
     aquaVegaDosage: {
       seedling: { a: 13, b: 13, ec: 650 },
-      growth: { a: 19, b: 19, ec: 1050 },
-      mature: { a: 25, b: 25, ec: 1350 }
+      growth:   { a: 19, b: 19, ec: 1250 },
+      mature:   { a: 25, b: 25, ec: 1500 }
     },
-    info: "Variedad productiva pero no muy tolerante a sales altas."
+    info: "Variedad productiva. Seguir escalado gradual de EC."
   },
   "Trocadero": {
     color: "bg-gradient-to-br from-lime-600 to-lime-700",
     textColor: "text-lime-700",
-    ecMax: 1300,
+    ecMax: 1600,
     phIdeal: 6.0,
     ecRanges: {
-      seedling: { min: 300, optimal: 600, max: 750 },
-      growth: { min: 650, optimal: 950, max: 1100 },
-      mature: { min: 900, optimal: 1250, max: 1300 }
+      seedling: { min: 300, optimal: 500, max: 700 },   // Muy sensible en inicio
+      growth:   { min: 700, optimal: 1100, max: 1300 },
+      mature:   { min: 1100, optimal: 1400, max: 1600 }
     },
     aquaVegaDosage: {
-      seedling: { a: 12, b: 12, ec: 600 },
-      growth: { a: 17, b: 17, ec: 950 },
-      mature: { a: 22, b: 22, ec: 1250 }
+      seedling: { a: 11, b: 11, ec: 500 },
+      growth:   { a: 17, b: 17, ec: 1100 },
+      mature:   { a: 22, b: 22, ec: 1400 }
     },
-    info: "Muy sensible en plántula. Requiere EC baja inicial."
+    info: "Muy sensible en plántula. Requiere EC baja inicial y aumento lento."
   },
   "Hoja de Roble Rojo": {
     color: "bg-gradient-to-br from-red-600 to-red-700",
     textColor: "text-red-700",
-    ecMax: 1600,
+    ecMax: 1800, // Tolerante a EC más alta
     phIdeal: 6.0,
     ecRanges: {
       seedling: { min: 500, optimal: 700, max: 900 },
-      growth: { min: 900, optimal: 1150, max: 1350 },
-      mature: { min: 1200, optimal: 1500, max: 1600 }
+      growth:   { min: 900, optimal: 1400, max: 1600 },
+      mature:   { min: 1400, optimal: 1700, max: 1800 } // [citation:5]
     },
     aquaVegaDosage: {
       seedling: { a: 14, b: 14, ec: 700 },
-      growth: { a: 21, b: 21, ec: 1150 },
-      mature: { a: 28, b: 28, ec: 1500 }
+      growth:   { a: 21, b: 21, ec: 1400 },
+      mature:   { a: 28, b: 28, ec: 1700 }
     },
-    info: "Variedad más tolerante. Puede manejar EC más alta en maduración."
+    info: "Variedad tolerante. Puede manejar EC más alta en maduración."
   },
   "Romana": {
     color: "bg-gradient-to-br from-blue-600 to-blue-700",
     textColor: "text-blue-700",
-    ecMax: 1450,
+    ecMax: 1750,
     phIdeal: 6.0,
     ecRanges: {
       seedling: { min: 450, optimal: 650, max: 850 },
-      growth: { min: 750, optimal: 1050, max: 1250 },
-      mature: { min: 1050, optimal: 1350, max: 1450 }
+      growth:   { min: 850, optimal: 1250, max: 1500 },
+      mature:   { min: 1250, optimal: 1550, max: 1750 }
     },
     aquaVegaDosage: {
       seedling: { a: 13, b: 13, ec: 650 },
-      growth: { a: 19, b: 19, ec: 1050 },
-      mature: { a: 25, b: 25, ec: 1350 }
+      growth:   { a: 19, b: 19, ec: 1250 },
+      mature:   { a: 25, b: 25, ec: 1550 }
     },
-    info: "Variedad robusta con crecimiento vertical. EC media óptima."
+    info: "Variedad robusta. EC media-alta óptima para crecimiento vertical."
   }
 };
 
@@ -2910,7 +2912,8 @@ Próxima limpieza recomendada: en 14 días`);
                 </div>
                 <div>
                   <p className="font-bold text-slate-800">Observa la lana de roca 1 hora después del riego</p>
-                  <p className="text-sm text-slate-600">Debe estar húmeda pero no chorreando agua</p>
+                  <p
+                                    <p className="text-sm text-slate-600">Debe estar húmeda pero no chorreando agua</p>
                 </div>
               </div>
 
@@ -3705,7 +3708,7 @@ Próxima limpieza recomendada: en 14 días`);
         onMethodChange={handleECMethodChange}
       />
 
-      {/* Panel de medidores de parámetros actuales */}
+      {/* CORRECCIÓN: Panel de medidores de parámetros actuales - AHORA SE MUESTRA */}
       <DashboardMetricsPanel config={config} measurements={measurements} />
 
       {/* Alertas */}
@@ -5271,4 +5274,4 @@ Próxima limpieza recomendada: en 14 días`);
       </footer>
     </div>
   );
-}
+}  
