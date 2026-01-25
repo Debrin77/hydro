@@ -2958,7 +2958,7 @@ Próxima limpieza recomendada: en 14 días`);
         <div className="relative">
           <div className="w-80 h-80 rounded-full overflow-hidden shadow-2xl">
             <Image 
-              src="/mi-imagen-hidroponia.jpg"
+              src="/mi-imagen.jpg"
               alt="HydroCaru Logo"
               width={400}
               height={400}
