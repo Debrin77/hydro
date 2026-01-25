@@ -176,13 +176,19 @@ const CALMAG_CONFIG = {
   maxDosage: 5,
 };
 
-// VARIEDADES CON EC OPTIMIZADO (VALORES CORREGIDOS)
+// VARIEDADES CON EC OPTIMIZADO (VALORES CORREGIDOS) - CON RANGOS ESPECÍFICOS
 const VARIETIES = {
   "Iceberg": {
     color: "bg-gradient-to-br from-cyan-500 to-cyan-600",
     textColor: "text-cyan-700",
     ecMax: 1400,
     phIdeal: 6.0,
+    // Rangos específicos por etapa de crecimiento
+    ecRanges: {
+      seedling: { min: 400, optimal: 600, max: 800 },
+      growth: { min: 700, optimal: 1000, max: 1200 },
+      mature: { min: 1000, optimal: 1300, max: 1400 }
+    },
     aquaVegaDosage: {
       seedling: { a: 12, b: 12, ec: 600 },
       growth: { a: 18, b: 18, ec: 1000 },
@@ -195,6 +201,11 @@ const VARIETIES = {
     textColor: "text-purple-700",
     ecMax: 1500,
     phIdeal: 6.0,
+    ecRanges: {
+      seedling: { min: 500, optimal: 700, max: 900 },
+      growth: { min: 800, optimal: 1100, max: 1300 },
+      mature: { min: 1100, optimal: 1400, max: 1500 }
+    },
     aquaVegaDosage: {
       seedling: { a: 14, b: 14, ec: 700 },
       growth: { a: 20, b: 20, ec: 1100 },
@@ -207,6 +218,11 @@ const VARIETIES = {
     textColor: "text-amber-700",
     ecMax: 1400,
     phIdeal: 6.0,
+    ecRanges: {
+      seedling: { min: 450, optimal: 650, max: 850 },
+      growth: { min: 750, optimal: 1050, max: 1250 },
+      mature: { min: 1000, optimal: 1350, max: 1400 }
+    },
     aquaVegaDosage: {
       seedling: { a: 13, b: 13, ec: 650 },
       growth: { a: 19, b: 19, ec: 1050 },
@@ -219,6 +235,11 @@ const VARIETIES = {
     textColor: "text-lime-700",
     ecMax: 1300,
     phIdeal: 6.0,
+    ecRanges: {
+      seedling: { min: 300, optimal: 600, max: 750 },
+      growth: { min: 650, optimal: 950, max: 1100 },
+      mature: { min: 900, optimal: 1250, max: 1300 }
+    },
     aquaVegaDosage: {
       seedling: { a: 12, b: 12, ec: 600 },
       growth: { a: 17, b: 17, ec: 950 },
@@ -231,6 +252,11 @@ const VARIETIES = {
     textColor: "text-red-700",
     ecMax: 1600,
     phIdeal: 6.0,
+    ecRanges: {
+      seedling: { min: 500, optimal: 700, max: 900 },
+      growth: { min: 900, optimal: 1150, max: 1350 },
+      mature: { min: 1200, optimal: 1500, max: 1600 }
+    },
     aquaVegaDosage: {
       seedling: { a: 14, b: 14, ec: 700 },
       growth: { a: 21, b: 21, ec: 1150 },
@@ -243,6 +269,11 @@ const VARIETIES = {
     textColor: "text-blue-700",
     ecMax: 1450,
     phIdeal: 6.0,
+    ecRanges: {
+      seedling: { min: 450, optimal: 650, max: 850 },
+      growth: { min: 750, optimal: 1050, max: 1250 },
+      mature: { min: 1050, optimal: 1350, max: 1450 }
+    },
     aquaVegaDosage: {
       seedling: { a: 13, b: 13, ec: 650 },
       growth: { a: 19, b: 19, ec: 1050 },
@@ -253,7 +284,7 @@ const VARIETIES = {
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO OPTIMIZADAS
+// FUNCIONES DE CÁLCULO OPTIMIZADAS (CORREGIDAS)
 // ============================================================================
 
 /**
@@ -280,13 +311,13 @@ const calculatePlantStats = (plants) => {
 };
 
 /**
- * Calcula EC por nivel de desarrollo con factores de seguridad
+ * Calcula EC por nivel de desarrollo con factores de seguridad - MODIFICADO PARA USAR RANGOS
  */
 const calculateECByLevel = (plants, waterType) => {
   const levels = {
-    1: { plants: 0, totalEC: 0 },
-    2: { plants: 0, totalEC: 0 },
-    3: { plants: 0, totalEC: 0 }
+    1: { plants: 0, totalEC: 0, minEC: Infinity, maxEC: -Infinity },
+    2: { plants: 0, totalEC: 0, minEC: Infinity, maxEC: -Infinity },
+    3: { plants: 0, totalEC: 0, minEC: Infinity, maxEC: -Infinity }
   };
 
   plants.forEach(plant => {
@@ -298,7 +329,8 @@ const calculateECByLevel = (plants, waterType) => {
     else if (plant.l === 2) stage = "growth";
     else stage = "mature";
 
-    const ecTarget = variety.aquaVegaDosage[stage].ec;
+    const ecOptimal = variety.aquaVegaDosage[stage].ec;
+    const ecRange = variety.ecRanges[stage];
 
     // Aplicar factor de seguridad según etapa
     let safetyFactor = 1.0;
@@ -306,7 +338,7 @@ const calculateECByLevel = (plants, waterType) => {
     else if (plant.l === 2) safetyFactor = 0.9;
     else safetyFactor = 1.1;
 
-    const adjustedEC = ecTarget * safetyFactor;
+    const adjustedEC = ecOptimal * safetyFactor;
 
     // Ajustar por tipo de agua
     const waterConfig = WATER_TYPES[waterType];
@@ -314,13 +346,121 @@ const calculateECByLevel = (plants, waterType) => {
 
     levels[plant.l].plants += 1;
     levels[plant.l].totalEC += finalEC;
+    
+    // Actualizar min y max basado en rangos específicos de la variedad
+    if (ecRange.min < levels[plant.l].minEC) levels[plant.l].minEC = ecRange.min;
+    if (ecRange.max > levels[plant.l].maxEC) levels[plant.l].maxEC = ecRange.max;
+  });
+
+  // Ajustar valores si no hay plantas
+  Object.keys(levels).forEach(level => {
+    if (levels[level].plants === 0) {
+      levels[level].minEC = 0;
+      levels[level].maxEC = 0;
+    }
   });
 
   return {
-    level1: levels[1].plants > 0 ? Math.round(levels[1].totalEC / levels[1].plants) : 0,
-    level2: levels[2].plants > 0 ? Math.round(levels[2].totalEC / levels[2].plants) : 0,
-    level3: levels[3].plants > 0 ? Math.round(levels[3].totalEC / levels[3].plants) : 0
+    level1: {
+      avg: levels[1].plants > 0 ? Math.round(levels[1].totalEC / levels[1].plants) : 0,
+      min: Math.round(levels[1].minEC),
+      max: Math.round(levels[1].maxEC),
+      plants: levels[1].plants
+    },
+    level2: {
+      avg: levels[2].plants > 0 ? Math.round(levels[2].totalEC / levels[2].plants) : 0,
+      min: Math.round(levels[2].minEC),
+      max: Math.round(levels[2].maxEC),
+      plants: levels[2].plants
+    },
+    level3: {
+      avg: levels[3].plants > 0 ? Math.round(levels[3].totalEC / levels[3].plants) : 0,
+      min: Math.round(levels[3].minEC),
+      max: Math.round(levels[3].maxEC),
+      plants: levels[3].plants
+    }
   };
+};
+
+/**
+ * Calcula el rango seguro de EC para todo el sistema basado en todas las plantas
+ */
+const calculateSystemECRange = (plants, waterType) => {
+  if (plants.length === 0) return { min: 800, max: 1500 };
+
+  let systemMin = Infinity;
+  let systemMax = -Infinity;
+  let totalOptimal = 0;
+
+  plants.forEach(plant => {
+    const variety = VARIETIES[plant.v];
+    if (!variety) return;
+
+    let stage;
+    if (plant.l === 1) stage = "seedling";
+    else if (plant.l === 2) stage = "growth";
+    else stage = "mature";
+
+    const ecRange = variety.ecRanges[stage];
+    
+    // Ajustar por tipo de agua
+    const waterConfig = WATER_TYPES[waterType];
+    let adjustedMin = waterType !== "osmosis" ? Math.max(0, ecRange.min - waterConfig.ecBase) : ecRange.min;
+    let adjustedMax = waterType !== "osmosis" ? Math.max(0, ecRange.max - waterConfig.ecBase) : ecRange.max;
+    let adjustedOptimal = waterType !== "osmosis" ? Math.max(0, ecRange.optimal - waterConfig.ecBase) : ecRange.optimal;
+
+    if (adjustedMin < systemMin) systemMin = adjustedMin;
+    if (adjustedMax > systemMax) systemMax = adjustedMax;
+    totalOptimal += adjustedOptimal;
+  });
+
+  return {
+    min: Math.round(systemMin),
+    max: Math.round(systemMax),
+    avg: Math.round(totalOptimal / plants.length)
+  };
+};
+
+/**
+ * Verifica si el EC está fuera de rango y devuelve recomendaciones específicas
+ */
+const checkECAlert = (currentEC, plants, waterType) => {
+  const systemRange = calculateSystemECRange(plants, waterType);
+  const ec = parseFloat(currentEC) || 0;
+  
+  if (ec === 0) return null;
+
+  // Calcular desviación porcentual
+  const deviationFromMin = ((systemRange.min - ec) / systemRange.min) * 100;
+  const deviationFromMax = ((ec - systemRange.max) / systemRange.max) * 100;
+
+  if (ec < systemRange.min) {
+    // EC demasiado baja
+    const severity = deviationFromMin > 30 ? 1 : deviationFromMin > 15 ? 2 : 3;
+    return {
+      type: 'low',
+      severity,
+      current: ec,
+      targetMin: systemRange.min,
+      targetMax: systemRange.max,
+      deviation: Math.round(deviationFromMin),
+      message: `EC ${ec} µS/cm está ${Math.round(deviationFromMin)}% por debajo del mínimo recomendado (${systemRange.min} µS/cm)`
+    };
+  } else if (ec > systemRange.max) {
+    // EC demasiado alta
+    const severity = deviationFromMax > 30 ? 1 : deviationFromMax > 15 ? 2 : 3;
+    return {
+      type: 'high',
+      severity,
+      current: ec,
+      targetMin: systemRange.min,
+      targetMax: systemRange.max,
+      deviation: Math.round(deviationFromMax),
+      message: `EC ${ec} µS/cm está ${Math.round(deviationFromMax)}% por encima del máximo recomendado (${systemRange.max} µS/cm)`
+    };
+  }
+
+  return null;
 };
 
 /**
@@ -367,8 +507,9 @@ const calculateStagedEC = (plants, waterType) => {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
 
-  // Aplicar límites seguros
-  finalEC = Math.max(800, Math.min(finalEC, 1500));
+  // Aplicar límites seguros basados en rangos del sistema
+  const systemRange = calculateSystemECRange(plants, waterType);
+  finalEC = Math.max(systemRange.min, Math.min(finalEC, systemRange.max));
 
   return {
     targetEC: Math.round(finalEC).toString(),
@@ -407,8 +548,9 @@ const calculateAverageEC = (plants, waterType) => {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
 
-  // Aplicar límites seguros
-  finalEC = Math.max(800, Math.min(finalEC, 1500));
+  // Aplicar límites seguros basados en rangos del sistema
+  const systemRange = calculateSystemECRange(plants, waterType);
+  finalEC = Math.max(systemRange.min, Math.min(finalEC, systemRange.max));
 
   return {
     targetEC: Math.round(finalEC).toString(),
@@ -441,8 +583,9 @@ const calculateConservativeEC = (plants, waterType) => {
     finalEC = Math.max(0, finalEC - waterConfig.ecBase);
   }
 
-  // Aplicar límite mínimo seguro
-  finalEC = Math.max(700, finalEC);
+  // Aplicar límite mínimo seguro basado en rangos del sistema
+  const systemRange = calculateSystemECRange(plants, waterType);
+  finalEC = Math.max(systemRange.min * 0.8, finalEC);
 
   return {
     targetEC: Math.round(finalEC).toString(),
@@ -461,10 +604,11 @@ const calculateSmartEC = (plants, waterType) => {
   };
 
   const stats = calculatePlantStats(plants);
+  const systemRange = calculateSystemECRange(plants, waterType);
 
   let selectedMethod = "promedio";
 
-  // Lógica mejorada de selección de método
+  // Lógica mejorada de selección de método basada en distribución de plantas
   if (stats.seedlingCount > stats.growthCount + stats.matureCount) {
     selectedMethod = "conservador"; // Muchas plántulas
   } else if (stats.matureCount > stats.growthCount && stats.matureCount > stats.seedlingCount) {
@@ -475,7 +619,8 @@ const calculateSmartEC = (plants, waterType) => {
 
   return {
     ...methods[selectedMethod],
-    allMethods: methods
+    allMethods: methods,
+    systemRange: systemRange
   };
 };
 
@@ -918,6 +1063,7 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
   const ecMethods = calculateSmartEC(plants, waterType);
   const ecByLevel = calculateECByLevel(plants, waterType);
   const plantStats = calculatePlantStats(plants);
+  const systemRange = calculateSystemECRange(plants, waterType);
 
   // Usar el método seleccionado manualmente o el automático
   const currentMethod = selectedMethod || ecMethods.method;
@@ -931,35 +1077,8 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
     }
   }, [currentEC, onECCalculated]);
 
-  // CALCULAR VALOR MEDIO DE EC - NUEVO: Para optimización en todos los niveles
-  const calculateAverageECForAllLevels = () => {
-    if (plants.length === 0) return 0;
-    
-    const ecValues = plants.map(plant => {
-      const variety = VARIETIES[plant.v];
-      if (!variety) return 1100;
-      
-      let stage;
-      if (plant.l === 1) stage = "seedling";
-      else if (plant.l === 2) stage = "growth";
-      else stage = "mature";
-      
-      return variety.aquaVegaDosage[stage].ec;
-    });
-    
-    const sum = ecValues.reduce((a, b) => a + b, 0);
-    const average = sum / ecValues.length;
-    
-    // Ajustar por tipo de agua
-    const waterConfig = WATER_TYPES[waterType];
-    if (waterConfig && waterType !== "osmosis") {
-      return Math.max(0, average - waterConfig.ecBase);
-    }
-    
-    return average;
-  };
-
-  const averageEC = calculateAverageECForAllLevels();
+  // Verificar alerta de EC
+  const ecAlert = checkECAlert(currentEC, plants, waterType);
 
   return (
     <Card className="p-6 rounded-2xl mb-8">
@@ -969,82 +1088,112 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
         </div>
         <div>
           <h2 className="font-bold text-slate-800 text-xl">Cálculo EC Escalonado Optimizado</h2>
-          <p className="text-slate-600">3 métodos de cálculo seguro para lechugas</p>
+          <p className="text-slate-600">Sistema inteligente basado en variedades y niveles</p>
         </div>
       </div>
 
+      {/* CORRECCIÓN: Ajustados los estilos para que los textos queden dentro de los cuadrados */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 bg-gradient-to-b from-blue-50 to-white rounded-xl border-2 border-blue-200">
-          <h4 className="font-bold text-blue-700 mb-2">Método Seleccionado</h4>
-          <div className="text-3xl font-bold text-blue-600 mb-2">{currentEC} µS/cm</div>
-          <Badge className="bg-blue-100 text-blue-800">
-            {selectedMethod || ecMethods.method}
-          </Badge>
-          {selectedMethod && selectedMethod !== ecMethods.method && (
-            <p className="text-xs text-slate-500 mt-1">Modificado manualmente</p>
-          )}
-          <p className="text-xs text-slate-600 mt-2">
-            {currentMethod === "conservador" ? "✅ Seguro para plántulas" :
-              currentMethod === "escalonado" ? "✅ Ideal para múltiples etapas" :
-                "✅ Balanceado para crecimiento"}
-          </p>
+        <div className="p-4 bg-gradient-to-b from-blue-50 to-white rounded-xl border-2 border-blue-200 min-h-[180px] flex flex-col">
+          <h4 className="font-bold text-blue-700 mb-2 text-sm">Método Seleccionado</h4>
+          <div className="text-3xl font-bold text-blue-600 mb-2 flex-grow flex items-center">{currentEC} µS/cm</div>
+          <div className="mt-auto">
+            <Badge className="bg-blue-100 text-blue-800">
+              {selectedMethod || ecMethods.method}
+            </Badge>
+            {selectedMethod && selectedMethod !== ecMethods.method && (
+              <p className="text-xs text-slate-500 mt-1">Modificado manualmente</p>
+            )}
+          </div>
         </div>
 
-        {/* NUEVO: Valor medio de EC para todos los niveles */}
-        <div className="p-4 bg-gradient-to-b from-amber-50 to-white rounded-xl border-2 border-amber-200">
-          <h4 className="font-bold text-amber-700 mb-2">Valor Medio EC Optimizado</h4>
-          <div className="text-3xl font-bold text-amber-600 mb-2">{Math.round(averageEC)} µS/cm</div>
-          <Badge className="bg-amber-100 text-amber-800">
-            Media para todos los niveles
-          </Badge>
-          <p className="text-xs text-slate-600 mt-2">
-            ✅ Óptimo para mantener equilibradas todas las plantas
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            Recomendado cuando hay plantas en diferentes niveles
-          </p>
+        <div className="p-4 bg-gradient-to-b from-amber-50 to-white rounded-xl border-2 border-amber-200 min-h-[180px] flex flex-col">
+          <h4 className="font-bold text-amber-700 mb-2 text-sm">Rango Seguro del Sistema</h4>
+          <div className="text-3xl font-bold text-amber-600 mb-2 flex-grow flex items-center">
+            {systemRange.min}-{systemRange.max} µS/cm
+          </div>
+          <div className="mt-auto">
+            <Badge className="bg-amber-100 text-amber-800">
+              Basado en {plants.length} plantas
+            </Badge>
+            <p className="text-xs text-slate-600 mt-1">
+              {plants.length > 0 ? `Promedio: ${systemRange.avg} µS/cm` : 'Añade plantas para calcular'}
+            </p>
+          </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-b from-purple-50 to-white rounded-xl border-2 border-purple-200">
-          <h4 className="font-bold text-purple-700 mb-2">EC por Nivel (seguro)</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-cyan-500"></div>
-                <span className="text-slate-700">Plántulas:</span>
-              </div>
-              <div className="text-right">
-                <span className="font-bold text-slate-800">{ecByLevel.level1} µS/cm</span>
-                <p className="text-xs text-slate-500">Rango seguro: 600-800</p>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span className="text-slate-700">Crecimiento:</span>
-              </div>
-              <div className="text-right">
-                <span className="font-bold text-slate-800">{ecByLevel.level2} µS/cm</span>
-                <p className="text-xs text-slate-500">Rango seguro: 900-1200</p>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span className="text-slate-700">Maduras:</span>
-              </div>
-              <div className="text-right">
-                <span className="font-bold text-slate-800">{ecByLevel.level3} µS/cm</span>
-                <p className="text-xs text-slate-500">Rango seguro: 1200-1500</p>
-              </div>
-            </div>
+        <div className="p-4 bg-gradient-to-b from-purple-50 to-white rounded-xl border-2 border-purple-200 min-h-[180px] flex flex-col">
+          <h4 className="font-bold text-purple-700 mb-2 text-sm">Estado EC Actual</h4>
+          <div className={`text-3xl font-bold mb-2 flex-grow flex items-center ${
+            ecAlert ? (ecAlert.severity === 1 ? 'text-red-600' : 'text-amber-600') : 'text-green-600'
+          }`}>
+            {currentEC} µS/cm
+          </div>
+          <div className="mt-auto">
+            {ecAlert ? (
+              <Badge className={ecAlert.severity === 1 ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}>
+                {ecAlert.type === 'low' ? 'EC BAJA' : 'EC ALTA'}
+              </Badge>
+            ) : (
+              <Badge className="bg-green-100 text-green-800">DENTRO DE RANGO</Badge>
+            )}
+            <p className="text-xs text-slate-600 mt-1">
+              {ecAlert ? ecAlert.message : 'EC dentro del rango seguro'}
+            </p>
           </div>
         </div>
       </div>
 
+      {/* CORRECCIÓN: Mejorada la visualización de EC por nivel */}
+      <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 mb-6">
+        <h4 className="font-bold text-blue-700 mb-3">📊 EC por Nivel de Crecimiento</h4>
+        <p className="text-sm text-slate-600 mb-4">Rangos específicos basados en variedades y etapas</p>
+
+        <div className="space-y-4">
+          {[1, 2, 3].map(level => {
+            const levelData = ecByLevel[`level${level}`];
+            const levelName = level === 1 ? "Plántulas" : level === 2 ? "Crecimiento" : "Maduras";
+            const levelColor = level === 1 ? "cyan" : level === 2 ? "green" : "emerald";
+            
+            return (
+              <div key={level} className="p-4 bg-white rounded-lg border border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full bg-${levelColor}-500`}></div>
+                    <div>
+                      <h5 className="font-bold text-slate-800">{levelName}</h5>
+                      <p className="text-sm text-slate-600">
+                        {levelData.plants} {levelData.plants === 1 ? 'planta' : 'plantas'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:items-end">
+                    <div className="text-2xl font-bold text-slate-800">{levelData.avg} µS/cm</div>
+                    <div className="text-sm text-slate-600">
+                      Rango: {levelData.min}-{levelData.max} µS/cm
+                    </div>
+                  </div>
+                </div>
+                
+                {levelData.plants > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <div className="text-xs text-slate-500">
+                      {level === 1 ? "🌱 Sensible a sales - Mantener EC baja" :
+                       level === 2 ? "📈 Fase de crecimiento activo - EC media" :
+                       "🌿 Fase de engorde - EC alta para mejor calidad"}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-        <h4 className="font-bold text-blue-700 mb-3">Comparación de Métodos de Cálculo</h4>
-        <p className="text-sm text-slate-600 mb-4">Selecciona el método según tu distribución de plantas o deja que el sistema elija automáticamente</p>
+        <h4 className="font-bold text-blue-700 mb-3">📈 Comparación de Métodos de Cálculo</h4>
+        <p className="text-sm text-slate-600 mb-4">Selecciona el método según tu distribución de plantas</p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div
@@ -1057,8 +1206,8 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
             </div>
             <p className="text-sm text-slate-600 mb-3">Peso por nivel de desarrollo</p>
             <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.escalonado?.targetEC || "1100"} µS/cm</p>
-            <p className="text-xs text-slate-500 mt-1">
-              ✅ Ideal cuando hay plantas en diferentes etapas
+            <p className="text-xs text-slate-500 mt-2">
+              Ideal cuando hay plantas en diferentes etapas
             </p>
           </div>
 
@@ -1072,8 +1221,8 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
             </div>
             <p className="text-sm text-slate-600 mb-3">Media aritmética simple</p>
             <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.promedio?.targetEC || "1000"} µS/cm</p>
-            <p className="text-xs text-slate-500 mt-1">
-              ✅ Para etapas similares o sistema equilibrado
+            <p className="text-xs text-slate-500 mt-2">
+              Para etapas similares o sistema equilibrado
             </p>
           </div>
 
@@ -1087,13 +1236,13 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
             </div>
             <p className="text-sm text-slate-600 mb-3">Mínimo + protección extra</p>
             <p className="text-2xl font-bold text-blue-600">{ecMethods.allMethods?.conservador?.targetEC || "800"} µS/cm</p>
-            <p className="text-xs text-slate-500 mt-1">
-              ✅ Para muchas plántulas o variedades sensibles
+            <p className="text-xs text-slate-500 mt-2">
+              Para muchas plántulas o variedades sensibles
             </p>
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <p className="text-sm text-slate-600">
             {selectedMethod
               ? `Método seleccionado manualmente: ${selectedMethod}`
@@ -1101,7 +1250,6 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
           </p>
           <Button
             variant="outline"
-            size="sm"
             onClick={() => onMethodChange && onMethodChange(null)}
             disabled={!selectedMethod}
             className="flex items-center gap-1"
@@ -1111,6 +1259,42 @@ const StagedECCalculator = ({ plants, waterType, onECCalculated, selectedMethod,
           </Button>
         </div>
       </div>
+
+      {/* CORRECCIÓN: Información de variedades específicas */}
+      {plants.length > 0 && (
+        <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
+          <h4 className="font-bold text-slate-700 mb-3">🌿 Rangos de EC por Variedad</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Object.entries(VARIETIES).map(([varietyName, variety]) => {
+              const plantCount = plantStats.varietyCount[varietyName] || 0;
+              if (plantCount === 0) return null;
+              
+              return (
+                <div key={varietyName} className="p-3 bg-white rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-slate-800">{varietyName}</span>
+                    <Badge>{plantCount} planta{plantCount !== 1 ? 's' : ''}</Badge>
+                  </div>
+                  <div className="text-sm text-slate-600 space-y-1">
+                    <div className="flex justify-between">
+                      <span>Plántula:</span>
+                      <span className="font-medium">{variety.ecRanges.seedling.min}-{variety.ecRanges.seedling.max} µS/cm</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Crecimiento:</span>
+                      <span className="font-medium">{variety.ecRanges.growth.min}-{variety.ecRanges.growth.max} µS/cm</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Madura:</span>
+                      <span className="font-medium">{variety.ecRanges.mature.min}-{variety.ecRanges.mature.max} µS/cm</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
@@ -1982,7 +2166,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     return getSeason();
   }, []);
 
-  // =================== ALERTAS OPTIMIZADAS ===================
+  // =================== ALERTAS OPTIMIZADAS CON RANGOS ESPECÍFICOS ===================
 
   const alerts = useMemo(() => {
     const vAct = parseFloat(config.currentVol) || 0;
@@ -2089,51 +2273,59 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       });
     }
 
-    if (ec < tEc - 300 && ec > 0) {
-      const mlPerLiter = aquaVegaDosage.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4;
-      res.push({
-        title: "¡FALTAN NUTRIENTES!",
-        value: `${Math.round(mlToAdd)}ml A+B`,
-        description: `EC ${ec} µS/cm (muy baja). Añadir AQUA VEGA.`,
-        color: "bg-gradient-to-r from-blue-800 to-cyan-800",
-        icon: <FlaskConical className="text-white" size={28} />,
-        priority: 1
-      });
-    }
-    else if (ec < tEc - 150 && ec > 0) {
-      const mlPerLiter = aquaVegaDosage.per10L.a / 10;
-      const mlToAdd = ((tEc - ec) / 100) * vAct * mlPerLiter * 0.4;
-      res.push({
-        title: "AÑADIR NUTRIENTES",
-        value: `${Math.round(mlToAdd)}ml A+B`,
-        description: `Subir de ${ec} a ${tEc} µS/cm`,
-        color: "bg-gradient-to-r from-blue-600 to-cyan-600",
-        icon: <FlaskConical className="text-white" size={28} />,
-        priority: 2
-      });
-    }
-    else if (ec > tEc + 400) {
-      const water = ((ec - tEc) / tEc * vAct).toFixed(1);
-      res.push({
-        title: "¡EC PELIGROSAMENTE ALTA!",
-        value: `${water}L AGUA`,
-        description: `EC ${ec} µS/cm. Diluir URGENTE para salvar raíces.`,
-        color: "bg-gradient-to-r from-red-800 to-amber-900",
-        icon: <Skull className="text-white" size={28} />,
-        priority: 1
-      });
-    }
-    else if (ec > tEc + 250) {
-      const water = ((ec - tEc) / tEc * vAct).toFixed(1);
-      res.push({
-        title: "DILUIR CON AGUA",
-        value: `${water}L`,
-        description: `EC ${ec} µS/cm &gt; objetivo ${tEc} µS/cm. Añadir agua sola.`,
-        color: "bg-gradient-to-r from-amber-600 to-orange-600",
-        icon: <AlertTriangle className="text-white" size={28} />,
-        priority: 2
-      });
+    // CORRECCIÓN: Alertas de EC optimizadas con rangos específicos
+    const ecAlert = checkECAlert(ec, plants, waterType);
+    if (ecAlert) {
+      if (ecAlert.type === 'low') {
+        const mlPerLiter = aquaVegaDosage.per10L.a / 10;
+        const mlToAdd = ((ecAlert.targetMin - ec) / 100) * vAct * mlPerLiter * 0.4;
+        
+        if (ecAlert.severity === 1) {
+          res.push({
+            title: "¡FALTAN NUTRIENTES!",
+            value: `${Math.round(mlToAdd)}ml A+B`,
+            description: `EC ${ec} µS/cm (${ecAlert.deviation}% por debajo del mínimo). Añadir AQUA VEGA.`,
+            color: "bg-gradient-to-r from-blue-800 to-cyan-800",
+            icon: <FlaskConical className="text-white" size={28} />,
+            priority: 1,
+            details: `Rango seguro: ${ecAlert.targetMin}-${ecAlert.targetMax} µS/cm`
+          });
+        } else {
+          res.push({
+            title: "AÑADIR NUTRIENTES",
+            value: `${Math.round(mlToAdd)}ml A+B`,
+            description: `Subir de ${ec} a ${ecAlert.targetMin} µS/cm`,
+            color: "bg-gradient-to-r from-blue-600 to-cyan-600",
+            icon: <FlaskConical className="text-white" size={28} />,
+            priority: 2,
+            details: `Rango seguro: ${ecAlert.targetMin}-${ecAlert.targetMax} µS/cm`
+          });
+        }
+      } else if (ecAlert.type === 'high') {
+        const water = ((ec - ecAlert.targetMax) / ecAlert.targetMax * vAct).toFixed(1);
+        
+        if (ecAlert.severity === 1) {
+          res.push({
+            title: "¡EC PELIGROSAMENTE ALTA!",
+            value: `${water}L AGUA`,
+            description: `EC ${ec} µS/cm (${ecAlert.deviation}% por encima del máximo). Diluir URGENTE.`,
+            color: "bg-gradient-to-r from-red-800 to-amber-900",
+            icon: <Skull className="text-white" size={28} />,
+            priority: 1,
+            details: `Rango seguro: ${ecAlert.targetMin}-${ecAlert.targetMax} µS/cm`
+          });
+        } else {
+          res.push({
+            title: "DILUIR CON AGUA",
+            value: `${water}L`,
+            description: `EC ${ec} µS/cm > máximo seguro ${ecAlert.targetMax} µS/cm. Añadir agua sola.`,
+            color: "bg-gradient-to-r from-amber-600 to-orange-600",
+            icon: <AlertTriangle className="text-white" size={28} />,
+            priority: 2,
+            details: `Rango seguro: ${ecAlert.targetMin}-${ecAlert.targetMax} µS/cm`
+          });
+        }
+      }
     }
 
     const lastCleanDate = new Date(lastClean);
@@ -2187,8 +2379,9 @@ Próxima limpieza recomendada: en 14 días`);
         if (value < 5.0 || value > 7.0) return "⚠️ AJUSTAR";
         return "⚠️ AJUSTAR";
       } else if (label === "EC") {
-        if (value >= 800 && value <= 1500) return "✅ ÓPTIMA";
-        if (value > 1500) return "🚨 ALTA";
+        const ecAlert = checkECAlert(value, plants, config.waterType);
+        if (!ecAlert) return "✅ ÓPTIMA";
+        if (ecAlert.severity === 1) return "🚨 ALTA";
         return "⚠️ BAJA";
       } else if (label === "Temperatura") {
         if (value >= 18 && value <= 25) return "✅ ÓPTIMA";
@@ -2204,6 +2397,9 @@ Próxima limpieza recomendada: en 14 días`);
       return "";
     };
 
+    const systemRange = calculateSystemECRange(plants, config.waterType);
+    const ecAlert = checkECAlert(parseFloat(measurements.manualEC || config.ec), plants, config.waterType);
+
     return (
       <Card className="p-6 rounded-2xl mb-8">
         <div className="flex items-center gap-3 mb-6">
@@ -2216,7 +2412,6 @@ Próxima limpieza recomendada: en 14 días`);
           </div>
         </div>
 
-        {/* CORRECCIÓN: Parámetros en cascada, uno encima de otro */}
         <div className="space-y-8">
           {/* Medidor de pH */}
           <div className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
@@ -2272,7 +2467,7 @@ Próxima limpieza recomendada: en 14 días`);
             </div>
           </div>
 
-          {/* Medidor de EC */}
+          {/* Medidor de EC - CORREGIDO: Con rangos específicos */}
           <div className="flex flex-col md:flex-row md:items-center gap-6 p-6 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
@@ -2281,23 +2476,23 @@ Próxima limpieza recomendada: en 14 días`);
                 </div>
                 <div>
                   <h3 className="font-bold text-blue-700">Conductividad (EC)</h3>
-                  <p className="text-sm text-slate-600">Concentración de nutrientes en µS/cm</p>
+                  <p className="text-sm text-slate-600">Rango seguro basado en tus plantas: {systemRange.min}-{systemRange.max} µS/cm</p>
                 </div>
               </div>
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-slate-700">Valor actual:</span>
-                    <span className="text-2xl font-bold text-blue-600">{parseFloat(measurements.manualEC || config.ec)} µS/cm</span>
+                    <span className={`text-2xl font-bold ${
+                      ecAlert ? (ecAlert.severity === 1 ? 'text-red-600' : 'text-amber-600') : 'text-blue-600'
+                    }`}>
+                      {parseFloat(measurements.manualEC || config.ec)} µS/cm
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-700">Estado:</span>
                     <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      parseFloat(measurements.manualEC || config.ec) >= 800 && parseFloat(measurements.manualEC || config.ec) <= 1500
-                        ? 'bg-green-100 text-green-800'
-                        : parseFloat(measurements.manualEC || config.ec) > 1500
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-amber-100 text-amber-800'
+                      ecAlert ? (ecAlert.severity === 1 ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800') : 'bg-green-100 text-green-800'
                     }`}>
                       {getStatusText("EC", parseFloat(measurements.manualEC || config.ec))}
                     </span>
@@ -2305,14 +2500,16 @@ Próxima limpieza recomendada: en 14 días`);
                 </div>
                 <div className="pt-2 border-t border-blue-100">
                   <p className="text-sm text-slate-600">
-                    <span className="font-medium">Objetivo:</span> {config.targetEC} µS/cm
+                    <span className="font-medium">Rango seguro:</span> {systemRange.min}-{systemRange.max} µS/cm
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {parseFloat(measurements.manualEC || config.ec) >= 800 && parseFloat(measurements.manualEC || config.ec) <= 1500
-                      ? "✅ La EC está en el rango seguro para lechugas"
-                      : parseFloat(measurements.manualEC || config.ec) > 1500
-                        ? "🚨 EC demasiado alta, riesgo de quemaduras en raíces"
-                        : "⚠️ EC demasiado baja, las plantas pueden tener deficiencias"}
+                    {ecAlert ? (
+                      <span className={ecAlert.severity === 1 ? 'text-red-600 font-bold' : 'text-amber-600'}>
+                        {ecAlert.message}
+                      </span>
+                    ) : (
+                      "✅ La EC está en el rango seguro para todas tus plantas"
+                    )}
                   </p>
                 </div>
               </div>
@@ -2324,7 +2521,7 @@ Próxima limpieza recomendada: en 14 días`);
                 max={3000}
                 label="EC"
                 unit="µS/cm"
-                color="blue"
+                color={ecAlert ? (ecAlert.severity === 1 ? "red" : "amber") : "blue"}
                 size="md"
               />
             </div>
@@ -3499,6 +3696,15 @@ Próxima limpieza recomendada: en 14 días`);
         aquaVegaDosage={aquaVegaDosage}
       />
 
+      {/* CORRECCIÓN: Panel de cálculo EC optimizado con rangos específicos */}
+      <StagedECCalculator
+        plants={plants}
+        waterType={config.waterType}
+        onECCalculated={handleECCalculated}
+        selectedMethod={selectedECMethod}
+        onMethodChange={handleECMethodChange}
+      />
+
       {/* Panel de medidores de parámetros actuales */}
       <DashboardMetricsPanel config={config} measurements={measurements} />
 
@@ -3520,6 +3726,9 @@ Próxima limpieza recomendada: en 14 días`);
                   <span className="text-2xl font-bold">{alert.value}</span>
                 </div>
                 <p className="text-white/90 mt-1">{alert.description}</p>
+                {alert.details && (
+                  <p className="text-white/80 text-sm mt-2">{alert.details}</p>
+                )}
               </div>
             </div>
           ))}
