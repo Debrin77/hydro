@@ -2958,7 +2958,7 @@ Próxima limpieza recomendada: en 14 días`);
           {/* Contenedor principal con Image optimizado de Next.js */}
           <div className="relative w-72 h-72 rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-105">
             <Image 
-              src="/mi-imagen-hidroponia.jpg"  // CAMBIA ESTE NOMBRE POR TU IMAGEN
+              src="/mi-imagen.jpg"  // CAMBIA ESTE NOMBRE POR TU IMAGEN
               alt="Sistema Hidropónico HydroCaru"
               width={400}
               height={400}
