@@ -781,17 +781,19 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
       pumpPower,
       rockwoolCubes,
       location: "Castellón de la Plana",
-      recommendations: ["Añade plantas al sistema para calcular riego"]
+      recommendations: ["Añade plantas al sistema para calcular riego"],
+      notes: ["Basado en observación real: 6 segundos empapan lana de roca"]
     };
   }
 
+  // Cálculo REVISADO: necesidades de agua más precisas
   plants.forEach(plant => {
-    let waterPerPlant = 0.35; // Reducido de 0.4 litros/día base
+    let waterPerPlant = 0.25; // REDUCIDO: 0.25L/día base (era 0.35L)
 
     // Ajustar por nivel de crecimiento
-    if (plant.l === 1) waterPerPlant *= 0.5;
-    else if (plant.l === 2) waterPerPlant *= 0.8;
-    else waterPerPlant *= 1.0;
+    if (plant.l === 1) waterPerPlant *= 0.5; // Plántula
+    else if (plant.l === 2) waterPerPlant *= 0.8; // Crecimiento
+    else waterPerPlant *= 1.0; // Madura
 
     // Ajustar por variedad
     const variety = VARIETIES[plant.v];
@@ -806,61 +808,104 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
 
   // Ajustar por temperatura y humedad de Castellón
   let tempFactor = 1.0;
-  if (temp > 25) tempFactor = 1.2;
-  else if (temp > 20) tempFactor = 1.05;
-  else if (temp < 15) tempFactor = 0.85;
+  if (temp > 28) tempFactor = 1.3;    // Muy caliente
+  else if (temp > 25) tempFactor = 1.2;
+  else if (temp > 20) tempFactor = 1.1;
+  else if (temp < 15) tempFactor = 0.9;
+  else if (temp < 10) tempFactor = 0.8;
 
   let humidityFactor = 1.0;
-  if (humidity < 40) humidityFactor = 1.15;
-  else if (humidity > 70) humidityFactor = 0.85;
+  if (humidity < 40) humidityFactor = 1.2;   // Muy seco
+  else if (humidity < 50) humidityFactor = 1.1;
+  else if (humidity > 70) humidityFactor = 0.9;
+  else if (humidity > 80) humidityFactor = 0.8;
 
   // Ajustar por estación en Castellón
   let seasonFactor = 1.0;
-  if (season === "summer") seasonFactor = 1.3;
-  else if (season === "winter") seasonFactor = 0.8;
+  if (season === "summer") seasonFactor = 1.4;   // Verano muy seco en Castellón
+  else if (season === "winter") seasonFactor = 0.7; // Invierno húmedo
 
   totalWaterNeeds = totalWaterNeeds * tempFactor * humidityFactor * seasonFactor;
 
-  // Calcular tiempo de riego (bomba de 7W, aprox 5L/h)
-  const pumpFlowRate = 5; // litros por hora
-  const dailyPumpMinutes = (totalWaterNeeds / pumpFlowRate) * 60;
-
-  // CORRECCIÓN: Cálculo mejorado de ciclos para lana de roca
-  // En torres verticales con cascada, el agua corre rápidamente
-  // Necesitamos ciclos más largos para que la lana de roca se empape bien
+  // CÁLCULO REVISADO BASADO EN OBSERVACIÓN REAL
   
-  // Determinamos ciclos según la temperatura
-  let baseCycles;
-  if (temp > 25) baseCycles = 6;  // Verano: más ciclos
-  else if (temp > 20) baseCycles = 5;  // Primavera/Otoño
-  else baseCycles = 4;  // Invierno: menos ciclos
+  // 1. Primero calculamos el tiempo total diario de bomba necesario
+  // Suponiendo un caudal alto (porque 6 segundos empapan)
+  // Estimación: si 6 segundos empapan, probablemente caudal ≈ 1L/min por planta
+  const estimatedFlowRate = 8; // L/hora - AUMENTADO por observación
+  const dailyPumpHours = totalWaterNeeds / estimatedFlowRate;
+  const dailyPumpMinutes = dailyPumpHours * 60;
+  const dailyPumpSeconds = dailyPumpMinutes * 60;
 
-  // Ajustar por humedad
-  if (humidity < 40) baseCycles += 1;
-  if (humidity > 70) baseCycles -= 1;
+  // 2. Determinamos número de ciclos basado en temperatura (observación real)
+  let cyclesPerDay;
+  if (temp > 28) {
+    cyclesPerDay = 12; // Verano caluroso: cada 2 horas
+  } else if (temp > 25) {
+    cyclesPerDay = 10; // Verano: cada 2.4 horas
+  } else if (temp > 20) {
+    cyclesPerDay = 8;  // Primavera/Otoño: cada 3 horas
+  } else if (temp > 15) {
+    cyclesPerDay = 6;  // Templado: cada 4 horas
+  } else {
+    cyclesPerDay = 4;  // Invierno: cada 6 horas
+  }
 
-  // Asegurar límites
-  const cyclesPerDay = Math.max(3, Math.min(baseCycles, 8));
+  // 3. Ajustar por humedad
+  if (humidity < 40) cyclesPerDay += 2;   // Aire seco → más ciclos
+  if (humidity > 70) cyclesPerDay -= 2;   // Aire húmedo → menos ciclos
   
-  // Tiempo por ciclo: suficiente para empapar la lana de roca (30-45 segundos)
-  const minutesPerCycle = dailyPumpMinutes / cyclesPerDay;
-  const secondsPerCycle = Math.max(30, Math.min(minutesPerCycle * 60, 45)); // 30-45 segundos
+  // 4. Límites seguros
+  cyclesPerDay = Math.max(4, Math.min(cyclesPerDay, 16));
+  
+  // 5. CALCULO CLAVE: Tiempo por ciclo BASADO EN TU OBSERVACIÓN
+  // Si 6 segundos empapan, usamos 4-8 segundos como rango
+  let secondsPerCycle;
+  if (temp > 25) {
+    secondsPerCycle = 8;  // Verano: 8 segundos (evaporación alta)
+  } else if (temp > 20) {
+    secondsPerCycle = 6;  // Templado-cálido: 6 segundos
+  } else {
+    secondsPerCycle = 4;  // Frío: 4 segundos (menor evaporación)
+  }
+  
+  // Ajuste por humedad
+  if (humidity < 40) secondsPerCycle += 2;  // Aire seco → más tiempo
+  if (humidity > 70) secondsPerCycle -= 1;  // Aire húmedo → menos tiempo
+  
+  // Límites: 3-10 segundos (basado en tu observación)
+  secondsPerCycle = Math.max(3, Math.min(secondsPerCycle, 10));
+
+  // 6. Calcular intervalo entre ciclos
+  const dailyMinutes = 24 * 60;
+  const intervalBetweenCycles = dailyMinutes / cyclesPerDay;
+  const intervalHours = Math.floor(intervalBetweenCycles / 60);
+  const intervalMinutes = Math.round(intervalBetweenCycles % 60);
 
   return {
-    totalWaterNeeds: totalWaterNeeds.toFixed(1),
-    pumpMinutesPerDay: dailyPumpMinutes.toFixed(0),
+    totalWaterNeeds: totalWaterNeeds.toFixed(2),
+    pumpMinutesPerDay: dailyPumpMinutes.toFixed(1),
     cyclesPerDay,
     secondsPerCycle: secondsPerCycle.toFixed(0),
-    minutesPerCycle: (secondsPerCycle / 60).toFixed(1),
+    intervalHours,
+    intervalMinutes,
+    minutesPerCycle: (secondsPerCycle / 60).toFixed(2),
     pumpPower,
     rockwoolCubes,
     location: "Castellón de la Plana",
     recommendations: [
-      `Regar ${cyclesPerDay} veces al día durante ${secondsPerCycle} segundos cada ciclo`,
-      `En verano aumentar ciclos a 6-7 por día`,
-      `En invierno reducir ciclos a 3-4 por día`,
-      `Los dados de lana de roca de 2.5cm necesitan 30-45 segundos para empaparse completamente`,
-      `Ajustar según observación: si la lana de roca se seca rápido, aumentar tiempo a 45 segundos`
+      `⏰ ${cyclesPerDay} ciclos al día (cada ${intervalHours}h ${intervalMinutes > 0 ? intervalMinutes + 'min' : ''})`,
+      `💧 ${secondsPerCycle} segundos por ciclo`,
+      `📊 Necesidad diaria: ${totalWaterNeeds.toFixed(2)}L para ${plants.length} plantas`,
+      season === "summer" ? "☀️ VERANO: Aumentar ciclos si la lana de roca se seca rápido" :
+      season === "winter" ? "❄️ INVIERNO: Reducir ciclos si se mantiene húmeda" :
+      "🌤️ OTOÑO/PRIMAVERA: Ciclos moderados",
+      "⚡ AJUSTE MANUAL: Si 6s empapa → reducir a 4-5s. Si se seca rápido → aumentar a 7-8s"
+    ],
+    notes: [
+      "Basado en tu observación: 6 segundos empapan la lana de roca",
+      "Caudal estimado alto (torre con cascada eficiente)",
+      "Ajustar según observación directa de humedad en lana de roca"
     ]
   };
 };
@@ -2180,6 +2225,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
   }, []);
 
   // CORRECCIÓN: Usar la función de riego actualizada
+ const IrrigationTab = () => {
   const irrigationData = useMemo(() => {
     return calculateIrrigation(
       plants,
@@ -2188,6 +2234,218 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
       season
     );
   }, [plants, measurements.manualTemp, measurements.manualHumidity, season]);
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Cálculo de Riego REVISADO</h2>
+        <p className="text-slate-600">Basado en observación real: 6 segundos empapan la lana de roca</p>
+      </div>
+
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+            <WaterDroplets className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Configuración REVISADA</h3>
+            <p className="text-sm text-slate-600">Basado en tu observación real de 6 segundos</p>
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+          <h4 className="font-bold text-amber-700 mb-3">📌 OBSERVACIÓN CLAVE</h4>
+          <p className="text-slate-700">
+            <strong>Has observado que con solo 6 segundos de riego la lana de roca se empapa completamente.</strong>
+            <br />
+            Esto indica que tu sistema tiene un caudal muy alto o distribuye el agua muy eficientemente.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+            <h4 className="font-bold text-blue-700 mb-3">⏱️ Tiempo por Ciclo</h4>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600">{irrigationData.secondsPerCycle}s</div>
+              <p className="text-sm text-slate-600">Por ciclo</p>
+              <p className="text-xs text-slate-500 mt-2">Basado en tu observación de 6 segundos</p>
+              <div className="mt-3">
+                <Badge className="bg-blue-100 text-blue-800">
+                  {irrigationData.secondsPerCycle === "6" ? "✅ Tu observación exacta" : "Ajustado por temperatura"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+            <h4 className="font-bold text-emerald-700 mb-3">🔄 Frecuencia</h4>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-emerald-600">{irrigationData.cyclesPerDay}</div>
+              <p className="text-sm text-slate-600">ciclos/día</p>
+              <p className="text-xs text-slate-500 mt-2">
+                Cada {irrigationData.intervalHours}h {irrigationData.intervalMinutes > 0 ? irrigationData.intervalMinutes + 'min' : ''}
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+            <h4 className="font-bold text-amber-700 mb-3">💧 Agua Total</h4>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-amber-600">{irrigationData.totalWaterNeeds}L</div>
+              <p className="text-sm text-slate-600">por día</p>
+              <p className="text-xs text-slate-500 mt-2">
+                {plants.length > 0 ? `${(parseFloat(irrigationData.totalWaterNeeds) / plants.length).toFixed(2)}L/planta` : 'Sin plantas'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
+          <h3 className="font-bold text-slate-800 mb-6 text-center">📋 RECOMENDACIONES BASADAS EN TU OBSERVACIÓN</h3>
+          
+          <div className="space-y-4">
+            {irrigationData.recommendations.map((rec, index) => (
+              <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-slate-200">
+                <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  {index + 1}
+                </div>
+                <p className="text-slate-700">{rec}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl">
+            <h4 className="font-bold text-cyan-700 mb-3">🎯 GUÍA DE AJUSTE MANUAL</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-3 bg-white rounded-lg">
+                <h5 className="font-bold text-red-600 mb-2">SI LA LANA DE ROCA SE EMPAPA DEMASIADO:</h5>
+                <ul className="text-sm text-slate-700 space-y-1">
+                  <li>• Reducir tiempo a <strong>4-5 segundos</strong></li>
+                  <li>• Aumentar intervalo entre ciclos</li>
+                  <li>• Verificar que no haya goteo continuo</li>
+                </ul>
+              </div>
+              <div className="p-3 bg-white rounded-lg">
+                <h5 className="font-bold text-emerald-600 mb-2">SI LA LANA DE ROCA SE SECA RÁPIDO:</h5>
+                <ul className="text-sm text-slate-700 space-y-1">
+                  <li>• Aumentar tiempo a <strong>7-8 segundos</strong></li>
+                  <li>• Reducir intervalo entre ciclos</li>
+                  <li>• Verificar que todas las plantas reciben agua</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
+          <h3 className="font-bold text-purple-800 mb-4">⚙️ Variables Consideradas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Temperatura actual:</span>
+                <span className="font-bold text-amber-600">{measurements.manualTemp}°C</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {parseFloat(measurements.manualTemp) > 25 ? "☀️ Calor → más ciclos" :
+                 parseFloat(measurements.manualTemp) > 20 ? "🌤️ Templado → ciclos normales" :
+                 parseFloat(measurements.manualTemp) > 15 ? "⛅ Fresco → menos ciclos" :
+                 "❄️ Frío → mínimos ciclos"}
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Humedad actual:</span>
+                <span className="font-bold text-cyan-600">{measurements.manualHumidity}%</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {parseFloat(measurements.manualHumidity) < 40 ? "🏜️ Seco → más tiempo/ciclo" :
+                 parseFloat(measurements.manualHumidity) < 60 ? "✅ Ideal" :
+                 "💦 Húmedo → menos tiempo/ciclo"}
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Estación:</span>
+                <span className="font-bold text-emerald-600">
+                  {season === "summer" ? "Verano" :
+                   season === "winter" ? "Invierno" :
+                   "Primavera/Otoño"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {season === "summer" ? "Evaporación alta → ciclos frecuentes" :
+                 season === "winter" ? "Evaporación baja → ciclos espaciados" :
+                 "Condiciones moderadas"}
+              </p>
+            </div>
+
+            <div className="p-3 bg-white rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-700">Plantas en sistema:</span>
+                <span className="font-bold text-blue-600">{plants.length} plantas</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {plants.length > 10 ? "Alta densidad → vigilar humedad" :
+                 plants.length > 5 ? "Densidad media" :
+                 "Baja densidad → ajustar según necesidad"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
+          <h3 className="font-bold text-emerald-800 mb-4">📝 Protocolo de Ajuste Paso a Paso</h3>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+              <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                1
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">Comienza con {irrigationData.secondsPerCycle} segundos por ciclo</p>
+                <p className="text-sm text-slate-600">Programa {irrigationData.cyclesPerDay} ciclos al día</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+              <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                2
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">Observa la lana de roca 1 hora después del riego</p>
+                <p className="text-sm text-slate-600">Debe estar húmeda pero no chorreando agua</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+              <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                3
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">Ajusta según necesidad</p>
+                <p className="text-sm text-slate-600">
+                  <strong>Empapada:</strong> reduce 1-2 segundos<br />
+                  <strong>Secándose rápido:</strong> aumenta 1-2 segundos
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+              <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                4
+              </div>
+              <div>
+                <p className="font-bold text-slate-800">Revisa cada 2-3 días</p>
+                <p className="text-sm text-slate-600">Las necesidades cambian con el crecimiento de las plantas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
 
   // =================== ALERTAS OPTIMIZADAS ===================
 
