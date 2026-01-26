@@ -3346,7 +3346,7 @@ Próxima limpieza recomendada: en 14 días`);
                       <p className="text-sm text-blue-700">
                         <strong>Protocolo agua destilada:</strong><br />
                         • Objetivo: 1400 µS/cm (1.4 mS/cm)<br />
-                        • Ajuste: +3ml A+B si < 1.4, agua destilada si > 1.4<br />
+                        • Ajuste: +3ml A+B si {'<'} 1.4, agua destilada si {'>'} 1.4<br />
                         • 70ml A+B por 20L agua destilada
                       </p>
                     </div>
@@ -4867,11 +4867,11 @@ Próxima limpieza recomendada: en 14 días`);
                 <span><strong>EC baja:</strong> Añadir +3ml de AQUA VEGA A y B por cada desviación de 0.1 mS/cm por debajo de 1.4.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink=0" size={16} />
+                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>EC alta:</strong> Añadir 200-300ml de agua destilada, mezclar, esperar 5min y medir de nuevo.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt=1 flex-shrink-0" size={16} />
+                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>pH inestable:</strong> Normal con agua destilada. Ajustar gota a gota y verificar cada 2-3 días.</span>
               </li>
             </ul>
@@ -4881,15 +4881,15 @@ Próxima limpieza recomendada: en 14 días`);
             <h4 className="font-bold text-purple-700 mb-3">🎯 Consejos para Lechugas con Agua Destilada</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>EC específica:</strong> Variedades sensibles como Iceberg y Trocadero pueden necesitar EC ligeramente menor (1.3 mS/cm).</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Calidad superior:</strong> El agua destilada produce lechugas más limpias y con mejor sabor.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Prevención de algas:</strong> Sin minerales en el agua inicial, hay menor riesgo de algas.</span>
               </li>
             </ul>
@@ -4899,15 +4899,15 @@ Próxima limpieza recomendada: en 14 días`);
             <h4 className="font-bold text-blue-700 mb-3">🔧 Mantenimiento del Sistema con Agua Destilada</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Limpieza:</strong> Cada 2 semanas, limpiar con agua destilada para evitar contaminación cruzada.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Almacenamiento:</strong> Guardar agua destilada en recipientes cerrados para evitar contaminación.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Calibración:</strong> Mensualmente, calibrar medidores con soluciones estándar para máxima precisión.</span>
               </li>
             </ul>
