@@ -1,4 +1,4 @@
-"use client"
+use client
 
 import React, { useState, useEffect, useMemo } from "react"
 import Image from 'next/image'
@@ -118,53 +118,20 @@ const Slider = ({ value, min, max, step, onValueChange, className = "" }) => {
 }
 
 // ============================================================================
-// CONFIGURACIÓN BASE CON EC OPTIMIZADO (RANGOS ACTUALIZADOS SEGÚN INVESTIGACIÓN)
+// CONFIGURACIÓN BASE CON EC OPTIMIZADO - SOLO AGUA DESTILADA
 // ============================================================================
 
 const WATER_TYPES = {
   "osmosis": {
-    name: "Ósmosis Inversa",
+    name: "Agua Destilada",
     icon: <Filter className="text-blue-500" />,
     ecBase: 0.0,
     hardness: 0,
     phBase: 7.0,
-    description: "Agua pura, EC casi 0. Perfecta para hidroponía.",
-    recommendation: "Usar nutrientes completos desde el inicio.",
+    description: "Agua destilada pura, EC casi 0. Perfecta para AQUA VEGA A y B para aguas blandas.",
+    recommendation: "Usar protocolo específico: 70ml de A y B por 20L, ajustar a 1.4 mS/cm.",
     calmagRequired: true,
     isOsmosis: true
-  },
-  "bajo_mineral": {
-    name: "Baja Mineralización",
-    icon: <Droplets className="text-cyan-500" />,
-    ecBase: 200,
-    hardness: 50,
-    phBase: 7.2,
-    description: "Agua blanda, ideal para AQUA VEGA.",
-    recommendation: "Ajuste mínimo de pH necesario.",
-    calmagRequired: false,
-    isOsmosis: false
-  },
-  "medio_mineral": {
-    name: "Media Mineralización",
-    icon: <Droplets className="text-teal-500" />,
-    ecBase: 400,
-    hardness: 150,
-    phBase: 7.5,
-    description: "Agua de grifo típica.",
-    recommendation: "Considerar dureza al mezclar.",
-    calmagRequired: false,
-    isOsmosis: false
-  },
-  "alta_mineral": {
-    name: "Alta Mineralización",
-    icon: <Droplets className="text-amber-500" />,
-    ecBase: 800,
-    hardness: 300,
-    phBase: 8.0,
-    description: "Agua dura, alta en calcio/magnesio.",
-    recommendation: "No recomendada para AQUA VEGA de agua blanda.",
-    calmagRequired: false,
-    isOsmosis: false
   }
 };
 
@@ -631,7 +598,7 @@ const calculateSmartEC = (plants, waterType) => {
  * Calcula características del agua
  */
 const getWaterCharacteristics = (waterType, osmosisMix = 0) => {
-  const baseWater = WATER_TYPES[waterType] || WATER_TYPES.bajo_mineral;
+  const baseWater = WATER_TYPES[waterType] || WATER_TYPES.osmosis;
   const osmosisWater = WATER_TYPES.osmosis;
 
   if (waterType === "osmosis") {
@@ -710,11 +677,25 @@ const calculateCalMagNeeded = (waterType, osmosisMix, volume) => {
 /**
  * Calcula dosis AQUA VEGA optimizada
  */
-const calculateAquaVegaDosage = (plants, totalVolume, targetEC, waterType = "bajo_mineral") => {
-  if (plants.length === 0) return { a: 0, b: 0, per10L: { a: 0, b: 0 }, note: "" };
+const calculateAquaVegaDosage = (plants, totalVolume, targetEC, waterType = "osmosis") => {
+  if (plants.length === 0) {
+    // Protocolo para agua destilada: 70ml de A y B por 20L para 1.4 mS/cm
+    const baseDosagePer20L = 70;
+    const dosage = (baseDosagePer20L * totalVolume) / 20;
+    
+    return { 
+      a: Math.round(dosage), 
+      b: Math.round(dosage), 
+      per10L: { 
+        a: Math.round((dosage * 10) / totalVolume), 
+        b: Math.round((dosage * 10) / totalVolume) 
+      }, 
+      note: "Protocolo agua destilada: 70ml A+B por 20L → 1.4 mS/cm" 
+    };
+  }
 
   let totalA = 0, totalB = 0;
-  let usedWaterType = WATER_TYPES[waterType] || WATER_TYPES["bajo_mineral"];
+  let usedWaterType = WATER_TYPES[waterType] || WATER_TYPES["osmosis"];
 
   plants.forEach(plant => {
     const variety = VARIETIES[plant.v];
@@ -795,7 +776,7 @@ const calculatePHAdjustment = (currentPH, targetPH, waterType, volume) => {
 
   let recommendation = "";
   if (phDiff > 0.3) {
-    recommendation = `pH demasiado alto (${currentPH}). Añadir ${adjustment.toFixed(1)}ml de pH- (ácido fosfórico). Mezclar bien y esperar 15 minutos antes de medir de nuevo.`;
+    recommendation = `pH demasiado alto (${currentPH}). Añadir ${adjustment.toFixed(1)}ml de pH- (ácido cítrico). Mezclar bien y esperar 15 minutos antes de medir de nuevo.`;
   } else if (phDiff < -0.3) {
     recommendation = `pH demasiado bajo (${currentPH}). Añadir ${adjustment.toFixed(1)}ml de pH+ (hidróxido de potasio). Mezclar bien y esperar 15 minutos.`;
   } else {
@@ -1311,66 +1292,58 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
     steps: [
       {
         step: 1,
-        action: "Llenar con agua de ósmosis",
-        details: `Preparar ${volume}L de agua pura de ósmosis`,
+        action: "Llenar con agua destilada",
+        details: `Preparar ${volume}L de agua destilada`,
         icon: "💧"
       },
       {
         step: 2,
-        action: "Añadir CalMag",
-        details: `Agregar ${calmagNeeded.dosage}ml de CalMag (obligatorio para ósmosis)`,
-        critical: true,
-        reason: "Agua muy blanda (0 ppm). Necesario para prevenir deficiencias de Ca/Mg",
-        icon: "🧪"
-      },
-      {
-        step: 3,
-        action: "Mezclar",
-        details: "Mezclar bien durante 2-3 minutos",
-        icon: "🔄"
-      },
-      {
-        step: 4,
         action: "Añadir AQUA VEGA A",
-        details: `Agregar ${aquaVegaDosage.a}ml de AQUA VEGA A`,
+        details: `Agregar ${aquaVegaDosage.a}ml de AQUA VEGA A para aguas blandas`,
         icon: "⚗️"
       },
       {
-        step: 5,
+        step: 3,
         action: "Mezclar",
         details: "Mezclar durante 1 minuto",
         icon: "🔄"
       },
       {
-        step: 6,
+        step: 4,
         action: "Añadir AQUA VEGA B",
-        details: `Agregar ${aquaVegaDosage.b}ml de AQUA VEGA B`,
+        details: `Agregar ${aquaVegaDosage.b}ml de AQUA VEGA B para aguas blandas`,
         icon: "⚗️"
       },
       {
-        step: 7,
+        step: 5,
         action: "Mezclar",
         details: "Mezclar durante 2 minutos",
         icon: "🔄"
       },
       {
-        step: 8,
+        step: 6,
         action: "Esperar estabilización",
         details: "Esperar 15-30 minutos para que los nutrientes se estabilicen",
         icon: "⏰"
       },
       {
-        step: 9,
+        step: 7,
         action: "Medir EC",
-        details: "Verificar EC. Objetivo: 800-1500 µS/cm según plantas",
+        details: "Verificar EC. Objetivo: 1400 µS/cm (1.4 mS/cm)",
         icon: "📊"
       },
       {
-        step: 10,
-        action: "Ajustar pH",
-        details: "Ajustar pH a 6.0",
-        note: "El agua de ósmosis tiene bajo poder tampón - ajustar cuidadosamente",
+        step: 8,
+        action: "Ajustar EC si es necesario",
+        details: "Si EC < 1.4: añadir +3ml de A y B. Si EC > 1.4: añadir agua destilada",
         icon: "⚖️"
+      },
+      {
+        step: 9,
+        action: "Ajustar pH",
+        details: "Ajustar pH a 5.8 usando ácido cítrico",
+        note: "El agua destilada tiene bajo poder tampón - ajustar cuidadosamente",
+        icon: "🧪"
       }
     ]
   };
@@ -1382,29 +1355,29 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
           <Filter className="text-white" size={24} />
         </div>
         <div>
-          <h2 className="font-bold text-slate-800 text-xl">DIAGNÓSTICO PARA ÓSMOSIS - EC OPTIMIZADO</h2>
-          <p className="text-slate-600">Protocolo especial para agua de ósmosis inversa con valores seguros</p>
+          <h2 className="font-bold text-slate-800 text-xl">PROTOCOLO AGUA DESTILADA - AQUA VEGA A/B</h2>
+          <p className="text-slate-600">Protocolo específico para agua destilada con AQUA VEGA para aguas blandas</p>
         </div>
       </div>
 
       <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
-        <h3 className="font-bold text-blue-700 mb-3">1. ✅ Detección Automática - Agua Pura</h3>
+        <h3 className="font-bold text-blue-700 mb-3">1. ✅ Protocolo Específico</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-3 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">0 µS/cm</div>
-            <p className="text-sm text-blue-700">EC base</p>
+            <p className="text-sm text-blue-700">EC inicial</p>
           </div>
           <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">0 ppm</div>
-            <p className="text-sm text-blue-700">Dureza</p>
+            <div className="text-2xl font-bold text-blue-600">70 ml</div>
+            <p className="text-sm text-blue-700">AQUA VEGA A/B</p>
           </div>
           <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">7.0</div>
-            <p className="text-sm text-blue-700">pH base</p>
+            <div className="text-2xl font-bold text-blue-600">1.4 mS/cm</div>
+            <p className="text-sm text-blue-700">EC objetivo</p>
           </div>
         </div>
         <p className="text-sm text-slate-600 mt-3">
-          <strong>Nota:</strong> Con agua de ósmosis, comenzamos desde EC 0, permitiendo control total sobre los nutrientes.
+          <strong>Nota:</strong> Con agua destilada, comenzamos desde EC 0, permitiendo control total sobre los nutrientes.
         </p>
       </div>
 
@@ -1428,7 +1401,7 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
       )}
 
       <div className="mb-6 p-4 bg-white rounded-xl border border-blue-100">
-        <h3 className="font-bold text-blue-700 mb-3">3. 📋 Protocolo Especial para Ósmosis - Valores Seguros</h3>
+        <h3 className="font-bold text-blue-700 mb-3">3. 📋 Protocolo para Agua Destilada - AQUA VEGA A/B</h3>
         <div className="space-y-3">
           {osmosisProtocol.steps.map((step) => (
             <div key={step.step} className={`flex items-start gap-3 p-3 rounded-lg ${step.critical ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50'}`}>
@@ -1451,7 +1424,7 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
       </div>
 
       <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
-        <h3 className="font-bold text-emerald-700 mb-3">✅ Ventajas del Agua de Ósmosis</h3>
+        <h3 className="font-bold text-emerald-700 mb-3">✅ Ventajas del Agua Destilada + AQUA VEGA A/B</h3>
         <ul className="space-y-2 text-sm text-slate-700">
           <li className="flex items-start gap-2">
             <Check className="text-emerald-500 mt-0.5" size={16} />
@@ -1463,7 +1436,7 @@ const OsmosisDiagnosisPanel = ({ waterType, osmosisMix, calmagNeeded, volume, aq
           </li>
           <li className="flex items-start gap-2">
             <Check className="text-emerald-500 mt-0.5" size={16} />
-            <span><strong>Precisión en fórmulas:</strong> Las fórmulas AQUA VEGA están diseñadas para agua pura</span>
+            <span><strong>Precisión en fórmulas:</strong> AQUA VEGA A/B para aguas blandas está diseñada para agua pura</span>
           </li>
           <li className="flex items-start gap-2">
             <Check className="text-emerald-500 mt-0.5" size={16} />
@@ -1919,11 +1892,11 @@ export default function HydroAppFinal() {
     totalVol: "20",
     currentVol: "20",
     ph: "6.0",
-    ec: "1000",
+    ec: "1400",
     temp: "22",
-    targetEC: "1100",
+    targetEC: "1400",
     targetPH: "6.0",
-    waterType: "bajo_mineral",
+    waterType: "osmosis",
     hasHeater: true,
     useOsmosisMix: false,
     osmosisMixPercentage: 0,
@@ -1934,7 +1907,7 @@ export default function HydroAppFinal() {
   // Configuración de mediciones manuales con valores iniciales optimizados
   const [measurements, setMeasurements] = useState({
     manualPH: "6.0",
-    manualEC: "1000",
+    manualEC: "1400",
     manualTemp: "22",
     manualWaterTemp: "22",
     manualVolume: "20",
@@ -1959,7 +1932,7 @@ export default function HydroAppFinal() {
         const savedMeasurements = data.measurements || {};
         setMeasurements({
           manualPH: savedMeasurements.manualPH || "6.0",
-          manualEC: savedMeasurements.manualEC || "1000",
+          manualEC: savedMeasurements.manualEC || "1400",
           manualTemp: savedMeasurements.manualTemp || "22",
           manualWaterTemp: savedMeasurements.manualWaterTemp || "22",
           manualVolume: savedMeasurements.manualVolume || (data.config?.currentVol || "20"),
@@ -2066,7 +2039,7 @@ export default function HydroAppFinal() {
 
     // Calcular el EC usando el método seleccionado
     if (method) {
-      let newEC = "1100";
+      let newEC = "1400";
 
       if (method === "escalonado") {
         const result = calculateStagedEC(plants, config.waterType);
@@ -2176,25 +2149,25 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     const vTot = parseFloat(config.totalVol) || 20;
     const ph = parseFloat(config.ph) || 6.0;
     const ec = parseFloat(config.ec) || 0;
-    const tEc = parseFloat(config.targetEC) || 1100;
+    const tEc = parseFloat(config.targetEC) || 1400;
     const tPh = parseFloat(config.targetPH) || 6.0;
     const temp = parseFloat(config.temp) || 20;
-    const waterType = config.waterType || "bajo_mineral";
+    const waterType = config.waterType || "osmosis";
     const res = [];
 
-    // Alerta para agua de ósmosis
+    // Alerta para agua destilada
     if (waterType === "osmosis") {
       res.push({
-        title: "AGUA DE ÓSMOSIS DETECTADA",
-        value: "Protocolo especial",
-        description: "Activado diagnóstico completo para ósmosis inversa",
+        title: "AGUA DESTILADA DETECTADA",
+        value: "Protocolo específico",
+        description: "Activado protocolo para agua destilada + AQUA VEGA A/B para aguas blandas",
         color: "bg-gradient-to-r from-blue-700 to-cyan-800",
         icon: <Filter className="text-white" size={28} />,
         priority: 2
       });
     }
 
-    // Alerta para agua de ósmosis sin CalMag
+    // Alerta para agua destilada sin CalMag
     if (calmagNeeded.required && calmagNeeded.dosage > 0) {
       res.push({
         title: "FALTA CALMAG",
@@ -2681,11 +2654,11 @@ Próxima limpieza recomendada: en 14 días`);
               <div className="flex items-center justify-between">
                 <span className="text-slate-700">Tipo de agua:</span>
                 <span className="font-bold text-cyan-600">
-                  {WATER_TYPES[config.waterType]?.name || "Baja Mineralización"}
+                  {WATER_TYPES[config.waterType]?.name || "Agua Destilada"}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                EC base: {WATER_TYPES[config.waterType]?.ecBase || "200"} µS/cm
+                EC base: {WATER_TYPES[config.waterType]?.ecBase || "0"} µS/cm
               </p>
             </div>
 
@@ -2983,7 +2956,7 @@ Próxima limpieza recomendada: en 14 días`);
           HydroCaru Pro
         </h1>
         <p className="text-xl text-slate-600 max-w-lg mx-auto">
-          Sistema experto de cultivo hidropónico con valores EC seguros
+          Sistema experto de cultivo hidropónico con agua destilada y AQUA VEGA A/B
         </p>
       </div>
 
@@ -3003,8 +2976,8 @@ Próxima limpieza recomendada: en 14 días`);
         return (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-slate-800">¡IMPORTANTE! Protocolo de Preparación Optimizado</h2>
-              <p className="text-slate-600">Sigue estos pasos para preparar correctamente tu sistema con valores seguros</p>
+              <h2 className="text-3xl font-bold text-slate-800">¡IMPORTANTE! Protocolo de Preparación para Agua Destilada</h2>
+              <p className="text-slate-600">Sigue estos pasos para preparar correctamente tu sistema con agua destilada y AQUA VEGA A/B para aguas blandas</p>
             </div>
 
             <Card className="p-6 rounded-2xl border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -3013,17 +2986,17 @@ Próxima limpieza recomendada: en 14 días`);
                   <AlertOctagon className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800">⚠️ CONSEJO SUPER IMPORTANTE - EC OPTIMIZADO</h3>
-                  <p className="text-slate-600">Orden correcto para añadir nutrientes con valores seguros</p>
+                  <h3 className="font-bold text-slate-800">⚠️ PROTOCOLO ESPECÍFICO - AGUA DESTILADA + AQUA VEGA A/B</h3>
+                  <p className="text-slate-600">Protocolo exacto según tus instrucciones con valores seguros</p>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-                  <h4 className="font-bold text-amber-800 text-lg mb-3">📋 PASO A PASO - ORDEN CORRECTO CON VALORES SEGUROS</h4>
+                  <h4 className="font-bold text-amber-800 text-lg mb-3">📋 PASO A PASO - PROTOCOLO AGUA DESTILADA</h4>
                   <p className="text-slate-700 mb-4">
-                    El éxito en hidroponía depende del <strong>orden correcto</strong> y de usar <strong>valores seguros de EC</strong>.
-                    Sigue estrictamente esta secuencia con los valores optimizados:
+                    Protocolo específico para <strong>agua destilada</strong> y <strong>AQUA VEGA A y B para aguas blandas</strong>.
+                    Sigue estrictamente esta secuencia:
                   </p>
 
                   <div className="space-y-4">
@@ -3032,8 +3005,10 @@ Próxima limpieza recomendada: en 14 días`);
                         1
                       </div>
                       <div>
-                        <h5 className="font-bold text-slate-800">Llenar el depósito con agua</h5>
-                        <p className="text-sm text-slate-600">Usa el tipo de agua que has seleccionado en el paso anterior</p>
+                        <h5 className="font-bold text-slate-800">PASO 1: Preparación de la Nueva Solución</h5>
+                        <p className="text-sm text-slate-600">Llena con 20 litros de agua destilada</p>
+                        <p className="text-sm text-emerald-600 font-bold mt-1">• Añade 70 ml de CANNA Aqua Vega A. Remueve manualmente durante 1 minuto</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Añade 70 ml de CANNA Aqua Vega B. Remueve manualmente durante 2 minutos</p>
                       </div>
                     </div>
 
@@ -3042,9 +3017,10 @@ Próxima limpieza recomendada: en 14 días`);
                         2
                       </div>
                       <div>
-                        <h5 className="font-bold text-slate-800">Añadir CALMAG (si es necesario)</h5>
-                        <p className="text-sm text-slate-600">SOLO si usas agua de ósmosis o agua muy blanda</p>
-                        <p className="text-xs text-amber-600 font-bold mt-1">⚠️ CRÍTICO: Siempre antes de AQUA VEGA</p>
+                        <h5 className="font-bold text-slate-800">PASO 2: Estabilización y Medición Precisa</h5>
+                        <p className="text-sm text-slate-600">Enciende el difusor de aire y el calentador (ajustado a 20°C)</p>
+                        <p className="text-xs text-amber-600 font-bold mt-1">⚠️ Déjalos funcionar 10-15 minutos. Apaga el aireador. Espera 30 segundos</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Mide la EC con tu medidor (que tiene ATC). Anota el valor que muestra la pantalla</p>
                       </div>
                     </div>
 
@@ -3053,9 +3029,12 @@ Próxima limpieza recomendada: en 14 días`);
                         3
                       </div>
                       <div>
-                        <h5 className="font-bold text-slate-800">Añadir AQUA VEGA A</h5>
-                        <p className="text-sm text-slate-600">La cantidad calculada por este sistema (valores optimizados)</p>
-                        <p className="text-xs text-emerald-600 font-bold mt-1">✅ Mezclar durante 1-2 minutos</p>
+                        <h5 className="font-bold text-slate-800">PASO 3: Ajuste Fino (Basado en lectura DIRECTA)</h5>
+                        <p className="text-sm text-slate-600">Objetivo: 1.4 mS/cm (1400 µS/cm)</p>
+                        <p className="text-sm text-emerald-600 font-bold mt-1">• Si muestra 1.4 mS/cm → Objetivo logrado. Ve al Paso 4</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Si muestra MENOS (ej: 1.2 o 1.3 mS/cm) → Añade +3 ml de A y +3 ml de B</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Si muestra MÁS (ej: 1.5 o 1.6 mS/cm) → Añade un vaso (200-300 ml) de agua destilada</p>
+                        <p className="text-xs text-amber-600 font-bold mt-1">⚠️ Mezcla, estabiliza 5 min, apaga aireador y mide de nuevo. Repite hasta alcanzar 1.4</p>
                       </div>
                     </div>
 
@@ -3064,80 +3043,55 @@ Próxima limpieza recomendada: en 14 días`);
                         4
                       </div>
                       <div>
-                        <h5 className="font-bold text-slate-800">Añadir AQUA VEGA B</h5>
-                        <p className="text-sm text-slate-600">La misma cantidad que AQUA VEGA A</p>
-                        <p className="text-xs text-emerald-600 font-bold mt-1">✅ Mezclar durante 2-3 minutos</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
-                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
-                        5
-                      </div>
-                      <div>
-                        <h5 className="font-bold text-slate-800">Esperar 15-30 minutos</h5>
-                        <p className="text-sm text-slate-600">Dejar que los nutrientes se estabilicen</p>
-                        <p className="text-xs text-purple-600 font-bold mt-1">⏰ NO OMITIR este paso</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
-                      <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-rose-600 rounded-full flex items-center justify-center text-white font-bold">
-                        6
-                      </div>
-                      <div>
-                        <h5 className="font-bold text-slate-800">Medir pH y ajustar si es necesario</h5>
-                        <p className="text-sm text-slate-600">Objetivo: pH 5.8-6.2 (óptimo para lechugas)</p>
-                        <p className="text-xs text-pink-600 font-bold mt-1">⚖️ NUNCA ajustar pH antes de añadir nutrientes</p>
+                        <h5 className="font-bold text-slate-800">PASO 4: Ajuste Final del pH y Puesta en Marcha</h5>
+                        <p className="text-sm text-slate-600">Con la EC en 1.4 mS/cm, ajusta el pH a 5.8</p>
+                        <p className="text-sm text-emerald-600 font-bold mt-1">• Usa tu ácido cítrico (gota a gota, mezclando y midiendo)</p>
+                        <p className="text-xs text-pink-600 font-bold mt-1">⚖️ Objetivo final: EC 1.4 mS/cm, pH 5.8</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 rounded-xl border-2 border-red-200">
-                  <h4 className="font-bold text-red-700 text-lg mb-3">🚫 ERRORES COMUNES QUE DEBES EVITAR CON VALORES OPTIMIZADOS</h4>
+                  <h4 className="font-bold text-red-700 text-lg mb-3">🚫 ERRORES COMUNES QUE DEBES EVITAR</h4>
                   <ul className="space-y-2 text-slate-700">
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> usar EC &gt; 1500 µS/cm para lechugas (quemaduras garantizadas)</span>
+                      <span><strong>Nunca</strong> usar agua que no sea destilada</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> dar EC &gt; 800 µS/cm a plántulas (estrés salino)</span>
+                      <span><strong>Nunca</strong> usar otros nutrientes que no sean AQUA VEGA A y B para aguas blandas</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> mezclar AQUA VEGA A y B directamente (crean precipitados)</span>
+                      <span><strong>Nunca</strong> ajustar el pH antes de estabilizar la EC a 1.4 mS/cm</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> ajustar el pH antes de añadir todos los nutrientes</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
-                      <span><strong>Nunca</strong> añadir CalMag después de AQUA VEGA (se bloquea el calcio)</span>
+                      <span><strong>Nunca</strong> omitir los tiempos de mezcla y estabilización</span>
                     </li>
                   </ul>
                 </div>
 
                 <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
-                  <h4 className="font-bold text-green-700 text-lg mb-3">✅ CONSEJOS DE ÉXITO CON EC OPTIMIZADO</h4>
+                  <h4 className="font-bold text-green-700 text-lg mb-3">✅ CONSEJOS DE ÉXITO CON AGUA DESTILADA</h4>
                   <ul className="space-y-2 text-slate-700">
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Usa EC 600-800 µS/cm para plántulas (primeras 2 semanas)</span>
+                      <span>Usa siempre agua destilada recién abierta o almacenada correctamente</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Incrementa gradualmente EC: +100-200 µS/cm por semana</span>
+                      <span>Mide la EC con el medidor ATC después de estabilización (sin aireador)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Monitorea síntomas: hojas pálidas = EC baja, bordes quemados = EC alta</span>
+                      <span>Para ajustes finos: +3ml de A y B si EC baja, agua destilada si EC alta</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span>Para ósmosis: añadir siempre CalMag antes de nutrientes</span>
+                      <span>Ajusta pH gota a gota con ácido cítrico después de estabilizar EC</span>
                     </li>
                   </ul>
                 </div>
@@ -3170,7 +3124,7 @@ Próxima limpieza recomendada: en 14 días`);
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-slate-800">Paso 2: Configuración Básica</h2>
-              <p className="text-slate-600">Define las características de tu sistema</p>
+              <p className="text-slate-600">Define las características de tu sistema con agua destilada</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -3241,27 +3195,31 @@ Próxima limpieza recomendada: en 14 días`);
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800">Tipo de Agua</h3>
-                    <p className="text-sm text-slate-600">Selecciona el agua que usas</p>
+                    <p className="text-sm text-slate-600">Sistema configurado para AGUA DESTILADA</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(WATER_TYPES).map(([key, water]) => (
-                    <div
-                      key={key}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${config.waterType === key
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-slate-200 hover:border-slate-300'
-                        }`}
-                      onClick={() => setConfig({ ...config, waterType: key })}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        {water.icon}
-                        <span className="font-bold text-slate-800">{water.name}</span>
-                      </div>
-                      <p className="text-sm text-slate-600">{water.description}</p>
-                    </div>
-                  ))}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    {WATER_TYPES["osmosis"].icon}
+                    <span className="font-bold text-slate-800">AGUA DESTILADA</span>
+                  </div>
+                  <p className="text-sm text-slate-600 mb-3">{WATER_TYPES["osmosis"].description}</p>
+                  <p className="text-xs text-blue-600 font-bold">
+                    ✅ Sistema configurado para uso exclusivo de agua destilada
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Nutrientes: AQUA VEGA A y B para aguas blandas
+                  </p>
+                </div>
+
+                <div className="mt-4 p-3 bg-amber-50 rounded-lg">
+                  <p className="text-sm text-amber-700">
+                    <strong>Nota:</strong> Este sistema está configurado específicamente para:
+                    <br />• Agua destilada
+                    <br />• AQUA VEGA A y B para aguas blandas
+                    <br />• Protocolo: 70ml de A y B por 20L → EC objetivo 1.4 mS/cm
+                  </p>
                 </div>
               </Card>
             </div>
@@ -3347,7 +3305,7 @@ Próxima limpieza recomendada: en 14 días`);
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800">Conductividad Eléctrica (EC)</h3>
-                    <p className="text-sm text-slate-600">Nivel de nutrientes en µS/cm - Valores seguros</p>
+                    <p className="text-sm text-slate-600">Nivel de nutrientes en µS/cm - Protocolo agua destilada</p>
                   </div>
                 </div>
 
@@ -3357,14 +3315,14 @@ Próxima limpieza recomendada: en 14 días`);
                       <label className="text-sm font-medium text-slate-700">
                         Valor de EC: <span className="font-bold text-blue-600">{config.ec} µS/cm</span>
                       </label>
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${parseFloat(config.ec) >= 800 && parseFloat(config.ec) <= 1500
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${parseFloat(config.ec) >= 1300 && parseFloat(config.ec) <= 1500
                           ? 'bg-green-100 text-green-800'
                           : parseFloat(config.ec) > 1500
                             ? 'bg-red-100 text-red-800'
                             : 'bg-amber-100 text-amber-800'
                         }`}>
                         {parseFloat(config.ec) > 1500 ? 'DEMASIADO ALTA' :
-                          parseFloat(config.ec) < 800 ? 'DEMASIADO BAJA' : 'ÓPTIMA'}
+                          parseFloat(config.ec) < 1300 ? 'DEMASIADO BAJA' : 'ÓPTIMA'}
                       </span>
                     </div>
 
@@ -3380,16 +3338,16 @@ Próxima limpieza recomendada: en 14 días`);
 
                     <div className="flex justify-between text-sm text-slate-600 mt-2">
                       <span>0</span>
-                      <span className="font-bold text-green-600">800-1500</span>
+                      <span className="font-bold text-green-600">1300-1500</span>
                       <span>3000</span>
                     </div>
 
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                       <p className="text-sm text-blue-700">
-                        <strong>Rangos seguros para lechugas:</strong><br />
-                        • Plántulas: 600-800 µS/cm<br />
-                        • Crecimiento: 800-1200 µS/cm<br />
-                        • Maduración: 1200-1500 µS/cm
+                        <strong>Protocolo agua destilada:</strong><br />
+                        • Objetivo: 1400 µS/cm (1.4 mS/cm)<br />
+                        • Ajuste: +3ml A+B si < 1.4, agua destilada si > 1.4<br />
+                        • 70ml A+B por 20L agua destilada
                       </p>
                     </div>
                   </div>
@@ -3423,7 +3381,7 @@ Próxima limpieza recomendada: en 14 días`);
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-slate-800">Paso 4: Configurar Torre</h2>
-              <p className="text-slate-600">Añade plantas a tu sistema hidropónico con EC optimizado</p>
+              <p className="text-slate-600">Añade plantas a tu sistema hidropónico con agua destilada</p>
             </div>
 
             <Card className="p-6 rounded-2xl">
@@ -3651,8 +3609,8 @@ Próxima limpieza recomendada: en 14 días`);
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Panel de Control - EC Optimizado</h1>
-          <p className="text-slate-600">Sistema hidropónico con cálculo EC escalonado seguro para lechugas</p>
+          <h1 className="text-3xl font-bold text-slate-800">Panel de Control - AGUA DESTILADA</h1>
+          <p className="text-slate-600">Sistema hidropónico con agua destilada + AQUA VEGA A/B para aguas blandas</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -3672,7 +3630,7 @@ Próxima limpieza recomendada: en 14 días`);
         </div>
       </div>
 
-      {/* Panel de diagnóstico de ósmosis */}
+      {/* Panel de diagnóstico de agua destilada */}
       <OsmosisDiagnosisPanel
         waterType={config.waterType}
         osmosisMix={config.useOsmosisMix ? config.osmosisMixPercentage : 0}
@@ -3766,7 +3724,7 @@ Próxima limpieza recomendada: en 14 días`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Nutrición AQUA VEGA</h3>
-              <p className="text-sm text-slate-600">AQUA VEGA A+B con dosis segura</p>
+              <p className="text-sm text-slate-600">AQUA VEGA A+B para aguas blandas</p>
             </div>
           </div>
 
@@ -3875,14 +3833,6 @@ Próxima limpieza recomendada: en 14 días`);
         </Button>
 
         <Button
-          onClick={() => setShowWaterSelector(true)}
-          variant="outline"
-        >
-          <Filter className="mr-2" />
-          Cambiar Agua
-        </Button>
-
-        <Button
           onClick={() => setTab("calculator")}
           variant="outline"
         >
@@ -3905,8 +3855,8 @@ Próxima limpieza recomendada: en 14 días`);
     return (
       <div className="space-y-8 animate-fade-in">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre - EC Optimizado</h2>
-          <p className="text-slate-600">Sistema escalonado 5-5-5 con valores seguros de EC</p>
+          <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre - AGUA DESTILADA</h2>
+          <p className="text-slate-600">Sistema escalonado 5-5-5 con agua destilada</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -4205,8 +4155,8 @@ Próxima limpieza recomendada: en 14 días`);
   const CalculatorTab = () => (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Calculadora EC Optimizado</h2>
-        <p className="text-slate-600">Cálculos avanzados para tu sistema hidropónico</p>
+        <h2 className="text-2xl font-bold text-slate-800">Calculadora AGUA DESTILADA</h2>
+        <p className="text-slate-600">Cálculos avanzados para tu sistema con agua destilada</p>
       </div>
 
       <StagedECCalculator
@@ -4223,8 +4173,8 @@ Próxima limpieza recomendada: en 14 días`);
             <FlaskConical className="text-white" size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800">Cálculo de Nutrientes AQUA VEGA</h3>
-            <p className="text-slate-600">Dosificación precisa para tu volumen de agua</p>
+            <h3 className="font-bold text-slate-800">Cálculo de Nutrientes AQUA VEGA A/B</h3>
+            <p className="text-slate-600">Dosificación para agua destilada</p>
           </div>
         </div>
 
@@ -4235,7 +4185,7 @@ Próxima limpieza recomendada: en 14 días`);
                 <h4 className="font-bold text-emerald-700 mb-3">AQUA VEGA A</h4>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-emerald-600">{aquaVegaDosage.a} ml</div>
-                  <p className="text-sm text-slate-600">Para {config.currentVol}L de agua</p>
+                  <p className="text-sm text-slate-600">Para {config.currentVol}L de agua destilada</p>
                   <p className="text-xs text-slate-500 mt-2">
                     {aquaVegaDosage.per10L.a} ml por cada 10L
                   </p>
@@ -4246,7 +4196,7 @@ Próxima limpieza recomendada: en 14 días`);
                 <h4 className="font-bold text-green-700 mb-3">AQUA VEGA B</h4>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-green-600">{aquaVegaDosage.b} ml</div>
-                  <p className="text-sm text-slate-600">Para {config.currentVol}L de agua</p>
+                  <p className="text-sm text-slate-600">Para {config.currentVol}L de agua destilada</p>
                   <p className="text-xs text-slate-500 mt-2">
                     {aquaVegaDosage.per10L.b} ml por cada 10L
                   </p>
@@ -4255,7 +4205,7 @@ Próxima limpieza recomendada: en 14 días`);
             </div>
 
             <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-              <h4 className="font-bold text-blue-700 mb-3">Instrucciones de Mezcla</h4>
+              <h4 className="font-bold text-blue-700 mb-3">Protocolo Agua Destilada</h4>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-bold">
@@ -4267,19 +4217,19 @@ Próxima limpieza recomendada: en 14 días`);
                   <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-bold">
                     2
                   </div>
-                  <p className="text-slate-700">Añadir AQUA VEGA A ({aquaVegaDosage.a} ml) y mezclar durante 1-2 minutos</p>
+                  <p className="text-slate-700">Añadir AQUA VEGA A ({aquaVegaDosage.a} ml) y mezclar durante 1 minuto</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-bold">
                     3
                   </div>
-                  <p className="text-slate-700">Añadir AQUA VEGA B ({aquaVegaDosage.b} ml) y mezclar durante 2-3 minutos</p>
+                  <p className="text-slate-700">Añadir AQUA VEGA B ({aquaVegaDosage.b} ml) y mezclar durante 2 minutos</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-bold">
                     4
                   </div>
-                  <p className="text-slate-700">Esperar 15-30 minutos antes de ajustar pH</p>
+                  <p className="text-slate-700">Esperar 15-30 minutos, medir EC y ajustar a 1400 µS/cm</p>
                 </div>
               </div>
             </div>
@@ -4316,7 +4266,7 @@ Próxima limpieza recomendada: en 14 días`);
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl border-2 border-pink-200">
-              <h4 className="font-bold text-pink-700 mb-3">pH- (Ácido)</h4>
+              <h4 className="font-bold text-pink-700 mb-3">pH- (Ácido cítrico)</h4>
               <div className="text-center">
                 <div className="text-4xl font-bold text-pink-600">{phAdjustment.phMinus} ml</div>
                 <p className="text-sm text-slate-600">Para bajar el pH</p>
@@ -4857,8 +4807,8 @@ Próxima limpieza recomendada: en 14 días`);
   const ProTipsTab = () => (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Consejos Profesionales</h2>
-        <p className="text-slate-600">Secretos y mejores prácticas para cultivo hidropónico exitoso</p>
+        <h2 className="text-2xl font-bold text-slate-800">Consejos Profesionales - AGUA DESTILADA</h2>
+        <p className="text-slate-600">Secretos y mejores prácticas para cultivo con agua destilada y AQUA VEGA A/B</p>
       </div>
 
       <Card className="p-6 rounded-2xl">
@@ -4867,44 +4817,44 @@ Próxima limpieza recomendada: en 14 días`);
             <Brain className="text-white" size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800">Consejos Avanzados de Cultivo</h3>
-            <p className="text-slate-600">Técnicas probadas para maximizar tu producción</p>
+            <h3 className="font-bold text-slate-800">Consejos Específicos para Agua Destilada</h3>
+            <p className="text-slate-600">Técnicas probadas para maximizar tu producción con AQUA VEGA A/B</p>
           </div>
         </div>
 
         <div className="space-y-6">
           <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
-            <h4 className="font-bold text-cyan-700 mb-3">💧 Manejo del Agua y Nutrientes</h4>
+            <h4 className="font-bold text-cyan-700 mb-3">💧 Manejo del Agua Destilada y AQUA VEGA</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Cambio de solución:</strong> Reemplazar completamente la solución nutritiva cada 2-3 semanas para evitar acumulación de sales.</span>
+                <span><strong>Protocolo exacto:</strong> Sigue siempre 70ml de A y B por 20L, ajustando a 1.4 mS/cm con +3ml o agua destilada.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Oxigenación:</strong> Mantener la temperatura del agua por debajo de 22°C para maximizar el oxígeno disuelto.</span>
+                <span><strong>Estabilización:</strong> Siempre espera 15-30 minutos después de mezclar antes de medir EC.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>EC gradual:</strong> Aumentar la EC máximo 200 µS/cm por semana para evitar estrés salino.</span>
+                <span><strong>Medición precisa:</strong> Apaga el aireador y espera 30 segundos antes de medir EC con medidor ATC.</span>
               </li>
             </ul>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-            <h4 className="font-bold text-emerald-700 mb-3">🌱 Manejo de Plantas</h4>
+            <h4 className="font-bold text-emerald-700 mb-3">🌱 Manejo de Plantas con Agua Destilada</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Poda de raíces:</strong> Recortar raíces marrones cada 2 semanas para estimular crecimiento de nuevas raíces blancas.</span>
+                <span><strong>CalMag obligatorio:</strong> Con agua destilada siempre añade CalMag antes de los nutrientes principales.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Rotación sistemática:</strong> Mantener el sistema 5-5-5 asegura cosecha continua cada 3 semanas aproximadamente.</span>
+                <span><strong>pH estable:</strong> El agua destilada tiene bajo poder tampón - ajusta pH gota a gota y monitorea frecuentemente.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Monitoreo visual:</strong> Observar diariamente bordes de hojas y color para detectar problemas temprano.</span>
+                <span><strong>Ventajas:</strong> Control total sobre nutrientes, sin contaminantes, fórmulas precisas de AQUA VEGA.</span>
               </li>
             </ul>
           </div>
@@ -4914,51 +4864,51 @@ Próxima limpieza recomendada: en 14 días`);
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Hojas amarillas inferiores:</strong> Generalmente indica deficiencia de nitrógeno. Aumentar EC en 100-200 µS/cm.</span>
+                <span><strong>EC baja:</strong> Añadir +3ml de AQUA VEGA A y B por cada desviación de 0.1 mS/cm por debajo de 1.4.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Bordes quemados:</strong> EC demasiado alta. Reducir inmediatamente en 300-400 µS/cm y observar recuperación.</span>
+                <AlertTriangle className="text-amber-500 mt-1 flex-shrink=0" size={16} />
+                <span><strong>EC alta:</strong> Añadir 200-300ml de agua destilada, mezclar, esperar 5min y medir de nuevo.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Crecimiento lento:</strong> Verificar temperatura (óptima 18-25°C) y pH (5.8-6.2 para máxima absorción).</span>
+                <AlertTriangle className="text-amber-500 mt=1 flex-shrink-0" size={16} />
+                <span><strong>pH inestable:</strong> Normal con agua destilada. Ajustar gota a gota y verificar cada 2-3 días.</span>
               </li>
             </ul>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-            <h4 className="font-bold text-purple-700 mb-3">🎯 Consejos Específicos para Lechugas</h4>
+            <h4 className="font-bold text-purple-700 mb-3">🎯 Consejos para Lechugas con Agua Destilada</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Fotoperiodo:</strong> 14-16 horas de luz diarias es ideal. Más de 18 horas puede causar espigado prematuro.</span>
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
+                <span><strong>EC específica:</strong> Variedades sensibles como Iceberg y Trocadero pueden necesitar EC ligeramente menor (1.3 mS/cm).</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Variedades sensibles:</strong> Iceberg y Trocadero requieren EC más baja (max 1400 µS/cm) que otras variedades.</span>
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
+                <span><strong>Calidad superior:</strong> El agua destilada produce lechugas más limpias y con mejor sabor.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Cosecha óptima:</strong> Cosechar en horas tempranas cuando las plantas están más turgentes y frescas.</span>
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
+                <span><strong>Prevención de algas:</strong> Sin minerales en el agua inicial, hay menor riesgo de algas.</span>
               </li>
             </ul>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-            <h4 className="font-bold text-blue-700 mb-3">🔧 Mantenimiento del Sistema</h4>
+            <h4 className="font-bold text-blue-700 mb-3">🔧 Mantenimiento del Sistema con Agua Destilada</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Limpieza profunda:</strong> Cada 2 semanas, limpiar con peróxido de hidrógeno al 3% para prevenir algas y biofilm.</span>
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
+                <span><strong>Limpieza:</strong> Cada 2 semanas, limpiar con agua destilada para evitar contaminación cruzada.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Verificación de bombas:</strong> Semanalmente, asegurarse que todas las boquillas de riego funcionen correctamente.</span>
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
+                <span><strong>Almacenamiento:</strong> Guardar agua destilada en recipientes cerrados para evitar contaminación.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Calibración de sensores:</strong> Mensualmente, calibrar medidores de pH y EC con soluciones estándar.</span>
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
+                <span><strong>Calibración:</strong> Mensualmente, calibrar medidores con soluciones estándar para máxima precisión.</span>
               </li>
             </ul>
           </div>
@@ -4980,8 +4930,8 @@ Próxima limpieza recomendada: en 14 días`);
                 <Sprout className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="font-bold text-slate-800">HydroCaru Optimizado</h1>
-                <p className="text-xs text-slate-600">Cálculo EC Seguro • 6 Variedades • Valores Optimizados</p>
+                <h1 className="font-bold text-slate-800">HydroCaru - AGUA DESTILADA</h1>
+                <p className="text-xs text-slate-600">Protocolo específico: Agua destilada + AQUA VEGA A/B para aguas blandas</p>
               </div>
             </div>
 
@@ -5000,11 +4950,11 @@ Próxima limpieza recomendada: en 14 días`);
                           totalVol: "20",
                           currentVol: "20",
                           ph: "6.0",
-                          ec: "1000",
+                          ec: "1400",
                           temp: "22",
-                          targetEC: "1100",
+                          targetEC: "1400",
                           targetPH: "6.0",
-                          waterType: "bajo_mineral",
+                          waterType: "osmosis",
                           hasHeater: true,
                           useOsmosisMix: false,
                           osmosisMixPercentage: 0,
@@ -5013,7 +4963,7 @@ Próxima limpieza recomendada: en 14 días`);
                         });
                         setMeasurements({
                           manualPH: "6.0",
-                          manualEC: "1000",
+                          manualEC: "1400",
                           manualTemp: "22",
                           manualWaterTemp: "22",
                           manualVolume: "20",
@@ -5187,7 +5137,7 @@ Próxima limpieza recomendada: en 14 días`);
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="p-6 rounded-2xl max-w-md w-full">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-bold text-slate-800 text-lg">Cambiar Tipo de Agua</h3>
+              <h3 className="font-bold text-slate-800 text-lg">Configuración de Agua</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -5197,26 +5147,25 @@ Próxima limpieza recomendada: en 14 días`);
               </Button>
             </div>
 
-            <div className="space-y-4">
-              {Object.entries(WATER_TYPES).map(([key, water]) => (
-                <div
-                  key={key}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${config.waterType === key
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  onClick={() => {
-                    setConfig({ ...config, waterType: key });
-                    setShowWaterSelector(false);
-                  }}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    {water.icon}
-                    <span className="font-bold text-slate-800">{water.name}</span>
-                  </div>
-                  <p className="text-sm text-slate-600">{water.description}</p>
-                </div>
-              ))}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+              <div className="flex items-center gap-3 mb-2">
+                {WATER_TYPES["osmosis"].icon}
+                <span className="font-bold text-slate-800">AGUA DESTILADA</span>
+              </div>
+              <p className="text-sm text-slate-600 mb-3">{WATER_TYPES["osmosis"].description}</p>
+              <p className="text-xs text-blue-600 font-bold">
+                ✅ Sistema configurado para uso exclusivo de agua destilada
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Nutrientes: AQUA VEGA A y B para aguas blandas
+              </p>
+            </div>
+
+            <div className="mt-4 p-3 bg-amber-50 rounded-lg">
+              <p className="text-sm text-amber-700">
+                <strong>Nota:</strong> Este sistema está configurado específicamente para agua destilada y AQUA VEGA A/B para aguas blandas.
+                No se pueden seleccionar otros tipos de agua.
+              </p>
             </div>
           </Card>
         </div>
@@ -5249,7 +5198,9 @@ Próxima limpieza recomendada: en 14 días`);
               <span>•</span>
               <span>EC: {config.targetEC} µS/cm</span>
               <span>•</span>
-              <span>Método: {selectedECMethod || "automático"}</span>
+              <span>Agua: Destilada</span>
+              <span>•</span>
+              <span>Nutrientes: AQUA VEGA A/B</span>
             </div>
           </div>
         </div>
