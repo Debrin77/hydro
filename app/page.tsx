@@ -128,7 +128,7 @@ const WATER_TYPES = {
     ecBase: 0.0,
     phBase: 7.0,
     description: "Agua destilada pura, EC casi 0. Perfecta para AQUA VEGA A y B para aguas blandas.",
-    recommendation: "Protocolo específico: 63ml de A y B por 18L, ajustar a 1.4 mS/cm.",
+    recommendation: "Protocolo específico: 45ml de A y B por 18L, ajustar a 1.4 mS/cm.",
     isOsmosis: true
   }
 };
@@ -188,7 +188,7 @@ const VARIETIES = {
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO ACTUALIZADAS
+// FUNCIONES DE CÁLCULO ACTUALIZADAS - CORREGIDAS
 // ============================================================================
 
 /**
@@ -353,11 +353,11 @@ const getWaterCharacteristics = (waterType) => {
 };
 
 /**
- * Calcula dosis AQUA VEGA para 18 litros (Protocolo revisado)
+ * Calcula dosis AQUA VEGA para 18 litros (Protocolo CORREGIDO - 45ml A+B para 18L)
  */
 const calculateAquaVegaDosage = (plants, totalVolume, targetEC) => {
-  // Protocolo base para 18 litros: 63ml de A y B para 1.4 mS/cm
-  const baseDosagePer18L = 63;
+  // PROTOCOLO CORREGIDO para 18 litros: 45ml de A y B para 1.4 mS/cm (2.5ml/L)
+  const baseDosagePer18L = 45; // CORREGIDO: 45ml, no 63ml
   const dosage = (baseDosagePer18L * totalVolume) / 18;
   
   // Ajuste según EC objetivo
@@ -371,10 +371,10 @@ const calculateAquaVegaDosage = (plants, totalVolume, targetEC) => {
       a: Math.round((adjustedDosage * 10) / totalVolume), 
       b: Math.round((adjustedDosage * 10) / totalVolume) 
     }, 
-    note: "Protocolo para 18L: 63ml A+B → 1.4 mS/cm",
+    note: "Protocolo para 18L: 45ml A+B → 1.4 mS/cm (2.5ml/L)",
     baseProtocol: {
-      for18L: { a: 63, b: 63 },
-      perLiter: 3.5
+      for18L: { a: 45, b: 45 }, // CORREGIDO
+      perLiter: 2.5 // CORREGIDO: 2.5ml/L, no 3.5ml/L
     }
   };
 };
@@ -656,7 +656,7 @@ const StagedECCalculator = ({ plants, onECCalculated, selectedMethod, onMethodCh
             <Badge className="bg-blue-100 text-blue-800">
               Protocolo 18L
             </Badge>
-            <p className="text-xs text-slate-500 mt-1">63ml AQUA VEGA A+B</p>
+            <p className="text-xs text-slate-500 mt-1">45ml AQUA VEGA A+B</p>
           </div>
         </div>
 
@@ -748,7 +748,7 @@ const StagedECCalculator = ({ plants, onECCalculated, selectedMethod, onMethodCh
 
 const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
   const protocolo18L = {
-    title: "PROTOCOLO REVISADO PARA 18 LITROS",
+    title: "PROTOCOLO CORREGIDO PARA 18 LITROS",
     steps: [
       {
         phase: "FASE 1: PREPARACIÓN",
@@ -768,14 +768,14 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
           {
             step: 3,
             action: "Añadir AQUA VEGA A",
-            details: `Agregar ${aquaVegaDosage.baseProtocol.for18L.a}ml de AQUA VEGA A`,
+            details: `Agregar 45ml de AQUA VEGA A`,
             note: "Remover manualmente 1 minuto",
             icon: "⚗️"
           },
           {
             step: 4,
             action: "Añadir AQUA VEGA B",
-            details: `Agregar ${aquaVegaDosage.baseProtocol.for18L.b}ml de AQUA VEGA B`,
+            details: `Agregar 45ml de AQUA VEGA B`,
             note: "Remover manualmente 2 minutos",
             icon: "⚗️"
           },
@@ -799,7 +799,7 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
           {
             step: 2,
             action: "Objetivo EC: 1.4 mS/cm",
-            details: "Si <1.3: añadir +9ml de A y B. Si >1.6: añadir 100-200ml agua destilada",
+            details: "Si <1.3: añadir +3.2ml de A y B. Si >1.6: añadir 100-200ml agua destilada",
             icon: "🎯"
           },
           {
@@ -851,7 +851,7 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
           <FlaskConical className="text-white" size={24} />
         </div>
         <div>
-          <h2 className="font-bold text-slate-800 text-xl">PROTOCOLO REVISADO 18L - AQUA VEGA A/B</h2>
+          <h2 className="font-bold text-slate-800 text-xl">PROTOCOLO CORREGIDO 18L - AQUA VEGA A/B</h2>
           <p className="text-slate-600">Protocolo específico para cultivo de lechuga hidropónica</p>
         </div>
       </div>
@@ -874,7 +874,7 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
                 <td className="px-4 py-3 font-bold text-blue-600">1.4 mS/cm</td>
                 <td className="px-4 py-3">1.3 - 1.6 mS/cm</td>
                 <td className="px-4 py-3 text-sm">
-                  <div>&lt;1.3: +9ml A+B (1:1)</div>
+                  <div>&lt;1.3: +3.2ml A+B (por cada 0.1 mS/cm)</div>
                   <div>&gt;1.6: +100-200ml agua destilada</div>
                 </td>
               </tr>
@@ -924,7 +924,7 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
       ))}
 
       <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-        <h3 className="font-bold text-emerald-700 mb-3">✅ Ventajas del Protocolo 18L</h3>
+        <h3 className="font-bold text-emerald-700 mb-3">✅ Ventajas del Protocolo 18L Corregido</h3>
         <ul className="space-y-2 text-sm text-slate-700">
           <li className="flex items-start gap-2">
             <Check className="text-emerald-500 mt-0.5" size={16} />
@@ -936,7 +936,7 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
           </li>
           <li className="flex items-start gap-2">
             <Check className="text-emerald-500 mt-0.5" size={16} />
-            <span><strong>Protocolo exacto:</strong> 63ml de A y B por 18L = 3.5ml por litro</span>
+            <span><strong>Protocolo exacto:</strong> 45ml de A y B por 18L = 2.5ml por litro (CORREGIDO)</span>
           </li>
           <li className="flex items-start gap-2">
             <Check className="text-emerald-500 mt-0.5" size={16} />
@@ -1641,8 +1641,8 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     // Alerta para agua destilada
     res.push({
       title: "PROTOCOLO 18L ACTIVADO",
-      value: "63ml A+B",
-      description: "Protocolo específico para 18L: 63ml AQUA VEGA A y B",
+      value: "45ml A+B",
+      description: "Protocolo específico para 18L: 45ml AQUA VEGA A y B",
       color: "bg-gradient-to-r from-blue-700 to-cyan-800",
       icon: <FlaskConical className="text-white" size={28} />,
       priority: 3
@@ -1737,7 +1737,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     const ecAlert = checkECAlert(ec);
     if (ecAlert) {
       if (ecAlert.type === 'low') {
-        const mlPerPoint = 2.5; // 2.5ml por cada 0.1 mS/cm
+        const mlPerPoint = 3.2; // 3.2ml por cada 0.1 mS/cm (CORREGIDO)
         const pointsLow = (FIXED_EC_RANGE.target - ec) / 100;
         const mlToAdd = pointsLow * mlPerPoint * 2; // x2 para A y B
         
@@ -1750,7 +1750,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
             : "bg-gradient-to-r from-blue-600 to-cyan-600",
           icon: <FlaskConical className="text-white" size={28} />,
           priority: ecAlert.severity,
-          details: `Objetivo: ${FIXED_EC_RANGE.target} µS/cm`
+          details: `Objetivo: ${FIXED_EC_RANGE.target} µS/cm (3.2ml por cada 0.1 mS/cm)`
         });
       } else if (ecAlert.type === 'high') {
         const waterToAdd = ((ec - FIXED_EC_RANGE.target) / 100) * 100; // 100ml por cada 0.1 mS/cm
@@ -1840,15 +1840,15 @@ Próximo cambio recomendado: en 14 días`);
       date: now,
       type: "recharge",
       description: "Recarga de nutrientes AQUA VEGA A y B",
-      notes: `Recarga estándar: +18ml A y B para 18L`,
-      dosage: { a: 18, b: 18 }
+      notes: `Recarga estándar: +13ml A y B para 18L`,
+      dosage: { a: 13, b: 13 }
     };
 
     setHistory([rechargeRecord, ...history.slice(0, 49)]);
 
     alert(`✅ Recarga de nutrientes registrada:
-• +18ml AQUA VEGA A
-• +18ml AQUA VEGA B
+• +13ml AQUA VEGA A
+• +13ml AQUA VEGA B
 • Para 18L de solución
 
 Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
@@ -1891,8 +1891,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             <Activity className="text-white" size={24} />
           </div>
           <div>
-            <h2 className="font-bold text-slate-800 text-xl">Parámetros Actuales - Protocolo 18L</h2>
-            <p className="text-slate-600">Valores según protocolo revisado para cultivo de lechuga</p>
+            <h2 className="font-bold text-slate-800 text-xl">Parámetros Actuales - Protocolo 18L Corregido</h2>
+            <p className="text-slate-600">Valores según protocolo corregido para cultivo de lechuga</p>
           </div>
         </div>
 
@@ -2163,7 +2163,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Protocolo: 63ml A+B por 18L
+                Protocolo: 45ml A+B por 18L (CORREGIDO)
               </p>
             </div>
 
@@ -2479,7 +2479,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         return (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-slate-800">¡IMPORTANTE! Protocolo Revisado 18L</h2>
+              <h2 className="text-3xl font-bold text-slate-800">¡IMPORTANTE! Protocolo Corregido 18L</h2>
               <p className="text-slate-600">Sigue estos pasos para preparar correctamente tu sistema con agua destilada</p>
             </div>
 
@@ -2489,8 +2489,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   <AlertOctagon className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800">⚠️ PROTOCOLO REVISADO - 18 LITROS</h3>
-                  <p className="text-slate-600">Protocolo exacto según tus instrucciones con valores optimizados</p>
+                  <h3 className="font-bold text-slate-800">⚠️ PROTOCOLO CORREGIDO - 18 LITROS</h3>
+                  <p className="text-slate-600">Protocolo exacto según dosis correcta: 45ml A+B para 18L</p>
                 </div>
               </div>
 
@@ -2511,8 +2511,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                         <h5 className="font-bold text-slate-800">FASE 1: PREPARACIÓN</h5>
                         <p className="text-sm text-slate-600">Limpia el depósito con agua caliente. Elimina residuos.</p>
                         <p className="text-sm text-emerald-600 font-bold mt-1">• Llena con 18L de agua destilada</p>
-                        <p className="text-sm text-emerald-600 font-bold">• Añade 63ml de CANNA Aqua Vega A. Remueve 1 minuto</p>
-                        <p className="text-sm text-emerald-600 font-bold">• Añade 63ml de CANNA Aqua Vega B. Remueve 2 minutos</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Añade 45ml de AQUA VEGA A. Remueve 1 minuto</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Añade 45ml de AQUA VEGA B. Remueve 2 minutos</p>
                         <p className="text-sm text-emerald-600 font-bold">• Enciende difusor y calentador (20°C) durante 15 minutos</p>
                       </div>
                     </div>
@@ -2526,7 +2526,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                         <p className="text-sm text-slate-600">Objetivo: EC 1.4 mS/cm (1400 µS/cm)</p>
                         <p className="text-xs text-amber-600 font-bold mt-1">⚠️ Apaga aireador, espera 30 segundos, mide EC con ATC</p>
                         <p className="text-sm text-emerald-600 font-bold">• Si muestra 1.4 → Objetivo logrado</p>
-                        <p className="text-sm text-emerald-600 font-bold">• Si muestra MENOS (ej: 1.2 o 1.3) → Añade +9ml de A y +9ml de B</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Si muestra MENOS (ej: 1.2 o 1.3) → Añade +3.2ml de A y +3.2ml de B por cada 0.1 mS/cm de diferencia</p>
                         <p className="text-sm text-emerald-600 font-bold">• Si muestra MÁS (ej: 1.5 o 1.6) → Añade 100-200ml de agua destilada</p>
                         <p className="text-xs text-amber-600 font-bold mt-1">⚠️ Mezcla, airea 5 min, apaga aireador y mide de nuevo</p>
                       </div>
@@ -2585,15 +2585,19 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                       <X className="text-red-500 mt-0.5" size={16} />
                       <span><strong>Nunca</strong> añadir CalMag - AQUA VEGA ya contiene Ca y Mg en proporción óptima</span>
                     </li>
+                    <li className="flex items-start gap-2">
+                      <X className="text-red-500 mt-0.5" size={16} />
+                      <span><strong>Nunca</strong> usar 63ml A+B (error anterior) - La dosis correcta es 45ml A+B</span>
+                    </li>
                   </ul>
                 </div>
 
                 <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
-                  <h4 className="font-bold text-green-700 text-lg mb-3">✅ CONSEJOS DE ÉXITO CON PROTOCOLO 18L</h4>
+                  <h4 className="font-bold text-green-700 text-lg mb-3">✅ CONSEJOS DE ÉXITO CON PROTOCOLO CORREGIDO</h4>
                   <ul className="space-y-2 text-slate-700">
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span><strong>EC constante:</strong> 1350-1500 µS/cm para todas las variedades y etapas</span>
+                      <span><strong>Dosis correcta:</strong> 45ml de A y B para 18L (2.5ml/L)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
@@ -2610,6 +2614,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
                       <span><strong>Rellenar solo agua destilada:</strong> Mantiene estabilidad sin alterar nutrientes</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <span><strong>Ajuste EC:</strong> +3.2ml A+B por cada 0.1 mS/cm de diferencia</span>
                     </li>
                   </ul>
                 </div>
@@ -2667,7 +2675,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                         <div className="text-4xl font-bold text-blue-600">18L</div>
                         <p className="text-sm text-slate-600">Protocolo específico</p>
                         <p className="text-xs text-blue-600 mt-2">
-                          63ml AQUA VEGA A + 63ml AQUA VEGA B
+                          45ml AQUA VEGA A + 45ml AQUA VEGA B (CORREGIDO)
                         </p>
                       </div>
                     </div>
@@ -2731,8 +2739,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <strong>Nota importante:</strong> Este sistema está configurado específicamente para:
                     <br />• 18 litros de agua destilada
                     <br />• AQUA VEGA A y B para aguas blandas
-                    <br />• Protocolo: 63ml de A y B → EC objetivo 1.4 mS/cm
+                    <br />• Protocolo: 45ml de A y B → EC objetivo 1.4 mS/cm (CORREGIDO)
                     <br />• <strong>NO se requiere CalMag</strong> - Los nutrientes ya contienen Ca y Mg
+                    <br />• Ajuste EC: +3.2ml A+B por cada 0.1 mS/cm de diferencia
                   </p>
                 </div>
               </Card>
@@ -2764,7 +2773,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-slate-800">Paso 3: Valores Objetivo - Protocolo 18L</h2>
-              <p className="text-slate-600">Configura los valores objetivo según el protocolo revisado</p>
+              <p className="text-slate-600">Configura los valores objetivo según el protocolo corregido</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2868,10 +2877,11 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                       <p className="text-sm text-blue-700">
-                        <strong>Protocolo 18L:</strong><br />
+                        <strong>Protocolo 18L Corregido:</strong><br />
                         • Objetivo: 1400 µS/cm (1.4 mS/cm)<br />
-                        • Ajuste: +9ml A+B si {'<'} 1.3, agua destilada si {'>'} 1.6<br />
-                        • 63ml A+B por 18L agua destilada<br />
+                        • Ajuste: +3.2ml A+B por cada 0.1 mS/cm si {'<'} 1.3<br />
+                        • Agua destilada si {'>'} 1.6<br />
+                        • 45ml A+B por 18L agua destilada<br />
                         • <strong>NO CalMag</strong> - Ya incluido en AQUA VEGA
                       </p>
                     </div>
@@ -3126,7 +3136,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Panel de Control - PROTOCOLO 18L</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Panel de Control - PROTOCOLO 18L CORREGIDO</h1>
           <p className="text-slate-600">Sistema hidropónico con EC fija 1350-1500 µS/cm</p>
         </div>
 
@@ -3237,7 +3247,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Nutrición AQUA VEGA</h3>
-              <p className="text-sm text-slate-600">Protocolo 18L - Sin CalMag</p>
+              <p className="text-sm text-slate-600">Protocolo 18L Corregido - Sin CalMag</p>
             </div>
           </div>
 
@@ -3263,7 +3273,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
               <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
                 <p className="text-xs text-emerald-700 text-center">
-                  ✅ Sin CalMag - Ya incluido en AQUA VEGA A/B
+                  ✅ Protocolo corregido: 45ml A+B para 18L (2.5ml/L)
                 </p>
               </div>
             </div>
@@ -3674,7 +3684,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
   const CalculatorTab = () => (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Calculadora PROTOCOLO 18L</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Calculadora PROTOCOLO 18L CORREGIDO</h2>
         <p className="text-slate-600">Cálculos específicos para tu sistema con EC fija</p>
       </div>
 
@@ -3692,7 +3702,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           </div>
           <div>
             <h3 className="font-bold text-slate-800">Cálculo de Nutrientes AQUA VEGA A/B</h3>
-            <p className="text-slate-600">Dosificación para protocolo 18L - Sin CalMag</p>
+            <p className="text-slate-600">Dosificación para protocolo 18L Corregido - Sin CalMag</p>
           </div>
         </div>
 
@@ -3723,7 +3733,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
 
             <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-              <h4 className="font-bold text-blue-700 mb-3">Protocolo 18L - Sin CalMag</h4>
+              <h4 className="font-bold text-blue-700 mb-3">Protocolo 18L Corregido - Sin CalMag</h4>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-sm font-bold">
@@ -3753,12 +3763,22 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
 
             <div className="p-4 bg-white rounded-xl border-2 border-slate-200">
-              <h4 className="font-bold text-slate-800 mb-3">Notas Importantes - Protocolo 18L</h4>
+              <h4 className="font-bold text-slate-800 mb-3">Notas Importantes - Protocolo 18L Corregido</h4>
               <p className="text-slate-600">{aquaVegaDosage.note}</p>
               <div className="mt-3 p-3 bg-emerald-50 rounded-lg">
                 <p className="text-sm text-emerald-700">
+                  ✅ <strong>PROTOCOLO CORREGIDO:</strong> 45ml A+B para 18L = 2.5ml/L (antes 63ml = 3.5ml/L era incorrecto)
+                </p>
+              </div>
+              <div className="mt-2 p-3 bg-emerald-50 rounded-lg">
+                <p className="text-sm text-emerald-700">
                   ✅ <strong>NO se requiere CalMag</strong> - AQUA VEGA A/B para aguas blandas ya contiene 
                   calcio y magnesio en proporción óptima para agua destilada.
+                </p>
+              </div>
+              <div className="mt-2 p-3 bg-amber-50 rounded-lg">
+                <p className="text-sm text-amber-700">
+                  ⚠️ <strong>AJUSTE EC:</strong> +3.2ml de A y B por cada 0.1 mS/cm de diferencia
                 </p>
               </div>
             </div>
@@ -4064,7 +4084,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
     <div className="space-y-8 animate-fade-in">
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Calendario de Mantenimiento - Protocolo 18L</h2>
-        <p className="text-slate-600">Planificación de tareas según protocolo revisado</p>
+        <p className="text-slate-600">Planificación de tareas según protocolo corregido</p>
       </div>
 
       <Card className="p-6 rounded-2xl">
@@ -4403,7 +4423,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
   const ProTipsTab = () => (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Consejos Profesionales - PROTOCOLO 18L</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Consejos Profesionales - PROTOCOLO 18L CORREGIDO</h2>
         <p className="text-slate-600">Secretos y mejores prácticas para cultivo con EC fija 1350-1500 µS/cm</p>
       </div>
 
@@ -4413,15 +4433,19 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             <Brain className="text-white" size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800">Consejos Específicos para Protocolo 18L</h3>
+            <h3 className="font-bold text-slate-800">Consejos Específicos para Protocolo 18L Corregido</h3>
             <p className="text-slate-600">Técnicas probadas para maximizar tu producción con EC fija</p>
           </div>
         </div>
 
         <div className="space-y-6">
           <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
-            <h4 className="font-bold text-cyan-700 mb-3">💧 Manejo del Protocolo 18L</h4>
+            <h4 className="font-bold text-cyan-700 mb-3">💧 Manejo del Protocolo 18L Corregido</h4>
             <ul className="space-y-3">
+              <li className="flex items-start gap-2">
+                <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Dosis CORREGIDA:</strong> 45ml A+B para 18L (2.5ml/L). El anterior cálculo de 63ml era incorrecto.</span>
+              </li>
               <li className="flex items-start gap-2">
                 <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>EC constante:</strong> Simplifica enormemente el manejo. Mismo rango (1350-1500 µS/cm) para todas las variedades y etapas.</span>
@@ -4432,7 +4456,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Protocolo exacto:</strong> 63ml de A y B por 18L = 3.5ml por litro. Medir EC siempre con aireador apagado 30 segundos.</span>
+                <span><strong>Ajuste EC corregido:</strong> +3.2ml de A y B por cada 0.1 mS/cm de diferencia (antes +9ml era incorrecto).</span>
               </li>
             </ul>
           </div>
@@ -4452,15 +4476,19 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Mejor calidad:</strong> EC constante produce lechugas más uniformes y de mejor textura.</span>
               </li>
+              <li className="flex items-start gap-2">
+                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Ahorro de nutrientes:</strong> Con la dosis corregida (45ml vs 63ml) ahorrarás un 29% en nutrientes.</span>
+              </li>
             </ul>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-            <h4 className="font-bold text-amber-700 mb-3">⚡ Solución de Problemas - Protocolo 18L</h4>
+            <h4 className="font-bold text-amber-700 mb-3">⚡ Solución de Problemas - Protocolo 18L Corregido</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>EC baja (&lt;1.3 mS/cm):</strong> Añadir +9ml de AQUA VEGA A y B. Mezclar, airear 5min, medir.</span>
+                <span><strong>EC baja (&lt;1.3 mS/cm):</strong> Añadir +3.2ml de AQUA VEGA A y B por cada 0.1 mS/cm de diferencia. Mezclar, airear 5min, medir.</span>
               </li>
               <li className="flex items-start gap-2">
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
@@ -4469,6 +4497,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <li className="flex items-start gap-2">
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>pH inestable:</strong> Normal con agua destilada. Usar método de titulación (0.5ml por paso).</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Plantas amarillas:</strong> Si usaste la dosis anterior (63ml), probablemente EC demasiado alta. Diluir con agua destilada.</span>
               </li>
             </ul>
           </div>
@@ -4487,6 +4519,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <li className="flex items-start gap-2">
                 <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Ajuste por temperatura:</strong> En verano (+1-2s), en invierno (-1-2s). Monitorizar humedad.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Control visual:</strong> Observa las raíces. Blancas = sanas, marrones = exceso de agua.</span>
               </li>
             </ul>
           </div>
@@ -4510,6 +4546,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Calibración mensual:</strong> Calibrar medidores con soluciones estándar para máxima precisión.</span>
               </li>
+              <li className="flex items-start gap-2">
+                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Revisión semanal:</strong> Limpiar filtros, verificar bombas y conexiones.</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -4530,8 +4570,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <Sprout className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="font-bold text-slate-800">HydroCaru - PROTOCOLO 18L</h1>
-                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 63ml AQUA VEGA A+B</p>
+                <h1 className="font-bold text-slate-800">HydroCaru - PROTOCOLO 18L CORREGIDO</h1>
+                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 45ml AQUA VEGA A+B (CORREGIDO)</p>
               </div>
             </div>
 
@@ -4756,7 +4796,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 ✅ Sistema configurado para uso exclusivo de agua destilada
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                Protocolo 18L: 63ml AQUA VEGA A+B
+                Protocolo 18L: 45ml AQUA VEGA A+B (CORREGIDO)
               </p>
             </div>
 
@@ -4766,6 +4806,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <br />• 18 litros de agua destilada
                 <br />• AQUA VEGA A y B para aguas blandas
                 <br />• EC fija: 1350-1500 µS/cm
+                <br />• <strong>Protocolo corregido:</strong> 45ml A+B (antes 63ml era incorrecto)
                 <br />• <strong>NO se requiere CalMag</strong>
               </p>
             </div>
@@ -4802,7 +4843,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <span>•</span>
               <span>Agua: Destilada 18L</span>
               <span>•</span>
-              <span>Nutrientes: 63ml A+B</span>
+              <span>Nutrientes: 45ml A+B (CORREGIDO)</span>
               <span>•</span>
               <span>Sin CalMag</span>
             </div>
