@@ -3133,29 +3133,45 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
   const DashboardTab = () => (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      {/* Header con imagen */}
+      <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+        <div className="flex-shrink-0">
+          <div className="w-32 h-32 rounded-full overflow-hidden shadow-2xl">
+            <Image 
+              src="/mi-imagen.jpg"
+              alt="HydroCaru Logo"
+              width={400}
+              height={400}
+              className="w-full h-full object-cover"
+              priority
+            />
+          </div>
+        </div>
+        
+        <div className="flex-grow">
           <h1 className="text-3xl font-bold text-slate-800">Panel de Control - PROTOCOLO 18L CORREGIDO</h1>
           <p className="text-slate-600">Sistema hidropónico con EC fija 1350-1500 µS/cm</p>
-        </div>
+          
+          <div className="flex items-center gap-3 mt-4">
+            <Badge className={
+              season === "summer" ? "bg-amber-100 text-amber-800" :
+                season === "winter" ? "bg-blue-100 text-blue-800" :
+                  "bg-green-100 text-green-800"
+            }>
+              {season === "summer" ? "Verano" :
+                season === "winter" ? "Invierno" :
+                  "Primavera/Otoño"}
+            </Badge>
 
-        <div className="flex items-center gap-3">
-          <Badge className={
-            season === "summer" ? "bg-amber-100 text-amber-800" :
-              season === "winter" ? "bg-blue-100 text-blue-800" :
-                "bg-green-100 text-green-800"
-          }>
-            {season === "summer" ? "Verano" :
-              season === "winter" ? "Invierno" :
-                "Primavera/Otoño"}
-          </Badge>
-
-          <Badge className="bg-blue-100 text-blue-800">
-            {plants.length}/15 plantas
-          </Badge>
+            <Badge className="bg-blue-100 text-blue-800">
+              {plants.length}/15 plantas
+            </Badge>
+          </div>
         </div>
       </div>
+
+      {/* Panel de medidores primero (parámetros actuales) */}
+      <DashboardMetricsPanel config={config} measurements={measurements} />
 
       {/* Panel de cálculo EC fijo */}
       <StagedECCalculator
@@ -3164,9 +3180,6 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         selectedMethod={selectedECMethod}
         onMethodChange={handleECMethodChange}
       />
-
-      {/* Panel de medidores */}
-      <DashboardMetricsPanel config={config} measurements={measurements} />
 
       {/* Alertas */}
       {alerts.length > 0 && (
@@ -3870,21 +3883,27 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
   );
 
   const MeasurementsTab = () => {
-    // Función para validar entrada decimal
-    const validateDecimalInput = (value, min, max, allowNegative = false) => {
-      // Permitir vacío temporalmente
-      if (value === "" || value === "-") return value;
+    // Función para manejar entrada con coma decimal
+    const handleDecimalInput = (value, fieldName) => {
+      // Reemplazar coma por punto para cálculos internos
+      const normalizedValue = value.replace(',', '.');
       
-      // Validar formato decimal
-      const decimalRegex = allowNegative ? /^-?\d*\.?\d*$/ : /^\d*\.?\d*$/;
-      if (!decimalRegex.test(value)) return false;
+      // Validar que sea un número válido
+      if (normalizedValue === '' || normalizedValue === '-') {
+        setMeasurements({...measurements, [fieldName]: value});
+        return;
+      }
       
-      // Validar rango numérico
-      const numValue = parseFloat(value);
-      if (isNaN(numValue)) return false;
-      if (numValue < min || numValue > max) return false;
-      
-      return value;
+      const numValue = parseFloat(normalizedValue);
+      if (!isNaN(numValue)) {
+        setMeasurements({...measurements, [fieldName]: value});
+      }
+    };
+
+    // Función para obtener valor para el slider
+    const getSliderValue = (value) => {
+      const numValue = parseFloat(value.replace(',', '.'));
+      return isNaN(numValue) ? 0 : numValue;
     };
 
     return (
@@ -3917,7 +3936,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="4.0"
                     max="9.0"
                     step="0.1"
-                    value={parseFloat(measurements.manualPH) || 5.8}
+                    value={getSliderValue(measurements.manualPH)}
                     onChange={(e) => setMeasurements({...measurements, manualPH: e.target.value})}
                     className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
                   />
@@ -3925,22 +3944,17 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     type="text"
                     inputMode="decimal"
                     value={measurements.manualPH}
-                    onChange={(e) => {
-                      const validated = validateDecimalInput(e.target.value, 4.0, 9.0);
-                      if (validated !== false) {
-                        setMeasurements({...measurements, manualPH: validated});
-                      }
-                    }}
+                    onChange={(e) => handleDecimalInput(e.target.value, 'manualPH')}
                     onBlur={(e) => {
-                      if (!e.target.value) {
-                        setMeasurements({...measurements, manualPH: "5.8"});
+                      if (!e.target.value || e.target.value === ',') {
+                        setMeasurements({...measurements, manualPH: "5,8"});
                       }
                     }}
                     className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600"
-                    placeholder="5.8"
+                    placeholder="5,8"
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Objetivo: 5.8 | Rango: 5.5-6.5</p>
+                <p className="text-xs text-slate-500 mt-1">Objetivo: 5,8 | Rango: 5,5-6,5</p>
               </div>
 
               <div>
@@ -3953,7 +3967,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="0"
                     max="3000"
                     step="50"
-                    value={parseFloat(measurements.manualEC) || 1400}
+                    value={getSliderValue(measurements.manualEC)}
                     onChange={(e) => setMeasurements({...measurements, manualEC: e.target.value})}
                     className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
                   />
@@ -3961,14 +3975,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     type="text"
                     inputMode="decimal"
                     value={measurements.manualEC}
-                    onChange={(e) => {
-                      const validated = validateDecimalInput(e.target.value, 0, 3000);
-                      if (validated !== false) {
-                        setMeasurements({...measurements, manualEC: validated});
-                      }
-                    }}
+                    onChange={(e) => handleDecimalInput(e.target.value, 'manualEC')}
                     onBlur={(e) => {
-                      if (!e.target.value) {
+                      if (!e.target.value || e.target.value === ',') {
                         setMeasurements({...measurements, manualEC: "1400"});
                       }
                     }}
@@ -3989,7 +3998,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="10"
                     max="35"
                     step="0.5"
-                    value={parseFloat(measurements.manualTemp) || 20}
+                    value={getSliderValue(measurements.manualTemp)}
                     onChange={(e) => setMeasurements({...measurements, manualTemp: e.target.value})}
                     className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
                   />
@@ -3997,14 +4006,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     type="text"
                     inputMode="decimal"
                     value={measurements.manualTemp}
-                    onChange={(e) => {
-                      const validated = validateDecimalInput(e.target.value, 10, 35);
-                      if (validated !== false) {
-                        setMeasurements({...measurements, manualTemp: validated});
-                      }
-                    }}
+                    onChange={(e) => handleDecimalInput(e.target.value, 'manualTemp')}
                     onBlur={(e) => {
-                      if (!e.target.value) {
+                      if (!e.target.value || e.target.value === ',') {
                         setMeasurements({...measurements, manualTemp: "20"});
                       }
                     }}
@@ -4025,7 +4029,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="10"
                     max="30"
                     step="0.5"
-                    value={parseFloat(measurements.manualWaterTemp) || 20}
+                    value={getSliderValue(measurements.manualWaterTemp)}
                     onChange={(e) => setMeasurements({...measurements, manualWaterTemp: e.target.value})}
                     className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
                   />
@@ -4033,14 +4037,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     type="text"
                     inputMode="decimal"
                     value={measurements.manualWaterTemp}
-                    onChange={(e) => {
-                      const validated = validateDecimalInput(e.target.value, 10, 30);
-                      if (validated !== false) {
-                        setMeasurements({...measurements, manualWaterTemp: validated});
-                      }
-                    }}
+                    onChange={(e) => handleDecimalInput(e.target.value, 'manualWaterTemp')}
                     onBlur={(e) => {
-                      if (!e.target.value) {
+                      if (!e.target.value || e.target.value === ',') {
                         setMeasurements({...measurements, manualWaterTemp: "20"});
                       }
                     }}
@@ -4061,7 +4060,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="0"
                     max={config.totalVol}
                     step="1"
-                    value={parseFloat(measurements.manualVolume) || config.currentVol}
+                    value={getSliderValue(measurements.manualVolume)}
                     onChange={(e) => setMeasurements({...measurements, manualVolume: e.target.value})}
                     className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
                   />
@@ -4069,14 +4068,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     type="text"
                     inputMode="decimal"
                     value={measurements.manualVolume}
-                    onChange={(e) => {
-                      const validated = validateDecimalInput(e.target.value, 0, parseFloat(config.totalVol));
-                      if (validated !== false) {
-                        setMeasurements({...measurements, manualVolume: validated});
-                      }
-                    }}
+                    onChange={(e) => handleDecimalInput(e.target.value, 'manualVolume')}
                     onBlur={(e) => {
-                      if (!e.target.value) {
+                      if (!e.target.value || e.target.value === ',') {
                         setMeasurements({...measurements, manualVolume: config.currentVol});
                       }
                     }}
@@ -4097,7 +4091,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="20"
                     max="90"
                     step="1"
-                    value={parseFloat(measurements.manualHumidity) || 65}
+                    value={getSliderValue(measurements.manualHumidity)}
                     onChange={(e) => setMeasurements({...measurements, manualHumidity: e.target.value})}
                     className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
                   />
@@ -4105,14 +4099,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     type="text"
                     inputMode="decimal"
                     value={measurements.manualHumidity}
-                    onChange={(e) => {
-                      const validated = validateDecimalInput(e.target.value, 20, 90);
-                      if (validated !== false) {
-                        setMeasurements({...measurements, manualHumidity: validated});
-                      }
-                    }}
+                    onChange={(e) => handleDecimalInput(e.target.value, 'manualHumidity')}
                     onBlur={(e) => {
-                      if (!e.target.value) {
+                      if (!e.target.value || e.target.value === ',') {
                         setMeasurements({...measurements, manualHumidity: "65"});
                       }
                     }}
