@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import Image from 'next/image'
 import {
   Sprout, Activity, Layers, Beaker, Calendar,
@@ -1412,6 +1412,14 @@ export default function HydroAppFinal() {
     manualHumidity: "65",
     lastMeasurement: new Date().toISOString()
   });
+
+  // Refs para los inputs de mediciones
+  const phInputRef = useRef(null);
+  const ecInputRef = useRef(null);
+  const tempInputRef = useRef(null);
+  const waterTempInputRef = useRef(null);
+  const volumeInputRef = useRef(null);
+  const humidityInputRef = useRef(null);
 
   // =================== EFECTOS Y PERSISTENCIA ===================
 
@@ -3883,24 +3891,93 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
   );
 
   const MeasurementsTab = () => {
-    // Función para manejar entrada con coma decimal
-    const handleDecimalInput = (value, fieldName) => {
-      // Reemplazar coma por punto para cálculos internos
-      const normalizedValue = value.replace(',', '.');
+    // Estados locales para los inputs
+    const [localValues, setLocalValues] = useState({
+      manualPH: measurements.manualPH,
+      manualEC: measurements.manualEC,
+      manualTemp: measurements.manualTemp,
+      manualWaterTemp: measurements.manualWaterTemp,
+      manualVolume: measurements.manualVolume,
+      manualHumidity: measurements.manualHumidity
+    });
+
+    // Estado para controlar qué input está enfocado
+    const [focusedInput, setFocusedInput] = useState(null);
+
+    // Función para manejar cambios en los inputs sin perder el foco
+    const handleInputChange = (field, value) => {
+      // Permitir solo números, punto y coma
+      const sanitizedValue = value.replace(/[^0-9.,]/g, '');
       
-      // Validar que sea un número válido
-      if (normalizedValue === '' || normalizedValue === '-') {
-        setMeasurements({...measurements, [fieldName]: value});
-        return;
-      }
+      setLocalValues(prev => ({
+        ...prev,
+        [field]: sanitizedValue
+      }));
+    };
+
+    // Función para manejar el blur (cuando el input pierde el foco)
+    const handleInputBlur = (field) => {
+      setFocusedInput(null);
       
-      const numValue = parseFloat(normalizedValue);
-      if (!isNaN(numValue)) {
-        setMeasurements({...measurements, [fieldName]: value});
+      // Validar y formatear el valor
+      let value = localValues[field];
+      
+      // Reemplazar comas por puntos para cálculos
+      const numericValue = parseFloat(value.replace(',', '.'));
+      
+      if (!isNaN(numericValue)) {
+        // Actualizar el estado global
+        setMeasurements(prev => ({
+          ...prev,
+          [field]: value
+        }));
+        
+        // Actualizar config si es necesario
+        if (field === 'manualPH') {
+          setConfig(prev => ({ ...prev, ph: value }));
+        } else if (field === 'manualEC') {
+          setConfig(prev => ({ ...prev, ec: value }));
+        } else if (field === 'manualTemp') {
+          setConfig(prev => ({ ...prev, temp: value }));
+        } else if (field === 'manualVolume') {
+          setConfig(prev => ({ ...prev, currentVol: value }));
+        }
+      } else {
+        // Si no es un número válido, restaurar el valor anterior
+        setLocalValues(prev => ({
+          ...prev,
+          [field]: measurements[field]
+        }));
       }
     };
 
-    // Función para obtener valor para el slider
+    // Función para manejar el slider
+    const handleSliderChange = (field, value) => {
+      const stringValue = value.toString();
+      
+      setLocalValues(prev => ({
+        ...prev,
+        [field]: stringValue
+      }));
+      
+      setMeasurements(prev => ({
+        ...prev,
+        [field]: stringValue
+      }));
+      
+      // Actualizar config si es necesario
+      if (field === 'manualPH') {
+        setConfig(prev => ({ ...prev, ph: stringValue }));
+      } else if (field === 'manualEC') {
+        setConfig(prev => ({ ...prev, ec: stringValue }));
+      } else if (field === 'manualTemp') {
+        setConfig(prev => ({ ...prev, temp: stringValue }));
+      } else if (field === 'manualVolume') {
+        setConfig(prev => ({ ...prev, currentVol: stringValue }));
+      }
+    };
+
+    // Función para obtener valor numérico para el slider
     const getSliderValue = (value) => {
       const numValue = parseFloat(value.replace(',', '.'));
       return isNaN(numValue) ? 0 : numValue;
@@ -3926,6 +4003,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* pH del Agua */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   pH del Agua
@@ -3936,27 +4014,31 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="4.0"
                     max="9.0"
                     step="0.1"
-                    value={getSliderValue(measurements.manualPH)}
-                    onChange={(e) => setMeasurements({...measurements, manualPH: e.target.value})}
+                    value={getSliderValue(localValues.manualPH)}
+                    onChange={(e) => handleSliderChange('manualPH', e.target.value)}
                     className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
                   />
                   <input
+                    ref={phInputRef}
                     type="text"
                     inputMode="decimal"
-                    value={measurements.manualPH}
-                    onChange={(e) => handleDecimalInput(e.target.value, 'manualPH')}
-                    onBlur={(e) => {
-                      if (!e.target.value || e.target.value === ',') {
-                        setMeasurements({...measurements, manualPH: "5,8"});
+                    value={localValues.manualPH}
+                    onChange={(e) => handleInputChange('manualPH', e.target.value)}
+                    onFocus={() => setFocusedInput('manualPH')}
+                    onBlur={() => handleInputBlur('manualPH')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        phInputRef.current?.blur();
                       }
                     }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600"
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="5,8"
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Objetivo: 5,8 | Rango: 5,5-6,5</p>
               </div>
 
+              {/* Conductividad (EC) */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Conductividad (EC) en µS/cm
@@ -3967,27 +4049,31 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="0"
                     max="3000"
                     step="50"
-                    value={getSliderValue(measurements.manualEC)}
-                    onChange={(e) => setMeasurements({...measurements, manualEC: e.target.value})}
+                    value={getSliderValue(localValues.manualEC)}
+                    onChange={(e) => handleSliderChange('manualEC', e.target.value)}
                     className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
                   />
                   <input
+                    ref={ecInputRef}
                     type="text"
                     inputMode="decimal"
-                    value={measurements.manualEC}
-                    onChange={(e) => handleDecimalInput(e.target.value, 'manualEC')}
-                    onBlur={(e) => {
-                      if (!e.target.value || e.target.value === ',') {
-                        setMeasurements({...measurements, manualEC: "1400"});
+                    value={localValues.manualEC}
+                    onChange={(e) => handleInputChange('manualEC', e.target.value)}
+                    onFocus={() => setFocusedInput('manualEC')}
+                    onBlur={() => handleInputBlur('manualEC')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        ecInputRef.current?.blur();
                       }
                     }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="1400"
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Objetivo: 1400 | Rango: 1350-1500</p>
               </div>
 
+              {/* Temperatura Ambiente */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Temperatura Ambiente (°C)
@@ -3998,27 +4084,31 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="10"
                     max="35"
                     step="0.5"
-                    value={getSliderValue(measurements.manualTemp)}
-                    onChange={(e) => setMeasurements({...measurements, manualTemp: e.target.value})}
+                    value={getSliderValue(localValues.manualTemp)}
+                    onChange={(e) => handleSliderChange('manualTemp', e.target.value)}
                     className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
                   />
                   <input
+                    ref={tempInputRef}
                     type="text"
                     inputMode="decimal"
-                    value={measurements.manualTemp}
-                    onChange={(e) => handleDecimalInput(e.target.value, 'manualTemp')}
-                    onBlur={(e) => {
-                      if (!e.target.value || e.target.value === ',') {
-                        setMeasurements({...measurements, manualTemp: "20"});
+                    value={localValues.manualTemp}
+                    onChange={(e) => handleInputChange('manualTemp', e.target.value)}
+                    onFocus={() => setFocusedInput('manualTemp')}
+                    onBlur={() => handleInputBlur('manualTemp')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        tempInputRef.current?.blur();
                       }
                     }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600"
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="20"
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Ideal: 18-25°C</p>
               </div>
 
+              {/* Temperatura del Agua */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Temperatura del Agua (°C)
@@ -4029,27 +4119,31 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="10"
                     max="30"
                     step="0.5"
-                    value={getSliderValue(measurements.manualWaterTemp)}
-                    onChange={(e) => setMeasurements({...measurements, manualWaterTemp: e.target.value})}
+                    value={getSliderValue(localValues.manualWaterTemp)}
+                    onChange={(e) => handleSliderChange('manualWaterTemp', e.target.value)}
                     className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
                   />
                   <input
+                    ref={waterTempInputRef}
                     type="text"
                     inputMode="decimal"
-                    value={measurements.manualWaterTemp}
-                    onChange={(e) => handleDecimalInput(e.target.value, 'manualWaterTemp')}
-                    onBlur={(e) => {
-                      if (!e.target.value || e.target.value === ',') {
-                        setMeasurements({...measurements, manualWaterTemp: "20"});
+                    value={localValues.manualWaterTemp}
+                    onChange={(e) => handleInputChange('manualWaterTemp', e.target.value)}
+                    onFocus={() => setFocusedInput('manualWaterTemp')}
+                    onBlur={() => handleInputBlur('manualWaterTemp')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        waterTempInputRef.current?.blur();
                       }
                     }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-cyan-600"
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                     placeholder="20"
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Objetivo: 20°C | Rango: 18-22°C</p>
               </div>
 
+              {/* Volumen Actual */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Volumen Actual (L)
@@ -4060,27 +4154,31 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="0"
                     max={config.totalVol}
                     step="1"
-                    value={getSliderValue(measurements.manualVolume)}
-                    onChange={(e) => setMeasurements({...measurements, manualVolume: e.target.value})}
+                    value={getSliderValue(localValues.manualVolume)}
+                    onChange={(e) => handleSliderChange('manualVolume', e.target.value)}
                     className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
                   />
                   <input
+                    ref={volumeInputRef}
                     type="text"
                     inputMode="decimal"
-                    value={measurements.manualVolume}
-                    onChange={(e) => handleDecimalInput(e.target.value, 'manualVolume')}
-                    onBlur={(e) => {
-                      if (!e.target.value || e.target.value === ',') {
-                        setMeasurements({...measurements, manualVolume: config.currentVol});
+                    value={localValues.manualVolume}
+                    onChange={(e) => handleInputChange('manualVolume', e.target.value)}
+                    onFocus={() => setFocusedInput('manualVolume')}
+                    onBlur={() => handleInputBlur('manualVolume')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        volumeInputRef.current?.blur();
                       }
                     }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-emerald-600"
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     placeholder={config.currentVol}
                   />
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Total: {config.totalVol}L</p>
               </div>
 
+              {/* Humedad Relativa */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Humedad Relativa (%)
@@ -4091,21 +4189,24 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     min="20"
                     max="90"
                     step="1"
-                    value={getSliderValue(measurements.manualHumidity)}
-                    onChange={(e) => setMeasurements({...measurements, manualHumidity: e.target.value})}
+                    value={getSliderValue(localValues.manualHumidity)}
+                    onChange={(e) => handleSliderChange('manualHumidity', e.target.value)}
                     className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
                   />
                   <input
+                    ref={humidityInputRef}
                     type="text"
                     inputMode="decimal"
-                    value={measurements.manualHumidity}
-                    onChange={(e) => handleDecimalInput(e.target.value, 'manualHumidity')}
-                    onBlur={(e) => {
-                      if (!e.target.value || e.target.value === ',') {
-                        setMeasurements({...measurements, manualHumidity: "65"});
+                    value={localValues.manualHumidity}
+                    onChange={(e) => handleInputChange('manualHumidity', e.target.value)}
+                    onFocus={() => setFocusedInput('manualHumidity')}
+                    onBlur={() => handleInputBlur('manualHumidity')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        humidityInputRef.current?.blur();
                       }
                     }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="65"
                   />
                 </div>
