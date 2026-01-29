@@ -1347,7 +1347,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL - REESCRITO COMPLETAMENTE
 // ============================================================================
 
 export default function HydroAppFinal() {
@@ -1382,7 +1382,7 @@ export default function HydroAppFinal() {
     calculationMethod: "escalonado"
   });
 
-  // Configuración de mediciones manuales
+  // =================== ESTADO MEJORADO PARA MEDICIONES ===================
   const [measurements, setMeasurements] = useState({
     manualPH: "5.8",
     manualEC: "1400",
@@ -1393,13 +1393,15 @@ export default function HydroAppFinal() {
     lastMeasurement: new Date().toISOString()
   });
 
-  // Refs para los inputs de mediciones
-  const phInputRef = useRef(null);
-  const ecInputRef = useRef(null);
-  const tempInputRef = useRef(null);
-  const waterTempInputRef = useRef(null);
-  const volumeInputRef = useRef(null);
-  const humidityInputRef = useRef(null);
+  // Estado para los inputs temporales en la pestaña de mediciones
+  const [tempMeasurements, setTempMeasurements] = useState({
+    manualPH: "5.8",
+    manualEC: "1400",
+    manualTemp: "20",
+    manualWaterTemp: "20",
+    manualVolume: "18",
+    manualHumidity: "65"
+  });
 
   // =================== EFECTOS Y PERSISTENCIA ===================
 
@@ -1423,6 +1425,16 @@ export default function HydroAppFinal() {
           manualVolume: savedMeasurements.manualVolume || (data.config?.currentVol || "18"),
           manualHumidity: savedMeasurements.manualHumidity || "65",
           lastMeasurement: savedMeasurements.lastMeasurement || new Date().toISOString()
+        });
+
+        // Inicializar tempMeasurements con los mismos valores
+        setTempMeasurements({
+          manualPH: savedMeasurements.manualPH || "5.8",
+          manualEC: savedMeasurements.manualEC || "1400",
+          manualTemp: savedMeasurements.manualTemp || "20",
+          manualWaterTemp: savedMeasurements.manualWaterTemp || "20",
+          manualVolume: savedMeasurements.manualVolume || (data.config?.currentVol || "18"),
+          manualHumidity: savedMeasurements.manualHumidity || "65"
         });
 
         if (data.plants && data.plants.length > 0) {
@@ -1540,44 +1552,153 @@ export default function HydroAppFinal() {
     }
   };
 
-  // FUNCIÓN CORREGIDA PARA SINCRONIZAR MEDICIONES CON EL PANEL DE CONTROL
-  const saveManualMeasurement = () => {
+  // =================== FUNCIONES MEJORADAS PARA MEDICIONES ===================
+
+  // Función para actualizar mediciones temporales desde inputs
+  const updateTempMeasurement = (field, value) => {
+    // Permitir números, punto y coma
+    const sanitizedValue = value.replace(/[^0-9.,]/g, '');
+    
+    setTempMeasurements(prev => ({
+      ...prev,
+      [field]: sanitizedValue
+    }));
+  };
+
+  // Función para actualizar mediciones desde sliders
+  const updateMeasurementFromSlider = (field, value) => {
+    const stringValue = value.toString();
+    
+    // Actualizar ambos estados inmediatamente
+    setMeasurements(prev => ({
+      ...prev,
+      [field]: stringValue
+    }));
+    
+    setTempMeasurements(prev => ({
+      ...prev,
+      [field]: stringValue
+    }));
+
+    // Actualizar config si corresponde
+    if (field === 'manualPH') {
+      setConfig(prev => ({ ...prev, ph: stringValue }));
+    } else if (field === 'manualEC') {
+      setConfig(prev => ({ ...prev, ec: stringValue }));
+    } else if (field === 'manualTemp') {
+      setConfig(prev => ({ ...prev, temp: stringValue }));
+    } else if (field === 'manualVolume') {
+      setConfig(prev => ({ ...prev, currentVol: stringValue }));
+    }
+  };
+
+  // Función para guardar mediciones cuando se pierde el foco del input
+  const saveMeasurementOnBlur = (field) => {
+    let value = tempMeasurements[field];
+    
+    // Convertir coma a punto para parsear
+    const numericValue = parseFloat(value.replace(',', '.'));
+    
+    if (!isNaN(numericValue)) {
+      const formattedValue = numericValue.toString();
+      
+      // Actualizar estado principal
+      setMeasurements(prev => ({
+        ...prev,
+        [field]: formattedValue
+      }));
+
+      // Actualizar config si corresponde
+      if (field === 'manualPH') {
+        setConfig(prev => ({ ...prev, ph: formattedValue }));
+      } else if (field === 'manualEC') {
+        setConfig(prev => ({ ...prev, ec: formattedValue }));
+      } else if (field === 'manualTemp') {
+        setConfig(prev => ({ ...prev, temp: formattedValue }));
+      } else if (field === 'manualVolume') {
+        setConfig(prev => ({ ...prev, currentVol: formattedValue }));
+      }
+    } else {
+      // Si no es un número válido, restaurar el valor anterior
+      setTempMeasurements(prev => ({
+        ...prev,
+        [field]: measurements[field]
+      }));
+    }
+  };
+
+  // Función para guardar todas las mediciones manuales
+  const saveAllManualMeasurements = () => {
     const now = new Date().toISOString();
+    
+    // Primero sincronizar todos los campos
+    const fieldsToSync = [
+      'manualPH', 'manualEC', 'manualTemp', 
+      'manualWaterTemp', 'manualVolume', 'manualHumidity'
+    ];
+    
+    let allValid = true;
+    const updatedMeasurements = { ...measurements };
+    const updatedConfig = { ...config };
+    
+    fieldsToSync.forEach(field => {
+      const value = tempMeasurements[field];
+      const numericValue = parseFloat(value.replace(',', '.'));
+      
+      if (!isNaN(numericValue)) {
+        const formattedValue = numericValue.toString();
+        updatedMeasurements[field] = formattedValue;
+        
+        // Actualizar config si corresponde
+        if (field === 'manualPH') {
+          updatedConfig.ph = formattedValue;
+        } else if (field === 'manualEC') {
+          updatedConfig.ec = formattedValue;
+        } else if (field === 'manualTemp') {
+          updatedConfig.temp = formattedValue;
+        } else if (field === 'manualVolume') {
+          updatedConfig.currentVol = formattedValue;
+        }
+      } else {
+        allValid = false;
+      }
+    });
+    
+    if (!allValid) {
+      alert("Algunos valores no son números válidos. Por favor, corrige los campos en rojo.");
+      return;
+    }
+    
+    // Actualizar estados
+    setMeasurements({
+      ...updatedMeasurements,
+      lastMeasurement: now
+    });
+    setConfig(updatedConfig);
+    
+    // Guardar en historial
     const measurementRecord = {
       id: generatePlantId(),
       date: now,
-      ph: measurements.manualPH,
-      ec: measurements.manualEC,
-      temp: measurements.manualTemp,
-      waterTemp: measurements.manualWaterTemp,
-      volume: measurements.manualVolume || config.currentVol,
-      humidity: measurements.manualHumidity,
-      notes: "Medición manual completa"
+      ph: updatedMeasurements.manualPH,
+      ec: updatedMeasurements.manualEC,
+      temp: updatedMeasurements.manualTemp,
+      waterTemp: updatedMeasurements.manualWaterTemp,
+      volume: updatedMeasurements.manualVolume,
+      humidity: updatedMeasurements.manualHumidity,
+      notes: "Medición manual completa",
+      type: "measurement"
     };
-
-    // ACTUALIZAR CONFIGURACIÓN CON NUEVOS VALORES - CORREGIDO
-    setConfig(prev => ({
-      ...prev,
-      ph: measurements.manualPH,
-      ec: measurements.manualEC,
-      temp: measurements.manualTemp,
-      currentVol: measurements.manualVolume || prev.currentVol
-    }));
-
-    // Guardar en historial
+    
     setHistory([measurementRecord, ...history.slice(0, 49)]);
 
-    setMeasurements(prev => ({
-      ...prev,
-      lastMeasurement: now
-    }));
-
     alert(`✅ Medición completa guardada:
-pH: ${measurements.manualPH}
-EC: ${measurements.manualEC} µS/cm
-Temp ambiente: ${measurements.manualTemp}°C
-Temp agua: ${measurements.manualWaterTemp}°C
-Volumen: ${measurements.manualVolume || config.currentVol}L`);
+pH: ${updatedMeasurements.manualPH}
+EC: ${updatedMeasurements.manualEC} µS/cm
+Temp ambiente: ${updatedMeasurements.manualTemp}°C
+Temp agua: ${updatedMeasurements.manualWaterTemp}°C
+Volumen: ${updatedMeasurements.manualVolume}L
+Humedad: ${updatedMeasurements.manualHumidity}%`);
   };
 
   // =================== CÁLCULOS ===================
@@ -1589,18 +1710,18 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
   const aquaVegaDosage = useMemo(() => {
     return calculateAquaVegaDosage(
       plants,
-      parseFloat(config.currentVol),
+      parseFloat(measurements.manualVolume || config.currentVol),
       parseFloat(config.targetEC)
     );
-  }, [plants, config.currentVol, config.targetEC]);
+  }, [plants, measurements.manualVolume, config.currentVol, config.targetEC]);
 
   const phAdjustment = useMemo(() => {
     return calculatePHAdjustment(
-      parseFloat(config.ph),
+      parseFloat(measurements.manualPH),
       parseFloat(config.targetPH),
-      parseFloat(config.currentVol)
+      parseFloat(measurements.manualVolume || config.currentVol)
     );
-  }, [config.ph, config.targetPH, config.currentVol]);
+  }, [measurements.manualPH, config.targetPH, measurements.manualVolume, config.currentVol]);
 
   const plantStats = useMemo(() => {
     return calculatePlantStats(plants);
@@ -1617,13 +1738,13 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
   // =================== ALERTAS ACTUALIZADAS ===================
 
   const alerts = useMemo(() => {
-    const vAct = parseFloat(config.currentVol) || 0;
+    const vAct = parseFloat(measurements.manualVolume || config.currentVol) || 0;
     const vTot = parseFloat(config.totalVol) || 18;
-    const ph = parseFloat(config.ph) || 5.8;
-    const ec = parseFloat(config.ec) || 0;
+    const ph = parseFloat(measurements.manualPH) || 5.8;
+    const ec = parseFloat(measurements.manualEC) || 0;
     const tEc = parseFloat(config.targetEC) || 1400;
     const tPh = parseFloat(config.targetPH) || 5.8;
-    const temp = parseFloat(config.temp) || 20;
+    const temp = parseFloat(measurements.manualTemp) || 20;
     const waterTemp = parseFloat(measurements.manualWaterTemp) || 20;
     const res = [];
 
@@ -1794,7 +1915,7 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     }
 
     return res.sort((a, b) => a.priority - b.priority);
-  }, [config, lastClean, history, phAdjustment, aquaVegaDosage, measurements.manualWaterTemp]);
+  }, [config, lastClean, history, phAdjustment, aquaVegaDosage, measurements]);
 
   // =================== FUNCIÓN PARA REGISTRAR LIMPIEZA ===================
 
@@ -1871,7 +1992,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
     };
 
     const systemRange = calculateSystemECRange();
-    const ecAlert = checkECAlert(parseFloat(measurements.manualEC || config.ec));
+    const ecAlert = checkECAlert(parseFloat(measurements.manualEC));
 
     return (
       <Card className="p-6 rounded-2xl mb-8">
@@ -1886,7 +2007,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         </div>
 
         <div className="space-y-8">
-          {/* Medidor de pH - ACTUALIZADO PARA USAR measurements.manualPH */}
+          {/* Medidor de pH */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
@@ -1940,7 +2061,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
 
-          {/* Medidor de EC - ACTUALIZADO PARA USAR measurements.manualEC */}
+          {/* Medidor de EC */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
@@ -2000,7 +2121,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
 
-          {/* Medidor de Temperatura Agua - ACTUALIZADO PARA USAR measurements.manualWaterTemp */}
+          {/* Medidor de Temperatura Agua */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
@@ -2066,7 +2187,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
 
-          {/* Medidor de Volumen - ACTUALIZADO PARA USAR measurements.manualVolume */}
+          {/* Medidor de Volumen */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
@@ -2421,6 +2542,286 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
     );
   };
 
+  // =================== PESTAÑA DE MEDICIONES REESCRITA COMPLETAMENTE ===================
+
+  const MeasurementsTab = () => {
+    // Helper function to get numeric value for slider
+    const getNumericValue = (value) => {
+      const num = parseFloat(value.replace(',', '.'));
+      return isNaN(num) ? 0 : num;
+    };
+
+    // Helper function to format value for display
+    const formatValue = (value) => {
+      return value.replace('.', ',');
+    };
+
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales - Protocolo 18L</h2>
+          <p className="text-slate-600">Registra las mediciones actuales de tu sistema según protocolo diario</p>
+        </div>
+
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <Clipboard className="text-white" size={24} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800">Registro de Mediciones Diarias</h3>
+              <p className="text-slate-600">Protocolo: Medir 1 vez al día (mañana, aireador apagado)</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* pH del Agua */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  pH del Agua
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="4.0"
+                    max="9.0"
+                    step="0.1"
+                    value={getNumericValue(tempMeasurements.manualPH)}
+                    onChange={(e) => updateMeasurementFromSlider('manualPH', e.target.value)}
+                    className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={tempMeasurements.manualPH}
+                    onChange={(e) => updateTempMeasurement('manualPH', e.target.value)}
+                    onBlur={() => saveMeasurementOnBlur('manualPH')}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="5,8"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Objetivo: 5,8 | Rango: 5,5-6,5</p>
+              </div>
+
+              {/* Conductividad (EC) */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Conductividad (EC) en µS/cm
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="3000"
+                    step="50"
+                    value={getNumericValue(tempMeasurements.manualEC)}
+                    onChange={(e) => updateMeasurementFromSlider('manualEC', e.target.value)}
+                    className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={tempMeasurements.manualEC}
+                    onChange={(e) => updateTempMeasurement('manualEC', e.target.value)}
+                    onBlur={() => saveMeasurementOnBlur('manualEC')}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="1400"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Objetivo: 1400 | Rango: 1350-1500</p>
+              </div>
+
+              {/* Temperatura Ambiente */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Temperatura Ambiente (°C)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="10"
+                    max="35"
+                    step="0.5"
+                    value={getNumericValue(tempMeasurements.manualTemp)}
+                    onChange={(e) => updateMeasurementFromSlider('manualTemp', e.target.value)}
+                    className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={tempMeasurements.manualTemp}
+                    onChange={(e) => updateTempMeasurement('manualTemp', e.target.value)}
+                    onBlur={() => saveMeasurementOnBlur('manualTemp')}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="20"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Ideal: 18-25°C</p>
+              </div>
+
+              {/* Temperatura del Agua */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Temperatura del Agua (°C)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="10"
+                    max="30"
+                    step="0.5"
+                    value={getNumericValue(tempMeasurements.manualWaterTemp)}
+                    onChange={(e) => updateMeasurementFromSlider('manualWaterTemp', e.target.value)}
+                    className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={tempMeasurements.manualWaterTemp}
+                    onChange={(e) => updateTempMeasurement('manualWaterTemp', e.target.value)}
+                    onBlur={() => saveMeasurementOnBlur('manualWaterTemp')}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    placeholder="20"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Objetivo: 20°C | Rango: 18-22°C</p>
+              </div>
+
+              {/* Volumen Actual */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Volumen Actual (L)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max={config.totalVol}
+                    step="1"
+                    value={getNumericValue(tempMeasurements.manualVolume)}
+                    onChange={(e) => updateMeasurementFromSlider('manualVolume', e.target.value)}
+                    className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={tempMeasurements.manualVolume}
+                    onChange={(e) => updateTempMeasurement('manualVolume', e.target.value)}
+                    onBlur={() => saveMeasurementOnBlur('manualVolume')}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder={config.currentVol}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Total: {config.totalVol}L</p>
+              </div>
+
+              {/* Humedad Relativa */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Humedad Relativa (%)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="20"
+                    max="90"
+                    step="1"
+                    value={getNumericValue(tempMeasurements.manualHumidity)}
+                    onChange={(e) => updateMeasurementFromSlider('manualHumidity', e.target.value)}
+                    className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={tempMeasurements.manualHumidity}
+                    onChange={(e) => updateTempMeasurement('manualHumidity', e.target.value)}
+                    onBlur={() => saveMeasurementOnBlur('manualHumidity')}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="65"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Ideal: 40-70%</p>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-200">
+              <Button
+                onClick={saveAllManualMeasurements}
+                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
+              >
+                <Clipboard className="mr-2" />
+                Guardar Medición Diaria
+              </Button>
+              <p className="text-xs text-slate-500 mt-3 text-center">
+                Última medición: {new Date(measurements.lastMeasurement).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {history.length > 0 && (
+          <Card className="p-6 rounded-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-bold text-slate-800">Historial Reciente</h3>
+                <p className="text-slate-600">Últimas mediciones registradas</p>
+              </div>
+              <Badge>{history.length} registros</Badge>
+            </div>
+
+            <div className="space-y-4">
+              {history.slice(0, 5).map((record, index) => (
+                <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-bold text-slate-800">
+                        {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      <p className="text-sm text-slate-600">{record.notes || "Medición diaria"}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteHistoryRecord(record.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="text-center p-2 bg-purple-50 rounded-lg">
+                      <p className="text-xs text-purple-700">pH</p>
+                      <p className="font-bold text-purple-600">{record.ph}</p>
+                    </div>
+                    <div className="text-center p-2 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-blue-700">EC</p>
+                      <p className="font-bold text-blue-600">{record.ec} µS/cm</p>
+                    </div>
+                    <div className="text-center p-2 bg-cyan-50 rounded-lg">
+                      <p className="text-xs text-cyan-700">Temp Agua</p>
+                      <p className="font-bold text-cyan-600">{record.temp}°C</p>
+                    </div>
+                    <div className="text-center p-2 bg-emerald-50 rounded-lg">
+                      <p className="text-xs text-emerald-700">Volumen</p>
+                      <p className="font-bold text-emerald-600">{record.volume}L</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
   // =================== RENDER POR PASOS ===================
 
   const renderStep = () => {
@@ -2431,14 +2832,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             <div className="flex justify-center">
               <div className="relative">
                 <div className="w-80 h-80 rounded-full overflow-hidden shadow-2xl">
-                  <Image 
-                    src="/mi-imagen.jpg"
-                    alt="HydroCaru Logo"
-                    width={400}
-                    height={400}
-                    className="w-full h-full object-cover"
-                    priority
-                  />
+                  <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
+                    <Sprout className="text-white" size={120} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -3125,15 +3521,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
       {/* Header con imagen */}
       <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
         <div className="flex-shrink-0">
-          <div className="w-32 h-32 rounded-full overflow-hidden shadow-2xl">
-            <Image 
-              src="/mi-imagen.jpg"
-              alt="HydroCaru Logo"
-              width={400}
-              height={400}
-              className="w-full h-full object-cover"
-              priority
-            />
+          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 overflow-hidden shadow-2xl flex items-center justify-center">
+            <Sprout className="text-white" size={64} />
           </div>
         </div>
         
@@ -3292,7 +3681,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-slate-700">Volumen:</span>
-              <span className="font-bold text-blue-600">{config.currentVol}L / {config.totalVol}L</span>
+              <span className="font-bold text-blue-600">{measurements.manualVolume}L / {config.totalVol}L</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-slate-700">Temp. agua:</span>
@@ -3305,20 +3694,20 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
             <div className="flex justify-between items-center">
               <span className="text-slate-700">pH actual:</span>
-              <span className={`font-bold ${Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.8 ? 'text-red-600' :
-                  Math.abs(parseFloat(config.ph) - parseFloat(config.targetPH)) > 0.5 ? 'text-amber-600' :
+              <span className={`font-bold ${Math.abs(parseFloat(measurements.manualPH) - parseFloat(config.targetPH)) > 0.8 ? 'text-red-600' :
+                  Math.abs(parseFloat(measurements.manualPH) - parseFloat(config.targetPH)) > 0.5 ? 'text-amber-600' :
                     'text-green-600'
                 }`}>
-                {config.ph}
+                {measurements.manualPH}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-slate-700">EC actual:</span>
-              <span className={`font-bold ${parseFloat(config.ec) > parseFloat(config.targetEC) + 100 ? 'text-red-600' :
-                  parseFloat(config.ec) < parseFloat(config.targetEC) - 100 ? 'text-amber-600' :
+              <span className={`font-bold ${parseFloat(measurements.manualEC) > parseFloat(config.targetEC) + 100 ? 'text-red-600' :
+                  parseFloat(measurements.manualEC) < parseFloat(config.targetEC) - 100 ? 'text-amber-600' :
                     'text-green-600'
                 }`}>
-                {config.ec} µS/cm
+                {measurements.manualEC} µS/cm
               </span>
             </div>
           </div>
@@ -3336,7 +3725,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         </Button>
 
         <Button
-          onClick={saveManualMeasurement}
+          onClick={saveAllManualMeasurements}
           variant="outline"
         >
           <Clipboard className="mr-2" />
@@ -3709,7 +4098,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <h4 className="font-bold text-emerald-700 mb-3">AQUA VEGA A</h4>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-emerald-600">{aquaVegaDosage.a} ml</div>
-                  <p className="text-sm text-slate-600">Para {config.currentVol}L de agua destilada</p>
+                  <p className="text-sm text-slate-600">Para {measurements.manualVolume}L de agua destilada</p>
                   <p className="text-xs text-slate-500 mt-2">
                     {aquaVegaDosage.per10L.a} ml por cada 10L
                   </p>
@@ -3720,7 +4109,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <h4 className="font-bold text-green-700 mb-3">AQUA VEGA B</h4>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-green-600">{aquaVegaDosage.b} ml</div>
-                  <p className="text-sm text-slate-600">Para {config.currentVol}L de agua destilada</p>
+                  <p className="text-sm text-slate-600">Para {measurements.manualVolume}L de agua destilada</p>
                   <p className="text-xs text-slate-500 mt-2">
                     {aquaVegaDosage.per10L.b} ml por cada 10L
                   </p>
@@ -3870,408 +4259,6 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
       </Card>
     </div>
   );
-
-  const MeasurementsTab = () => {
-    // Estados locales para los inputs
-    const [localValues, setLocalValues] = useState({
-      manualPH: measurements.manualPH,
-      manualEC: measurements.manualEC,
-      manualTemp: measurements.manualTemp,
-      manualWaterTemp: measurements.manualWaterTemp,
-      manualVolume: measurements.manualVolume,
-      manualHumidity: measurements.manualHumidity
-    });
-
-    // Estado para controlar qué input está enfocado
-    const [focusedInput, setFocusedInput] = useState(null);
-
-    // Función para manejar cambios en los inputs sin perder el foco
-    const handleInputChange = (field, value) => {
-      // Permitir solo números, punto y coma
-      const sanitizedValue = value.replace(/[^0-9.,]/g, '');
-      
-      setLocalValues(prev => ({
-        ...prev,
-        [field]: sanitizedValue
-      }));
-      
-      // ACTUALIZAR EL ESTADO GLOBAL INMEDIATAMENTE - CORREGIDO
-      setMeasurements(prev => ({
-        ...prev,
-        [field]: sanitizedValue
-      }));
-      
-      // ACTUALIZAR LA CONFIGURACIÓN INMEDIATAMENTE PARA QUE SE VEA EN EL DASHBOARD - CORREGIDO
-      if (field === 'manualPH') {
-        setConfig(prev => ({ ...prev, ph: sanitizedValue }));
-      } else if (field === 'manualEC') {
-        setConfig(prev => ({ ...prev, ec: sanitizedValue }));
-      } else if (field === 'manualTemp') {
-        setConfig(prev => ({ ...prev, temp: sanitizedValue }));
-      } else if (field === 'manualWaterTemp') {
-        // No actualizar config.temp para no mezclar con temperatura ambiente
-      } else if (field === 'manualVolume') {
-        setConfig(prev => ({ ...prev, currentVol: sanitizedValue }));
-      }
-    };
-
-    // Función para manejar el blur (cuando el input pierde el foco)
-    const handleInputBlur = (field) => {
-      setFocusedInput(null);
-      
-      // Validar y formatear el valor
-      let value = localValues[field];
-      
-      // Reemplazar comas por puntos para cálculos
-      const numericValue = parseFloat(value.replace(',', '.'));
-      
-      if (!isNaN(numericValue)) {
-        // El valor ya fue actualizado en handleInputChange
-      } else {
-        // Si no es un número válido, restaurar el valor anterior
-        setLocalValues(prev => ({
-          ...prev,
-          [field]: measurements[field]
-        }));
-      }
-    };
-
-    // Función para manejar el slider
-    const handleSliderChange = (field, value) => {
-      const stringValue = value.toString();
-      
-      setLocalValues(prev => ({
-        ...prev,
-        [field]: stringValue
-      }));
-      
-      // ACTUALIZAR EL ESTADO GLOBAL INMEDIATAMENTE - CORREGIDO
-      setMeasurements(prev => ({
-        ...prev,
-        [field]: stringValue
-      }));
-      
-      // ACTUALIZAR LA CONFIGURACIÓN INMEDIATAMENTE - CORREGIDO
-      if (field === 'manualPH') {
-        setConfig(prev => ({ ...prev, ph: stringValue }));
-      } else if (field === 'manualEC') {
-        setConfig(prev => ({ ...prev, ec: stringValue }));
-      } else if (field === 'manualTemp') {
-        setConfig(prev => ({ ...prev, temp: stringValue }));
-      } else if (field === 'manualWaterTemp') {
-        // No actualizar config.temp para no mezclar con temperatura ambiente
-      } else if (field === 'manualVolume') {
-        setConfig(prev => ({ ...prev, currentVol: stringValue }));
-      }
-    };
-
-    // Función para obtener valor numérico para el slider
-    const getSliderValue = (value) => {
-      const numValue = parseFloat(value.replace(',', '.'));
-      return isNaN(numValue) ? 0 : numValue;
-    };
-
-    return (
-      <div className="space-y-8 animate-fade-in">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales - Protocolo 18L</h2>
-          <p className="text-slate-600">Registra las mediciones actuales de tu sistema según protocolo diario</p>
-        </div>
-
-        <Card className="p-6 rounded-2xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <Clipboard className="text-white" size={24} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Registro de Mediciones Diarias</h3>
-              <p className="text-slate-600">Protocolo: Medir 1 vez al día (mañana, aireador apagado)</p>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* pH del Agua */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  pH del Agua
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="4.0"
-                    max="9.0"
-                    step="0.1"
-                    value={getSliderValue(localValues.manualPH)}
-                    onChange={(e) => handleSliderChange('manualPH', e.target.value)}
-                    className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <input
-                    ref={phInputRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={localValues.manualPH}
-                    onChange={(e) => handleInputChange('manualPH', e.target.value)}
-                    onFocus={() => setFocusedInput('manualPH')}
-                    onBlur={() => handleInputBlur('manualPH')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        phInputRef.current?.blur();
-                      }
-                    }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="5,8"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Objetivo: 5,8 | Rango: 5,5-6,5</p>
-              </div>
-
-              {/* Conductividad (EC) */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Conductividad (EC) en µS/cm
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="0"
-                    max="3000"
-                    step="50"
-                    value={getSliderValue(localValues.manualEC)}
-                    onChange={(e) => handleSliderChange('manualEC', e.target.value)}
-                    className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <input
-                    ref={ecInputRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={localValues.manualEC}
-                    onChange={(e) => handleInputChange('manualEC', e.target.value)}
-                    onFocus={() => setFocusedInput('manualEC')}
-                    onBlur={() => handleInputBlur('manualEC')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        ecInputRef.current?.blur();
-                      }
-                    }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="1400"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Objetivo: 1400 | Rango: 1350-1500</p>
-              </div>
-
-              {/* Temperatura Ambiente */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Temperatura Ambiente (°C)
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="10"
-                    max="35"
-                    step="0.5"
-                    value={getSliderValue(localValues.manualTemp)}
-                    onChange={(e) => handleSliderChange('manualTemp', e.target.value)}
-                    className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <input
-                    ref={tempInputRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={localValues.manualTemp}
-                    onChange={(e) => handleInputChange('manualTemp', e.target.value)}
-                    onFocus={() => setFocusedInput('manualTemp')}
-                    onBlur={() => handleInputBlur('manualTemp')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        tempInputRef.current?.blur();
-                      }
-                    }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    placeholder="20"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Ideal: 18-25°C</p>
-              </div>
-
-              {/* Temperatura del Agua */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Temperatura del Agua (°C)
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="10"
-                    max="30"
-                    step="0.5"
-                    value={getSliderValue(localValues.manualWaterTemp)}
-                    onChange={(e) => handleSliderChange('manualWaterTemp', e.target.value)}
-                    className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <input
-                    ref={waterTempInputRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={localValues.manualWaterTemp}
-                    onChange={(e) => handleInputChange('manualWaterTemp', e.target.value)}
-                    onFocus={() => setFocusedInput('manualWaterTemp')}
-                    onBlur={() => handleInputBlur('manualWaterTemp')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        waterTempInputRef.current?.blur();
-                      }
-                    }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    placeholder="20"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Objetivo: 20°C | Rango: 18-22°C</p>
-              </div>
-
-              {/* Volumen Actual */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Volumen Actual (L)
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="0"
-                    max={config.totalVol}
-                    step="1"
-                    value={getSliderValue(localValues.manualVolume)}
-                    onChange={(e) => handleSliderChange('manualVolume', e.target.value)}
-                    className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <input
-                    ref={volumeInputRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={localValues.manualVolume}
-                    onChange={(e) => handleInputChange('manualVolume', e.target.value)}
-                    onFocus={() => setFocusedInput('manualVolume')}
-                    onBlur={() => handleInputBlur('manualVolume')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        volumeInputRef.current?.blur();
-                      }
-                    }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder={config.currentVol}
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Total: {config.totalVol}L</p>
-              </div>
-
-              {/* Humedad Relativa */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Humedad Relativa (%)
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="20"
-                    max="90"
-                    step="1"
-                    value={getSliderValue(localValues.manualHumidity)}
-                    onChange={(e) => handleSliderChange('manualHumidity', e.target.value)}
-                    className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <input
-                    ref={humidityInputRef}
-                    type="text"
-                    inputMode="decimal"
-                    value={localValues.manualHumidity}
-                    onChange={(e) => handleInputChange('manualHumidity', e.target.value)}
-                    onFocus={() => setFocusedInput('manualHumidity')}
-                    onBlur={() => handleInputBlur('manualHumidity')}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        humidityInputRef.current?.blur();
-                      }
-                    }}
-                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="65"
-                  />
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Ideal: 40-70%</p>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-slate-200">
-              <Button
-                onClick={saveManualMeasurement}
-                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
-              >
-                <Clipboard className="mr-2" />
-                Guardar Medición Diaria
-              </Button>
-              <p className="text-xs text-slate-500 mt-3 text-center">
-                Última medición: {new Date(measurements.lastMeasurement).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {history.length > 0 && (
-          <Card className="p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="font-bold text-slate-800">Historial Reciente</h3>
-                <p className="text-slate-600">Últimas mediciones registradas</p>
-              </div>
-              <Badge>{history.length} registros</Badge>
-            </div>
-
-            <div className="space-y-4">
-              {history.slice(0, 5).map((record, index) => (
-                <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-bold text-slate-800">
-                        {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      <p className="text-sm text-slate-600">{record.notes || "Medición diaria"}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteHistoryRecord(record.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="text-center p-2 bg-purple-50 rounded-lg">
-                      <p className="text-xs text-purple-700">pH</p>
-                      <p className="font-bold text-purple-600">{record.ph}</p>
-                    </div>
-                    <div className="text-center p-2 bg-blue-50 rounded-lg">
-                      <p className="text-xs text-blue-700">EC</p>
-                      <p className="font-bold text-blue-600">{record.ec} µS/cm</p>
-                    </div>
-                    <div className="text-center p-2 bg-cyan-50 rounded-lg">
-                      <p className="text-xs text-cyan-700">Temp Agua</p>
-                      <p className="font-bold text-cyan-600">{record.temp}°C</p>
-                    </div>
-                    <div className="text-center p-2 bg-emerald-50 rounded-lg">
-                      <p className="text-xs text-emerald-700">Volumen</p>
-                      <p className="font-bold text-emerald-600">{record.volume}L</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-      </div>
-    );
-  };
 
   const CalendarTab = () => (
     <div className="space-y-8 animate-fade-in">
@@ -4803,6 +4790,14 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                           manualHumidity: "65",
                           lastMeasurement: new Date().toISOString()
                         });
+                        setTempMeasurements({
+                          manualPH: "5.8",
+                          manualEC: "1400",
+                          manualTemp: "20",
+                          manualWaterTemp: "20",
+                          manualVolume: "18",
+                          manualHumidity: "65"
+                        });
                         setSelectedECMethod(null);
                         setTab("dashboard");
                       }
@@ -5014,8 +5009,6 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         onConfirm={handleRotationConfirm}
         plants={plants}
       />
-
-      {/* Footer - ELIMINADO SEGÚN SOLICITUD */}
     </div>
   );
 }
