@@ -881,9 +881,9 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
               <tr className="bg-white border-b">
                 <td className="px-4 py-3 font-medium">pH</td>
                 <td className="px-4 py-3 font-bold text-purple-600">5.8</td>
-                <td className="px-4 py-3">5.6 - 6.2</td>
+                <td className="px-4 py-3">5.5 - 6.5</td>
                 <td className="px-4 py-3 text-sm">
-                  <div>&gt;6.3: ácido cítrico (0.5ml/paso)</div>
+                  <div>&gt;6.5: ácido cítrico (0.5ml/paso)</div>
                   <div>&lt;5.5: base suave (muy raro)</div>
                 </td>
               </tr>
@@ -996,8 +996,8 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
   // Determinar color del valor según el rango
   const getValueColor = () => {
     if (label === "pH") {
-      if (value >= 5.6 && value <= 6.2) return "text-green-600";
-      if (value < 5.5 || value > 6.3) return "text-red-600";
+      if (value >= 5.5 && value <= 6.5) return "text-green-600";
+      if (value < 5.5 || value > 6.5) return "text-red-600";
       return "text-amber-600";
     } else if (label === "EC") {
       if (value >= 1350 && value <= 1500) return "text-green-600";
@@ -1064,7 +1064,7 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
         <div className="text-xs text-slate-500 space-y-0.5">
           {label === "pH" && (
             <div className="flex flex-col">
-              <span>Ideal: 5.6-6.2</span>
+              <span>Ideal: 5.5-6.5</span>
               <span className="text-xs">Objetivo: 5.8</span>
             </div>
           )}
@@ -1715,15 +1715,15 @@ Volumen: ${measurements.manualVolume || config.currentVol}L`);
     }
 
     // Alertas de pH
-    if (ph > tPh + 0.5 || ph < tPh - 0.5) {
-      const action = ph > tPh ? "pH-" : "pH+";
-      const ml = ph > tPh ? phAdjustment.phMinus : phAdjustment.phPlus;
+    if (ph > 6.5 || ph < 5.5) {
+      const action = ph > 6.5 ? "pH-" : "pH+";
+      const ml = ph > 6.5 ? phAdjustment.phMinus : phAdjustment.phPlus;
       const severity = Math.abs(ph - tPh) > 0.8 ? 1 : 2;
       
       res.push({
         title: `AJUSTAR ${action}`,
         value: `${ml}ml`,
-        description: `pH ${ph} → objetivo ${tPh}. ${phAdjustment.recommendation}`,
+        description: `pH ${ph} fuera de rango (5.5-6.5). Objetivo ${tPh}. ${phAdjustment.recommendation}`,
         color: severity === 1 
           ? "bg-gradient-to-r from-red-700 to-pink-800" 
           : "bg-gradient-to-r from-purple-500 to-pink-500",
@@ -1859,8 +1859,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
   const DashboardMetricsPanel = ({ config, measurements }) => {
     const getStatusText = (label, value) => {
       if (label === "pH") {
-        if (value >= 5.6 && value <= 6.2) return "✅ ÓPTIMO";
-        if (value < 5.5 || value > 6.3) return "⚠️ AJUSTAR";
+        if (value >= 5.5 && value <= 6.5) return "✅ ÓPTIMO";
+        if (value < 5.5 || value > 6.5) return "⚠️ AJUSTAR";
         return "⚠️ AJUSTAR";
       } else if (label === "EC") {
         const ecAlert = checkECAlert(value);
@@ -1917,7 +1917,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
                 <div>
                   <h3 className="font-bold text-purple-700">pH del Agua</h3>
-                  <p className="text-sm text-slate-600">Rango de trabajo: 5.6 - 6.2</p>
+                  <p className="text-sm text-slate-600">Rango de trabajo: 5.5 - 6.5</p>
                 </div>
               </div>
               <div className="space-y-3">
@@ -1929,7 +1929,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-700">Estado:</span>
                     <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      parseFloat(measurements.manualPH || config.ph) >= 5.6 && parseFloat(measurements.manualPH || config.ph) <= 6.2
+                      parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5
                         ? 'bg-green-100 text-green-800'
                         : 'bg-amber-100 text-amber-800'
                     }`}>
@@ -1942,7 +1942,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <span className="font-medium">Objetivo:</span> {config.targetPH}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {parseFloat(measurements.manualPH || config.ph) >= 5.6 && parseFloat(measurements.manualPH || config.ph) <= 6.2
+                    {parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5
                       ? "✅ pH en rango ideal para absorción de nutrientes"
                       : "⚠️ Ajustar con método de titulación (0.5ml por paso)"}
                   </p>
@@ -2784,7 +2784,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-800">pH del Agua</h3>
-                    <p className="text-sm text-slate-600">Rango de trabajo: 5.6 - 6.2</p>
+                    <p className="text-sm text-slate-600">Rango de trabajo: 5.5 - 6.5</p>
                   </div>
                 </div>
 
@@ -2794,11 +2794,11 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                       <label className="text-sm font-medium text-slate-700">
                         Valor de pH: <span className="font-bold text-purple-600">{config.ph}</span>
                       </label>
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${parseFloat(config.ph) >= 5.6 && parseFloat(config.ph) <= 6.2
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${parseFloat(config.ph) >= 5.5 && parseFloat(config.ph) <= 6.5
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                         }`}>
-                        {parseFloat(config.ph) >= 5.6 && parseFloat(config.ph) <= 6.2 ? 'EN RANGO' : 'FUERA DE RANGO'}
+                        {parseFloat(config.ph) >= 5.5 && parseFloat(config.ph) <= 6.5 ? 'EN RANGO' : 'FUERA DE RANGO'}
                       </span>
                     </div>
 
@@ -2814,14 +2814,14 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
                     <div className="flex justify-between text-sm text-slate-600 mt-2">
                       <span>4.0</span>
-                      <span className="font-bold text-green-600">5.6-6.2</span>
+                      <span className="font-bold text-green-600">5.5-6.5</span>
                       <span>9.0</span>
                     </div>
 
                     <div className="mt-4 p-3 bg-purple-50 rounded-lg">
                       <p className="text-sm text-purple-700">
                         <strong>Método de titulación:</strong><br />
-                        • Añadir 0.5ml ácido cítrico (≈10 gotas)<br />
+                        • Añadir 0.5ml de ácido cítrico (≈10 gotas)<br />
                         • Mezclar 2 minutos con aireador<br />
                         • Esperar 30 segundos, medir<br />
                         • Repetir hasta pH 5.8
@@ -3156,12 +3156,6 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           </Badge>
         </div>
       </div>
-
-      {/* Panel de protocolo 18L */}
-      <Protocolo18LPanel
-        volume={parseFloat(config.currentVol)}
-        aquaVegaDosage={aquaVegaDosage}
-      />
 
       {/* Panel de cálculo EC fijo */}
       <StagedECCalculator
@@ -3909,9 +3903,17 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   onChange={(e) => setMeasurements({...measurements, manualPH: e.target.value})}
                   className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="w-16 text-center font-bold text-purple-600">{measurements.manualPH}</span>
+                <input
+                  type="number"
+                  min="4.0"
+                  max="9.0"
+                  step="0.1"
+                  value={measurements.manualPH}
+                  onChange={(e) => setMeasurements({...measurements, manualPH: e.target.value})}
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600"
+                />
               </div>
-              <p className="text-xs text-slate-500 mt-1">Objetivo: 5.8 | Rango: 5.6-6.2</p>
+              <p className="text-xs text-slate-500 mt-1">Objetivo: 5.8 | Rango: 5.5-6.5</p>
             </div>
 
             <div>
@@ -3928,7 +3930,15 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   onChange={(e) => setMeasurements({...measurements, manualEC: e.target.value})}
                   className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="w-20 text-center font-bold text-blue-600">{measurements.manualEC} µS/cm</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="3000"
+                  step="50"
+                  value={measurements.manualEC}
+                  onChange={(e) => setMeasurements({...measurements, manualEC: e.target.value})}
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
+                />
               </div>
               <p className="text-xs text-slate-500 mt-1">Objetivo: 1400 | Rango: 1350-1500</p>
             </div>
@@ -3947,7 +3957,15 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   onChange={(e) => setMeasurements({...measurements, manualTemp: e.target.value})}
                   className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="w-16 text-center font-bold text-amber-600">{measurements.manualTemp}°C</span>
+                <input
+                  type="number"
+                  min="10"
+                  max="35"
+                  step="0.5"
+                  value={measurements.manualTemp}
+                  onChange={(e) => setMeasurements({...measurements, manualTemp: e.target.value})}
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600"
+                />
               </div>
               <p className="text-xs text-slate-500 mt-1">Ideal: 18-25°C</p>
             </div>
@@ -3966,7 +3984,15 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   onChange={(e) => setMeasurements({...measurements, manualWaterTemp: e.target.value})}
                   className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="w-16 text-center font-bold text-cyan-600">{measurements.manualWaterTemp}°C</span>
+                <input
+                  type="number"
+                  min="10"
+                  max="30"
+                  step="0.5"
+                  value={measurements.manualWaterTemp}
+                  onChange={(e) => setMeasurements({...measurements, manualWaterTemp: e.target.value})}
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-cyan-600"
+                />
               </div>
               <p className="text-xs text-slate-500 mt-1">Objetivo: 20°C | Rango: 18-22°C</p>
             </div>
@@ -3985,7 +4011,15 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   onChange={(e) => setMeasurements({...measurements, manualVolume: e.target.value})}
                   className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="w-16 text-center font-bold text-emerald-600">{measurements.manualVolume}L</span>
+                <input
+                  type="number"
+                  min="0"
+                  max={config.totalVol}
+                  step="1"
+                  value={measurements.manualVolume}
+                  onChange={(e) => setMeasurements({...measurements, manualVolume: e.target.value})}
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-emerald-600"
+                />
               </div>
               <p className="text-xs text-slate-500 mt-1">Total: {config.totalVol}L</p>
             </div>
@@ -4004,7 +4038,15 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   onChange={(e) => setMeasurements({...measurements, manualHumidity: e.target.value})}
                   className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="w-16 text-center font-bold text-blue-600">{measurements.manualHumidity}%</span>
+                <input
+                  type="number"
+                  min="20"
+                  max="90"
+                  step="1"
+                  value={measurements.manualHumidity}
+                  onChange={(e) => setMeasurements({...measurements, manualHumidity: e.target.value})}
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
+                />
               </div>
               <p className="text-xs text-slate-500 mt-1">Ideal: 40-70%</p>
             </div>
@@ -4496,7 +4538,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>pH inestable:</strong> Normal con agua destilada. Usar método de titulación (0.5ml por paso).</span>
+                <span><strong>pH inestable:</strong> Normal con agua destilada. Mantener en rango 5.5-6.5.</span>
               </li>
               <li className="flex items-start gap-2">
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
