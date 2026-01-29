@@ -3869,258 +3869,331 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
     </div>
   );
 
-  const MeasurementsTab = () => (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales - Protocolo 18L</h2>
-        <p className="text-slate-600">Registra las mediciones actuales de tu sistema según protocolo diario</p>
-      </div>
+  const MeasurementsTab = () => {
+    // Función para validar entrada decimal
+    const validateDecimalInput = (value, min, max, allowNegative = false) => {
+      // Permitir vacío temporalmente
+      if (value === "" || value === "-") return value;
+      
+      // Validar formato decimal
+      const decimalRegex = allowNegative ? /^-?\d*\.?\d*$/ : /^\d*\.?\d*$/;
+      if (!decimalRegex.test(value)) return false;
+      
+      // Validar rango numérico
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return false;
+      if (numValue < min || numValue > max) return false;
+      
+      return value;
+    };
 
-      <Card className="p-6 rounded-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-            <Clipboard className="text-white" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-800">Registro de Mediciones Diarias</h3>
-            <p className="text-slate-600">Protocolo: Medir 1 vez al día (mañana, aireador apagado)</p>
-          </div>
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales - Protocolo 18L</h2>
+          <p className="text-slate-600">Registra las mediciones actuales de tu sistema según protocolo diario</p>
         </div>
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                pH del Agua
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="4.0"
-                  max="9.0"
-                  step="0.1"
-                  value={measurements.manualPH}
-                  onChange={(e) => setMeasurements({...measurements, manualPH: e.target.value})}
-                  className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
-                />
-                <input
-                  type="number"
-                  min="4.0"
-                  max="9.0"
-                  step="0.1"
-                  value={measurements.manualPH}
-                  onChange={(e) => setMeasurements({...measurements, manualPH: e.target.value})}
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Objetivo: 5.8 | Rango: 5.5-6.5</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Conductividad (EC) en µS/cm
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="0"
-                  max="3000"
-                  step="50"
-                  value={measurements.manualEC}
-                  onChange={(e) => setMeasurements({...measurements, manualEC: e.target.value})}
-                  className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  max="3000"
-                  step="50"
-                  value={measurements.manualEC}
-                  onChange={(e) => setMeasurements({...measurements, manualEC: e.target.value})}
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Objetivo: 1400 | Rango: 1350-1500</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Temperatura Ambiente (°C)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="10"
-                  max="35"
-                  step="0.5"
-                  value={measurements.manualTemp}
-                  onChange={(e) => setMeasurements({...measurements, manualTemp: e.target.value})}
-                  className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
-                />
-                <input
-                  type="number"
-                  min="10"
-                  max="35"
-                  step="0.5"
-                  value={measurements.manualTemp}
-                  onChange={(e) => setMeasurements({...measurements, manualTemp: e.target.value})}
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Ideal: 18-25°C</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Temperatura del Agua (°C)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="10"
-                  max="30"
-                  step="0.5"
-                  value={measurements.manualWaterTemp}
-                  onChange={(e) => setMeasurements({...measurements, manualWaterTemp: e.target.value})}
-                  className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
-                />
-                <input
-                  type="number"
-                  min="10"
-                  max="30"
-                  step="0.5"
-                  value={measurements.manualWaterTemp}
-                  onChange={(e) => setMeasurements({...measurements, manualWaterTemp: e.target.value})}
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-cyan-600"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Objetivo: 20°C | Rango: 18-22°C</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Volumen Actual (L)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="0"
-                  max={config.totalVol}
-                  step="1"
-                  value={measurements.manualVolume}
-                  onChange={(e) => setMeasurements({...measurements, manualVolume: e.target.value})}
-                  className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  max={config.totalVol}
-                  step="1"
-                  value={measurements.manualVolume}
-                  onChange={(e) => setMeasurements({...measurements, manualVolume: e.target.value})}
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-emerald-600"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Total: {config.totalVol}L</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Humedad Relativa (%)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="20"
-                  max="90"
-                  step="1"
-                  value={measurements.manualHumidity}
-                  onChange={(e) => setMeasurements({...measurements, manualHumidity: e.target.value})}
-                  className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
-                />
-                <input
-                  type="number"
-                  min="20"
-                  max="90"
-                  step="1"
-                  value={measurements.manualHumidity}
-                  onChange={(e) => setMeasurements({...measurements, manualHumidity: e.target.value})}
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
-                />
-              </div>
-              <p className="text-xs text-slate-500 mt-1">Ideal: 40-70%</p>
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-slate-200">
-            <Button
-              onClick={saveManualMeasurement}
-              className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
-            >
-              <Clipboard className="mr-2" />
-              Guardar Medición Diaria
-            </Button>
-            <p className="text-xs text-slate-500 mt-3 text-center">
-              Última medición: {new Date(measurements.lastMeasurement).toLocaleString()}
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      {history.length > 0 && (
         <Card className="p-6 rounded-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="font-bold text-slate-800">Historial Reciente</h3>
-              <p className="text-slate-600">Últimas mediciones registradas</p>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <Clipboard className="text-white" size={24} />
             </div>
-            <Badge>{history.length} registros</Badge>
+            <div>
+              <h3 className="font-bold text-slate-800">Registro de Mediciones Diarias</h3>
+              <p className="text-slate-600">Protocolo: Medir 1 vez al día (mañana, aireador apagado)</p>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {history.slice(0, 5).map((record, index) => (
-              <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <p className="font-bold text-slate-800">
-                      {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    <p className="text-sm text-slate-600">{record.notes || "Medición diaria"}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteHistoryRecord(record.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  pH del Agua
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="4.0"
+                    max="9.0"
+                    step="0.1"
+                    value={parseFloat(measurements.manualPH) || 5.8}
+                    onChange={(e) => setMeasurements({...measurements, manualPH: e.target.value})}
+                    className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={measurements.manualPH}
+                    onChange={(e) => {
+                      const validated = validateDecimalInput(e.target.value, 4.0, 9.0);
+                      if (validated !== false) {
+                        setMeasurements({...measurements, manualPH: validated});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value) {
+                        setMeasurements({...measurements, manualPH: "5.8"});
+                      }
+                    }}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-purple-600"
+                    placeholder="5.8"
+                  />
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="text-center p-2 bg-purple-50 rounded-lg">
-                    <p className="text-xs text-purple-700">pH</p>
-                    <p className="font-bold text-purple-600">{record.ph}</p>
-                  </div>
-                  <div className="text-center p-2 bg-blue-50 rounded-lg">
-                    <p className="text-xs text-blue-700">EC</p>
-                    <p className="font-bold text-blue-600">{record.ec} µS/cm</p>
-                  </div>
-                  <div className="text-center p-2 bg-cyan-50 rounded-lg">
-                    <p className="text-xs text-cyan-700">Temp Agua</p>
-                    <p className="font-bold text-cyan-600">{record.temp}°C</p>
-                  </div>
-                  <div className="text-center p-2 bg-emerald-50 rounded-lg">
-                    <p className="text-xs text-emerald-700">Volumen</p>
-                    <p className="font-bold text-emerald-600">{record.volume}L</p>
-                  </div>
-                </div>
+                <p className="text-xs text-slate-500 mt-1">Objetivo: 5.8 | Rango: 5.5-6.5</p>
               </div>
-            ))}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Conductividad (EC) en µS/cm
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max="3000"
+                    step="50"
+                    value={parseFloat(measurements.manualEC) || 1400}
+                    onChange={(e) => setMeasurements({...measurements, manualEC: e.target.value})}
+                    className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={measurements.manualEC}
+                    onChange={(e) => {
+                      const validated = validateDecimalInput(e.target.value, 0, 3000);
+                      if (validated !== false) {
+                        setMeasurements({...measurements, manualEC: validated});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value) {
+                        setMeasurements({...measurements, manualEC: "1400"});
+                      }
+                    }}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
+                    placeholder="1400"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Objetivo: 1400 | Rango: 1350-1500</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Temperatura Ambiente (°C)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="10"
+                    max="35"
+                    step="0.5"
+                    value={parseFloat(measurements.manualTemp) || 20}
+                    onChange={(e) => setMeasurements({...measurements, manualTemp: e.target.value})}
+                    className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={measurements.manualTemp}
+                    onChange={(e) => {
+                      const validated = validateDecimalInput(e.target.value, 10, 35);
+                      if (validated !== false) {
+                        setMeasurements({...measurements, manualTemp: validated});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value) {
+                        setMeasurements({...measurements, manualTemp: "20"});
+                      }
+                    }}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600"
+                    placeholder="20"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Ideal: 18-25°C</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Temperatura del Agua (°C)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="10"
+                    max="30"
+                    step="0.5"
+                    value={parseFloat(measurements.manualWaterTemp) || 20}
+                    onChange={(e) => setMeasurements({...measurements, manualWaterTemp: e.target.value})}
+                    className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={measurements.manualWaterTemp}
+                    onChange={(e) => {
+                      const validated = validateDecimalInput(e.target.value, 10, 30);
+                      if (validated !== false) {
+                        setMeasurements({...measurements, manualWaterTemp: validated});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value) {
+                        setMeasurements({...measurements, manualWaterTemp: "20"});
+                      }
+                    }}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-cyan-600"
+                    placeholder="20"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Objetivo: 20°C | Rango: 18-22°C</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Volumen Actual (L)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="0"
+                    max={config.totalVol}
+                    step="1"
+                    value={parseFloat(measurements.manualVolume) || config.currentVol}
+                    onChange={(e) => setMeasurements({...measurements, manualVolume: e.target.value})}
+                    className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={measurements.manualVolume}
+                    onChange={(e) => {
+                      const validated = validateDecimalInput(e.target.value, 0, parseFloat(config.totalVol));
+                      if (validated !== false) {
+                        setMeasurements({...measurements, manualVolume: validated});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value) {
+                        setMeasurements({...measurements, manualVolume: config.currentVol});
+                      }
+                    }}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-emerald-600"
+                    placeholder={config.currentVol}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Total: {config.totalVol}L</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Humedad Relativa (%)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="20"
+                    max="90"
+                    step="1"
+                    value={parseFloat(measurements.manualHumidity) || 65}
+                    onChange={(e) => setMeasurements({...measurements, manualHumidity: e.target.value})}
+                    className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={measurements.manualHumidity}
+                    onChange={(e) => {
+                      const validated = validateDecimalInput(e.target.value, 20, 90);
+                      if (validated !== false) {
+                        setMeasurements({...measurements, manualHumidity: validated});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!e.target.value) {
+                        setMeasurements({...measurements, manualHumidity: "65"});
+                      }
+                    }}
+                    className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
+                    placeholder="65"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Ideal: 40-70%</p>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-200">
+              <Button
+                onClick={saveManualMeasurement}
+                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
+              >
+                <Clipboard className="mr-2" />
+                Guardar Medición Diaria
+              </Button>
+              <p className="text-xs text-slate-500 mt-3 text-center">
+                Última medición: {new Date(measurements.lastMeasurement).toLocaleString()}
+              </p>
+            </div>
           </div>
         </Card>
-      )}
-    </div>
-  );
+
+        {history.length > 0 && (
+          <Card className="p-6 rounded-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-bold text-slate-800">Historial Reciente</h3>
+                <p className="text-slate-600">Últimas mediciones registradas</p>
+              </div>
+              <Badge>{history.length} registros</Badge>
+            </div>
+
+            <div className="space-y-4">
+              {history.slice(0, 5).map((record, index) => (
+                <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-bold text-slate-800">
+                        {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      <p className="text-sm text-slate-600">{record.notes || "Medición diaria"}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteHistoryRecord(record.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="text-center p-2 bg-purple-50 rounded-lg">
+                      <p className="text-xs text-purple-700">pH</p>
+                      <p className="font-bold text-purple-600">{record.ph}</p>
+                    </div>
+                    <div className="text-center p-2 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-blue-700">EC</p>
+                      <p className="font-bold text-blue-600">{record.ec} µS/cm</p>
+                    </div>
+                    <div className="text-center p-2 bg-cyan-50 rounded-lg">
+                      <p className="text-xs text-cyan-700">Temp Agua</p>
+                      <p className="font-bold text-cyan-600">{record.temp}°C</p>
+                    </div>
+                    <div className="text-center p-2 bg-emerald-50 rounded-lg">
+                      <p className="text-xs text-emerald-700">Volumen</p>
+                      <p className="font-bold text-emerald-600">{record.volume}L</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+    );
+  };
 
   const CalendarTab = () => (
     <div className="space-y-8 animate-fade-in">
