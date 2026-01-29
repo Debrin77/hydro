@@ -97,26 +97,6 @@ const Switch = ({ checked, onCheckedChange }) => (
   </button>
 )
 
-const Slider = ({ value, min, max, step, onValueChange, className = "" }) => {
-  const handleChange = (e) => {
-    onValueChange([parseFloat(e.target.value)])
-  }
-
-  return (
-    <div className={`w-full ${className}`}>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value[0]}
-        onChange={handleChange}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-      />
-    </div>
-  )
-}
-
 // ============================================================================
 // CONFIGURACIÓN BASE - AGUA DESTILADA ÚNICA
 // ============================================================================
@@ -1560,6 +1540,7 @@ export default function HydroAppFinal() {
     }
   };
 
+  // FUNCIÓN CORREGIDA PARA SINCRONIZAR MEDICIONES CON EL PANEL DE CONTROL
   const saveManualMeasurement = () => {
     const now = new Date().toISOString();
     const measurementRecord = {
@@ -1574,7 +1555,7 @@ export default function HydroAppFinal() {
       notes: "Medición manual completa"
     };
 
-    // Actualizar configuración con nuevos valores
+    // ACTUALIZAR CONFIGURACIÓN CON NUEVOS VALORES - CORREGIDO
     setConfig(prev => ({
       ...prev,
       ph: measurements.manualPH,
@@ -1905,11 +1886,11 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         </div>
 
         <div className="space-y-8">
-          {/* Medidor de pH */}
+          {/* Medidor de pH - ACTUALIZADO PARA USAR measurements.manualPH */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
-                value={parseFloat(measurements.manualPH || config.ph)}
+                value={parseFloat(measurements.manualPH)}
                 min={4}
                 max={9}
                 label="pH"
@@ -1932,16 +1913,16 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium text-slate-700">Valor actual:</span>
-                    <span className="text-xl md:text-2xl font-bold text-purple-600">{parseFloat(measurements.manualPH || config.ph)}</span>
+                    <span className="text-xl md:text-2xl font-bold text-purple-600">{parseFloat(measurements.manualPH)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-slate-700">Estado:</span>
                     <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5
+                      parseFloat(measurements.manualPH) >= 5.5 && parseFloat(measurements.manualPH) <= 6.5
                         ? 'bg-green-100 text-green-800'
                         : 'bg-amber-100 text-amber-800'
                     }`}>
-                      {getStatusText("pH", parseFloat(measurements.manualPH || config.ph))}
+                      {getStatusText("pH", parseFloat(measurements.manualPH))}
                     </span>
                   </div>
                 </div>
@@ -1950,7 +1931,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <span className="font-medium">Objetivo:</span> {config.targetPH}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    {parseFloat(measurements.manualPH || config.ph) >= 5.5 && parseFloat(measurements.manualPH || config.ph) <= 6.5
+                    {parseFloat(measurements.manualPH) >= 5.5 && parseFloat(measurements.manualPH) <= 6.5
                       ? "✅ pH en rango ideal para absorción de nutrientes"
                       : "⚠️ Ajustar con método de titulación (0.5ml por paso)"}
                   </p>
@@ -1959,11 +1940,11 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
 
-          {/* Medidor de EC */}
+          {/* Medidor de EC - ACTUALIZADO PARA USAR measurements.manualEC */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
-                value={parseFloat(measurements.manualEC || config.ec)}
+                value={parseFloat(measurements.manualEC)}
                 min={0}
                 max={3000}
                 label="EC"
@@ -1989,7 +1970,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <span className={`text-xl md:text-2xl font-bold ${
                       ecAlert ? (ecAlert.severity === 1 ? 'text-red-600' : 'text-amber-600') : 'text-blue-600'
                     }`}>
-                      {parseFloat(measurements.manualEC || config.ec)} µS/cm
+                      {parseFloat(measurements.manualEC)} µS/cm
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -1997,7 +1978,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <span className={`px-3 py-1 rounded-full text-sm font-bold ${
                       ecAlert ? (ecAlert.severity === 1 ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800') : 'bg-green-100 text-green-800'
                     }`}>
-                      {getStatusText("EC", parseFloat(measurements.manualEC || config.ec))}
+                      {getStatusText("EC", parseFloat(measurements.manualEC))}
                     </span>
                   </div>
                 </div>
@@ -2019,7 +2000,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
 
-          {/* Medidor de Temperatura Agua */}
+          {/* Medidor de Temperatura Agua - ACTUALIZADO PARA USAR measurements.manualWaterTemp */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
@@ -2085,7 +2066,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
 
-          {/* Medidor de Volumen */}
+          {/* Medidor de Volumen - ACTUALIZADO PARA USAR measurements.manualVolume */}
           <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
             <div className="flex-shrink-0 order-1 md:order-2">
               <CircularGauge
@@ -3157,7 +3138,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         </div>
         
         <div className="flex-grow">
-          <h1 className="text-3xl font-bold text-slate-800">Panel de Control - PROTOCOLO 18L CORREGIDO</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Panel de Control</h1>
           <p className="text-slate-600">Sistema hidropónico con EC fija 1350-1500 µS/cm</p>
           
           <div className="flex items-center gap-3 mt-4">
@@ -3913,6 +3894,25 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         ...prev,
         [field]: sanitizedValue
       }));
+      
+      // ACTUALIZAR EL ESTADO GLOBAL INMEDIATAMENTE - CORREGIDO
+      setMeasurements(prev => ({
+        ...prev,
+        [field]: sanitizedValue
+      }));
+      
+      // ACTUALIZAR LA CONFIGURACIÓN INMEDIATAMENTE PARA QUE SE VEA EN EL DASHBOARD - CORREGIDO
+      if (field === 'manualPH') {
+        setConfig(prev => ({ ...prev, ph: sanitizedValue }));
+      } else if (field === 'manualEC') {
+        setConfig(prev => ({ ...prev, ec: sanitizedValue }));
+      } else if (field === 'manualTemp') {
+        setConfig(prev => ({ ...prev, temp: sanitizedValue }));
+      } else if (field === 'manualWaterTemp') {
+        // No actualizar config.temp para no mezclar con temperatura ambiente
+      } else if (field === 'manualVolume') {
+        setConfig(prev => ({ ...prev, currentVol: sanitizedValue }));
+      }
     };
 
     // Función para manejar el blur (cuando el input pierde el foco)
@@ -3926,22 +3926,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
       const numericValue = parseFloat(value.replace(',', '.'));
       
       if (!isNaN(numericValue)) {
-        // Actualizar el estado global
-        setMeasurements(prev => ({
-          ...prev,
-          [field]: value
-        }));
-        
-        // Actualizar config si es necesario
-        if (field === 'manualPH') {
-          setConfig(prev => ({ ...prev, ph: value }));
-        } else if (field === 'manualEC') {
-          setConfig(prev => ({ ...prev, ec: value }));
-        } else if (field === 'manualTemp') {
-          setConfig(prev => ({ ...prev, temp: value }));
-        } else if (field === 'manualVolume') {
-          setConfig(prev => ({ ...prev, currentVol: value }));
-        }
+        // El valor ya fue actualizado en handleInputChange
       } else {
         // Si no es un número válido, restaurar el valor anterior
         setLocalValues(prev => ({
@@ -3960,18 +3945,21 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         [field]: stringValue
       }));
       
+      // ACTUALIZAR EL ESTADO GLOBAL INMEDIATAMENTE - CORREGIDO
       setMeasurements(prev => ({
         ...prev,
         [field]: stringValue
       }));
       
-      // Actualizar config si es necesario
+      // ACTUALIZAR LA CONFIGURACIÓN INMEDIATAMENTE - CORREGIDO
       if (field === 'manualPH') {
         setConfig(prev => ({ ...prev, ph: stringValue }));
       } else if (field === 'manualEC') {
         setConfig(prev => ({ ...prev, ec: stringValue }));
       } else if (field === 'manualTemp') {
         setConfig(prev => ({ ...prev, temp: stringValue }));
+      } else if (field === 'manualWaterTemp') {
+        // No actualizar config.temp para no mezclar con temperatura ambiente
       } else if (field === 'manualVolume') {
         setConfig(prev => ({ ...prev, currentVol: stringValue }));
       }
@@ -4775,8 +4763,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <Sprout className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="font-bold text-slate-800">HydroCaru - PROTOCOLO 18L CORREGIDO</h1>
-                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 45ml AQUA VEGA A+B (CORREGIDO)</p>
+                <h1 className="font-bold text-slate-800">HydroCaru</h1>
+                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 45ml AQUA VEGA A+B</p>
               </div>
             </div>
 
@@ -5027,34 +5015,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         plants={plants}
       />
 
-      {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 py-3">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="text-sm text-slate-600 flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${alerts.some(a => a.priority === 1) ? 'bg-red-500 animate-pulse' : 'bg-green-500'
-                }`} />
-              <span>
-                {alerts.filter(a => a.priority === 1).length > 0
-                  ? `${alerts.filter(a => a.priority === 1).length} alertas`
-                  : "Sistema estable"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4 text-sm text-slate-600">
-              <span>{plants.length} plantas</span>
-              <span>•</span>
-              <span>EC: 1350-1500 µS/cm</span>
-              <span>•</span>
-              <span>Agua: Destilada 18L</span>
-              <span>•</span>
-              <span>Nutrientes: 45ml A+B (CORREGIDO)</span>
-              <span>•</span>
-              <span>Sin CalMag</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Footer - ELIMINADO SEGÚN SOLICITUD */}
     </div>
   );
 }
