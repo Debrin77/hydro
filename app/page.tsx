@@ -33,7 +33,7 @@ const Card = ({ children, className = "" }) => (
   </div>
 )
 
-const Button = ({ children, onClick, className = "", variant = "default", disabled = false }) => {
+const Button = ({ children, onClick, className = "", variant = "default", disabled = false, size = "default" }) => {
   const baseStyles = "px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
 
   const variants = {
@@ -43,11 +43,16 @@ const Button = ({ children, onClick, className = "", variant = "default", disabl
     ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500"
   }
 
+  const sizes = {
+    default: "px-4 py-2",
+    sm: "px-3 py-1 text-sm"
+  }
+
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${baseStyles} ${variants[variant]} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
     >
       {children}
     </button>
@@ -168,7 +173,7 @@ const VARIETIES = {
 };
 
 // ============================================================================
-// FUNCIONES DE CÁLCULO ACTUALIZADAS - CORREGIDAS
+// FUNCIONES DE CÁLCULO ACTUALIZADAS - MODIFICADAS PARA 12 DÍAS
 // ============================================================================
 
 /**
@@ -401,7 +406,7 @@ const calculatePHAdjustment = (currentPH, targetPH, volume) => {
 };
 
 /**
- * Genera calendario de mantenimiento
+ * Genera calendario de mantenimiento - MODIFICADO PARA 12 DÍAS
  */
 const generateCalendar = (plants, lastRot, lastClean) => {
   const now = new Date();
@@ -472,7 +477,7 @@ const generateCalendar = (plants, lastRot, lastClean) => {
     }
 
     // Recarga de nutrientes cada 7-10 días
-    if (diffDays > 0 && diffDays % 7 === 0) {
+    if (diffDays > 0 && diffDays % 10 === 0) {
       day.events.push('recharge');
     }
 
@@ -481,9 +486,9 @@ const generateCalendar = (plants, lastRot, lastClean) => {
       day.events.push('change');
     }
 
-    // Rotación según crecimiento
+    // Rotación según crecimiento - MODIFICADO A 12 DÍAS
     const daysFromLastRot = Math.floor((dayDate - lastRotDate) / (1000 * 3600 * 24));
-    if (daysFromLastRot > 0 && daysFromLastRot % 14 === 0) {
+    if (daysFromLastRot > 0 && daysFromLastRot % 12 === 0) {
       day.events.push('rotation');
     }
 
@@ -508,7 +513,7 @@ const getSeason = (currentTime = new Date()) => {
 };
 
 /**
- * Calcula riego para torre vertical en Castellón - Actualizado con protocolo revisado
+ * Calcula riego para torre vertical - NUEVO PROGRAMA DE RIEGO
  */
 const calculateIrrigation = (plants, temp, humidity, season) => {
   if (plants.length === 0) {
@@ -518,76 +523,92 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
       cyclesPerDay: 0,
       secondsPerCycle: "0",
       recommendations: ["Añade plantas al sistema para calcular riego"],
-      notes: ["Protocolo revisado: 6 segundos empapan lana de roca"]
+      notes: ["Protocolo revisado: 3 minutos cada hora de 8:30 a 20:30, luego 00:00, 03:00 y 05:30"],
+      schedule: []
     };
   }
 
-  // Cálculo basado en observación real: 6 segundos empapan lana de roca
-  let secondsPerCycle = 6; // Valor base según observación
-  
-  // Ajustes por temperatura
-  if (temp > 28) secondsPerCycle = 8;
-  else if (temp > 25) secondsPerCycle = 7;
-  else if (temp < 15) secondsPerCycle = 4;
-  
-  // Ajustes por humedad
-  if (humidity < 40) secondsPerCycle += 1;
-  if (humidity > 70) secondsPerCycle -= 1;
-  
-  // Límites seguros
-  secondsPerCycle = Math.max(4, Math.min(secondsPerCycle, 10));
-  
-  // Cálculo de ciclos según temperatura
-  let cyclesPerDay;
-  if (temp > 28) {
-    cyclesPerDay = 12;
-  } else if (temp > 25) {
-    cyclesPerDay = 10;
-  } else if (temp > 20) {
-    cyclesPerDay = 8;
-  } else if (temp > 15) {
-    cyclesPerDay = 6;
-  } else {
-    cyclesPerDay = 4;
-  }
-  
-  // Ajuste por humedad
-  if (humidity < 40) cyclesPerDay += 2;
-  if (humidity > 70) cyclesPerDay -= 2;
-  
-  cyclesPerDay = Math.max(4, Math.min(cyclesPerDay, 16));
-  
-  // Intervalo entre ciclos
-  const dailyMinutes = 24 * 60;
-  const intervalBetweenCycles = dailyMinutes / cyclesPerDay;
-  const intervalHours = Math.floor(intervalBetweenCycles / 60);
-  const intervalMinutes = Math.round(intervalBetweenCycles % 60);
+  // NUEVO PROGRAMA DE RIEGO
+  const schedule = [
+    { time: "08:30", duration: 180, note: "Primer riego del día" },
+    { time: "09:30", duration: 180, note: "Riego horario" },
+    { time: "10:30", duration: 180, note: "Riego horario" },
+    { time: "11:30", duration: 180, note: "Riego horario" },
+    { time: "12:30", duration: 180, note: "Riego horario" },
+    { time: "13:30", duration: 180, note: "Riego horario" },
+    { time: "14:30", duration: 180, note: "Riego horario" },
+    { time: "15:30", duration: 180, note: "Riego horario" },
+    { time: "16:30", duration: 180, note: "Riego horario" },
+    { time: "17:30", duration: 180, note: "Riego horario" },
+    { time: "18:30", duration: 180, note: "Riego horario" },
+    { time: "19:30", duration: 180, note: "Riego horario" },
+    { time: "20:30", duration: 180, note: "Último riego diurno" },
+    { time: "00:00", duration: 180, note: "Riego nocturno" },
+    { time: "03:00", duration: 180, note: "Riego nocturno" },
+    { time: "05:30", duration: 180, note: "Riego previo al amanecer" }
+  ];
+
+  const cyclesPerDay = schedule.length;
+  const secondsPerCycle = 180; // 3 minutos
+  const totalSeconds = cyclesPerDay * secondsPerCycle;
+  const totalMinutes = totalSeconds / 60;
   
   // Consumo de agua estimado (alto caudal por observación)
   const flowRate = 8; // L/hora estimado
-  const secondsPerDay = secondsPerCycle * cyclesPerDay;
-  const hoursPerDay = secondsPerDay / 3600;
+  const hoursPerDay = totalSeconds / 3600;
   const totalWaterNeeds = hoursPerDay * flowRate;
+  
+  // Ajustes por temperatura y humedad
+  let adjustedSecondsPerCycle = secondsPerCycle;
+  let adjustedCyclesPerDay = cyclesPerDay;
+  
+  if (temp > 28) {
+    adjustedSecondsPerCycle = 210; // 3.5 minutos
+    adjustedCyclesPerDay = 18; // Más ciclos en calor
+  } else if (temp > 25) {
+    adjustedSecondsPerCycle = 180; // 3 minutos
+  } else if (temp < 15) {
+    adjustedSecondsPerCycle = 150; // 2.5 minutos
+    adjustedCyclesPerDay = 14; // Menos ciclos en frío
+  }
+  
+  // Ajustes por humedad
+  if (humidity < 40) {
+    adjustedSecondsPerCycle += 30; // +30 segundos si humedad baja
+  } else if (humidity > 70) {
+    adjustedSecondsPerCycle -= 30; // -30 segundos si humedad alta
+  }
+  
+  // Límites seguros
+  adjustedSecondsPerCycle = Math.max(120, Math.min(adjustedSecondsPerCycle, 240)); // 2-4 minutos
+  adjustedCyclesPerDay = Math.max(12, Math.min(adjustedCyclesPerDay, 18));
   
   return {
     totalWaterNeeds: totalWaterNeeds.toFixed(2),
-    pumpMinutesPerDay: (secondsPerDay / 60).toFixed(1),
-    cyclesPerDay,
+    pumpMinutesPerDay: totalMinutes.toFixed(1),
+    cyclesPerDay: cyclesPerDay,
     secondsPerCycle: secondsPerCycle.toString(),
-    intervalHours,
-    intervalMinutes,
+    schedule: schedule,
     recommendations: [
-      `⏰ ${cyclesPerDay} ciclos/día (cada ${intervalHours}h ${intervalMinutes > 0 ? intervalMinutes + 'min' : ''})`,
-      `💧 ${secondsPerCycle} segundos por ciclo`,
-      `📊 Basado en tu observación: 6s empapan la lana de roca`,
-      "⚡ AJUSTE MANUAL: Si 6s empapa → reducir a 4-5s. Si se seca rápido → aumentar a 7-8s",
+      "⏰ PROGRAMA DE RIEGO FIJO:",
+      "• 08:30 a 20:30 → Riego cada hora (3 minutos por ciclo)",
+      "• 00:00 → Riego nocturno (3 minutos)",
+      "• 03:00 → Riego nocturno (3 minutos)", 
+      "• 05:30 → Riego previo al amanecer (3 minutos)",
+      `📊 Total: ${cyclesPerDay} ciclos/día (${totalMinutes} minutos totales)`,
+      `💧 ${totalWaterNeeds}L de agua estimados por día`,
       "🌡️ Ajustar según temperatura y humedad ambiente"
     ],
     notes: [
-      "Protocolo revisado basado en observación real",
+      "Protocolo optimizado para máximo crecimiento",
       "Caudal alto estimado por eficiencia de torre",
-      "Monitorear humedad de lana de roca para ajustes"
-    ]
+      "3 minutos garantizan que los nutrientes lleguen a todas las raíces"
+    ],
+    adjustedSchedule: {
+      secondsPerCycle: adjustedSecondsPerCycle,
+      cyclesPerDay: adjustedCyclesPerDay,
+      note: `Ajustado por condiciones: ${adjustedSecondsPerCycle}s por ciclo, ${adjustedCyclesPerDay} ciclos/día`
+    }
   };
 };
 
@@ -1161,7 +1182,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="space-y-4">
             <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-              <h4 className="font-bold text-blue-700 mb-3">📋 Proceso de Rotación</h4>
+              <h4 className="font-bold text-blue-700 mb-3">📋 Proceso de Rotación - CADA 12 DÍAS</h4>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-rose-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -1169,7 +1190,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Nivel 3 → Cosecha</p>
-                    <p className="text-sm text-slate-600">Plantas maduras se cosechan</p>
+                    <p className="text-sm text-slate-600">Plantas maduras se cosechan después de 36 días</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -1178,7 +1199,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Nivel 2 → Nivel 3</p>
-                    <p className="text-sm text-slate-600">Plantas en crecimiento pasan a maduración</p>
+                    <p className="text-sm text-slate-600">Plantas en crecimiento pasan a maduración (días 13-24)</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -1187,7 +1208,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Nivel 1 → Nivel 2</p>
-                    <p className="text-sm text-slate-600">Plántulas pasan a crecimiento</p>
+                    <p className="text-sm text-slate-600">Plántulas pasan a crecimiento (días 1-12)</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -1196,7 +1217,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Añadir nuevas plántulas</p>
-                    <p className="text-sm text-slate-600">Nuevas plantas en nivel 1 (5 máximo)</p>
+                    <p className="text-sm text-slate-600">Nuevas plantas en nivel 1 (5 máximo) cada 12 días</p>
                   </div>
                 </div>
               </div>
@@ -1244,7 +1265,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 
           <div className="space-y-4">
             <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-              <h4 className="font-bold text-purple-700 mb-3">📊 Resumen de Rotación</h4>
+              <h4 className="font-bold text-purple-700 mb-3">📊 Resumen de Rotación - CICLO 36 DÍAS</h4>
 
               <div className="space-y-4">
                 <div className="p-3 bg-white rounded-lg">
@@ -1274,6 +1295,24 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-slate-700">Nivel 3 (ex nivel 2):</span>
                       <span className="font-bold text-emerald-600">{plants.filter(p => p.l === 2).length} plantas</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                  <h5 className="font-bold text-blue-700 mb-2">📅 Cronograma de Rotación</h5>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Nivel 1 (plántulas):</span>
+                      <span className="font-bold text-cyan-600">Días 1-12</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Nivel 2 (crecimiento):</span>
+                      <span className="font-bold text-green-600">Días 13-24</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700">Nivel 3 (maduración):</span>
+                      <span className="font-bold text-emerald-600">Días 25-36</span>
                     </div>
                   </div>
                 </div>
@@ -1337,7 +1376,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
               disabled={newSeedlings.length === 0}
             >
               <RotateCcw className="mr-2" />
-              Confirmar Rotación
+              Confirmar Rotación (Cada 12 días)
             </Button>
           </div>
         </div>
@@ -1347,7 +1386,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL - REESCRITO COMPLETAMENTE
+// COMPONENTE PRINCIPAL - REESCRITO COMPLETAMENTE CON LOS CAMBIOS SOLICITADOS
 // ============================================================================
 
 export default function HydroAppFinal() {
@@ -1518,11 +1557,11 @@ export default function HydroAppFinal() {
     // 7. Cerrar modal y mostrar confirmación
     setShowRotationModal(false);
 
-    alert(`✅ Rotación completada exitosamente:
-• ${plants.filter(p => p.l === 3).length} plantas cosechadas (nivel 3)
-• ${plants.filter(p => p.l === 2).length} plantas movidas a nivel 3
-• ${plants.filter(p => p.l === 1).length} plantas movidas a nivel 2
-• ${newSeedlings.length} nuevas plántulas añadidas al nivel 1`);
+    alert(`✅ Rotación completada exitosamente (Cada 12 días):
+• ${plants.filter(p => p.l === 3).length} plantas cosechadas (nivel 3 - 36 días)
+• ${plants.filter(p => p.l === 2).length} plantas movidas a nivel 3 (días 25-36)
+• ${plants.filter(p => p.l === 1).length} plantas movidas a nivel 2 (días 13-24)
+• ${newSeedlings.length} nuevas plántulas añadidas al nivel 1 (días 1-12)`);
 
     setTab("tower");
   };
@@ -1735,7 +1774,7 @@ Humedad: ${updatedMeasurements.manualHumidity}%`);
     return getSeason();
   }, []);
 
-  // =================== ALERTAS ACTUALIZADAS ===================
+  // =================== ALERTAS ACTUALIZADAS - MODIFICADAS PARA 12 DÍAS ===================
 
   const alerts = useMemo(() => {
     const vAct = parseFloat(measurements.manualVolume || config.currentVol) || 0;
@@ -1886,7 +1925,7 @@ Humedad: ${updatedMeasurements.manualHumidity}%`);
     
     if (daysSinceLastRecharge) {
       const daysDiff = Math.floor((new Date() - new Date(daysSinceLastRecharge.date)) / (1000 * 3600 * 24));
-      if (daysDiff >= 7) {
+      if (daysDiff >= 10) {
         res.push({
           title: "RECARGA DE NUTRIENTES",
           value: `${daysDiff} días`,
@@ -1914,8 +1953,24 @@ Humedad: ${updatedMeasurements.manualHumidity}%`);
       });
     }
 
+    // Alerta de rotación (cada 12 días)
+    const lastRotDate = new Date(lastRot);
+    const daysSinceRot = Math.floor((now - lastRotDate) / (1000 * 3600 * 24));
+    
+    if (daysSinceRot >= 10) {
+      res.push({
+        title: daysSinceRot >= 12 ? "¡ROTACIÓN URGENTE!" : "ROTACIÓN PRÓXIMA",
+        value: `${daysSinceRot} días`,
+        description: daysSinceRot >= 12 ? "Realizar rotación de niveles" : "Programar rotación en próximos días",
+        color: daysSinceRot >= 12 ? "bg-gradient-to-r from-orange-700 to-red-800" : "bg-gradient-to-r from-amber-600 to-orange-600",
+        icon: <RotateCcw className="text-white" size={28} />,
+        priority: daysSinceRot >= 12 ? 1 : 2,
+        details: "Rotación cada 12 días: N1→N2→N3→Cosecha"
+      });
+    }
+
     return res.sort((a, b) => a.priority - b.priority);
-  }, [config, lastClean, history, phAdjustment, aquaVegaDosage, measurements]);
+  }, [config, lastClean, lastRot, history, phAdjustment, aquaVegaDosage, measurements]);
 
   // =================== FUNCIÓN PARA REGISTRAR LIMPIEZA ===================
 
@@ -1961,7 +2016,7 @@ Próximo cambio recomendado: en 14 días`);
 • +13ml AQUA VEGA B
 • Para 18L de solución
 
-Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
+Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
   };
 
   // =================== COMPONENTES DE PESTAÑAS ===================
@@ -2333,8 +2388,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
     return (
       <div className="space-y-8 animate-fade-in">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Cálculo de Riego - Protocolo Revisado</h2>
-          <p className="text-slate-600">Basado en observación real: 6 segundos empapan la lana de roca</p>
+          <h2 className="text-2xl font-bold text-slate-800">Programa de Riego Optimizado - 3 minutos por ciclo</h2>
+          <p className="text-slate-600">Nuevo programa: 08:30-20:30 cada hora, luego 00:00, 03:00 y 05:30</p>
         </div>
 
         <Card className="p-6 rounded-2xl">
@@ -2343,17 +2398,17 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <WaterDroplets className="text-white" size={24} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800">Configuración de Riego</h3>
-              <p className="text-sm text-slate-600">Protocolo basado en tu observación de 6 segundos</p>
+              <h3 className="font-bold text-slate-800">Programa de Riego Optimizado</h3>
+              <p className="text-sm text-slate-600">3 minutos por ciclo para garantizar que los nutrientes lleguen a todas las raíces</p>
             </div>
           </div>
 
-          <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-            <h4 className="font-bold text-amber-700 mb-3">📌 OBSERVACIÓN CLAVE - PROTOCOLO 18L</h4>
+          <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+            <h4 className="font-bold text-emerald-700 mb-3">✅ PROGRAMA OPTIMIZADO CONFIRMADO</h4>
             <p className="text-slate-700">
-              <strong>Has observado que con solo 6 segundos de riego la lana de roca se empapa completamente.</strong>
+              <strong>Programa de riego mejorado:</strong> 3 minutos por ciclo garantizan que los nutrientes lleguen a todas las raíces de la torre vertical.
               <br />
-              Esto confirma que tu sistema tiene un caudal alto y distribuye el agua eficientemente.
+              <strong>Horario:</strong> 08:30 a 20:30 cada hora + 00:00, 03:00 y 05:30.
             </p>
           </div>
 
@@ -2361,24 +2416,24 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
               <h4 className="font-bold text-blue-700 mb-3">⏱️ Tiempo por Ciclo</h4>
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600">{irrigationData.secondsPerCycle}s</div>
-                <p className="text-sm text-slate-600">Por ciclo</p>
-                <p className="text-xs text-slate-500 mt-2">Basado en tu observación de 6 segundos</p>
+                <div className="text-4xl font-bold text-blue-600">3:00</div>
+                <p className="text-sm text-slate-600">minutos por ciclo</p>
+                <p className="text-xs text-slate-500 mt-2">Garantiza llegada a todas las raíces</p>
                 <div className="mt-3">
                   <Badge className="bg-blue-100 text-blue-800">
-                    {irrigationData.secondsPerCycle === "6" ? "✅ Tu observación exacta" : "Ajustado por condiciones"}
+                    ✅ Programa optimizado
                   </Badge>
                 </div>
               </div>
             </div>
 
             <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-              <h4 className="font-bold text-emerald-700 mb-3">🔄 Frecuencia</h4>
+              <h4 className="font-bold text-emerald-700 mb-3">🔄 Frecuencia Total</h4>
               <div className="text-center">
                 <div className="text-4xl font-bold text-emerald-600">{irrigationData.cyclesPerDay}</div>
                 <p className="text-sm text-slate-600">ciclos/día</p>
                 <p className="text-xs text-slate-500 mt-2">
-                  Cada {irrigationData.intervalHours}h {irrigationData.intervalMinutes > 0 ? irrigationData.intervalMinutes + 'min' : ''}
+                  13 diurnos + 3 nocturnos
                 </p>
               </div>
             </div>
@@ -2396,8 +2451,25 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           </div>
 
           <div className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
-            <h3 className="font-bold text-slate-800 mb-6 text-center">📋 RECOMENDACIONES BASADAS EN TU OBSERVACIÓN</h3>
+            <h3 className="font-bold text-slate-800 mb-6 text-center">📋 HORARIO COMPLETO DE RIEGO</h3>
             
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {irrigationData.schedule.map((item, index) => (
+                <div key={index} className="p-4 bg-white rounded-xl border-2 border-blue-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-bold text-blue-600">{item.time}</span>
+                    <Badge className="bg-blue-100 text-blue-800">
+                      {item.duration}s
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-slate-600">{item.note}</p>
+                  <p className="text-xs text-slate-500 mt-2">
+                    {index < 12 ? "🌞 Diurno" : "🌙 Nocturno"}
+                  </p>
+                </div>
+              ))}
+            </div>
+
             <div className="space-y-4">
               {irrigationData.recommendations.map((rec, index) => (
                 <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-slate-200">
@@ -2409,23 +2481,23 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               ))}
             </div>
 
-            <div className="mt-6 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl">
-              <h4 className="font-bold text-cyan-700 mb-3">🎯 GUÍA DE AJUSTE MANUAL - PROTOCOLO 18L</h4>
+            <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
+              <h4 className="font-bold text-amber-700 mb-3">⚙️ AJUSTES POR CONDICIONES AMBIENTALES</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-white rounded-lg">
-                  <h5 className="font-bold text-red-600 mb-2">SI LA LANA DE ROCA SE EMPAPA DEMASIADO:</h5>
+                  <h5 className="font-bold text-red-600 mb-2">EN VERANO O DÍAS CALUROSOS (&gt;28°C):</h5>
                   <ul className="text-sm text-slate-700 space-y-1">
-                    <li>• Reducir tiempo a <strong>4-5 segundos</strong></li>
-                    <li>• Aumentar intervalo entre ciclos en 1-2 horas</li>
-                    <li>• Verificar que no haya goteo continuo</li>
+                    <li>• Aumentar a 3.5 minutos por ciclo</li>
+                    <li>• Añadir 2-3 ciclos adicionales</li>
+                    <li>• Verificar humedad de lana de roca</li>
                   </ul>
                 </div>
                 <div className="p-3 bg-white rounded-lg">
-                  <h5 className="font-bold text-emerald-600 mb-2">SI LA LANA DE ROCA SE SECA RÁPIDO:</h5>
+                  <h5 className="font-bold text-blue-600 mb-2">EN INVIERNO O DÍAS FRÍOS (&lt;15°C):</h5>
                   <ul className="text-sm text-slate-700 space-y-1">
-                    <li>• Aumentar tiempo a <strong>7-8 segundos</strong></li>
-                    <li>• Reducir intervalo entre ciclos en 1-2 horas</li>
-                    <li>• Verificar que todas las plantas reciben agua</li>
+                    <li>• Reducir a 2.5 minutos por ciclo</li>
+                    <li>• Eliminar 1-2 ciclos nocturnos</li>
+                    <li>• Verificar que no haya exceso de humedad</li>
                   </ul>
                 </div>
               </div>
@@ -2433,73 +2505,60 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           </div>
 
           <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
-            <h3 className="font-bold text-purple-800 mb-4">⚙️ Variables Consideradas - Protocolo 18L</h3>
+            <h3 className="font-bold text-purple-800 mb-4">📊 RESUMEN DEL PROGRAMA DE RIEGO</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-3 bg-white rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-700">Temperatura actual:</span>
-                  <span className="font-bold text-amber-600">{measurements.manualTemp}°C</span>
+                  <span className="text-slate-700">Ciclos diurnos (08:30-20:30):</span>
+                  <span className="font-bold text-emerald-600">13 ciclos</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {parseFloat(measurements.manualTemp) > 25 ? "☀️ Calor → más ciclos" :
-                   parseFloat(measurements.manualTemp) > 20 ? "🌤️ Templado → ciclos normales" :
-                   parseFloat(measurements.manualTemp) > 15 ? "⛅ Fresco → menos ciclos" :
-                   "❄️ Frío → mínimos ciclos"}
+                  Cada hora exacta
                 </p>
               </div>
 
               <div className="p-3 bg-white rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-700">Humedad actual:</span>
-                  <span className="font-bold text-cyan-600">{measurements.manualHumidity}%</span>
+                  <span className="text-slate-700">Ciclos nocturnos:</span>
+                  <span className="font-bold text-blue-600">3 ciclos</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {parseFloat(measurements.manualHumidity) < 40 ? "🏜️ Seco → más tiempo/ciclo" :
-                   parseFloat(measurements.manualHumidity) < 60 ? "✅ Ideal" :
-                   "💦 Húmedo → menos tiempo/ciclo"}
+                  00:00, 03:00 y 05:30
                 </p>
               </div>
 
               <div className="p-3 bg-white rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-700">Estación:</span>
-                  <span className="font-bold text-emerald-600">
-                    {season === "summer" ? "Verano" :
-                     season === "winter" ? "Invierno" :
-                     "Primavera/Otoño"}
-                  </span>
+                  <span className="text-slate-700">Tiempo total de riego:</span>
+                  <span className="font-bold text-amber-600">{irrigationData.pumpMinutesPerDay} min/día</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {season === "summer" ? "Evaporación alta → ciclos frecuentes" :
-                   season === "winter" ? "Evaporación baja → ciclos espaciados" :
-                   "Condiciones moderadas"}
+                  {Math.floor(parseFloat(irrigationData.pumpMinutesPerDay) / 60)}h {parseFloat(irrigationData.pumpMinutesPerDay) % 60}min
                 </p>
               </div>
 
               <div className="p-3 bg-white rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-700">Plantas en sistema:</span>
-                  <span className="font-bold text-blue-600">{plants.length} plantas</span>
+                  <span className="text-slate-700">Consumo agua estimado:</span>
+                  <span className="font-bold text-cyan-600">{irrigationData.totalWaterNeeds}L/día</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  {plants.length > 10 ? "Alta densidad → vigilar humedad" :
-                   plants.length > 5 ? "Densidad media" :
-                   "Baja densidad → ajustar según necesidad"}
+                  {plants.length > 0 ? `${(parseFloat(irrigationData.totalWaterNeeds) / plants.length).toFixed(2)}L por planta` : ''}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
-            <h3 className="font-bold text-emerald-800 mb-4">📝 Protocolo de Ajuste Paso a Paso</h3>
+            <h3 className="font-bold text-emerald-800 mb-4">🎯 BENEFICIOS DEL NUEVO PROGRAMA</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
                 <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
                   1
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Comienza con {irrigationData.secondsPerCycle} segundos por ciclo</p>
-                  <p className="text-sm text-slate-600">Programa {irrigationData.cyclesPerDay} ciclos al día</p>
+                  <p className="font-bold text-slate-800">Nutrientes garantizados en todas las raíces</p>
+                  <p className="text-sm text-slate-600">3 minutos aseguran distribución completa en la torre</p>
                 </div>
               </div>
 
@@ -2508,8 +2567,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   2
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Observa la lana de roca 1 hora después del riego</p>
-                 <p className="text-sm text-slate-600">Debe estar húmeda pero no chorreando agua</p>
+                  <p className="font-bold text-slate-800">Crecimiento óptimo día y noche</p>
+                  <p className="text-sm text-slate-600">Ciclos nocturnos mantienen hidratación constante</p>
                 </div>
               </div>
 
@@ -2518,11 +2577,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   3
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Ajusta según necesidad</p>
-                  <p className="text-sm text-slate-600">
-                    <strong>Empapada:</strong> reducir 1-2 segundos<br />
-                    <strong>Secándose rápido:</strong> aumentar 1-2 segundos
-                  </p>
+                  <p className="font-bold text-slate-800">Prevención de estrés hídrico</p>
+                  <p className="text-sm text-slate-600">Frecuencia adecuada evita sequía entre riegos</p>
                 </div>
               </div>
 
@@ -2531,8 +2587,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   4
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Revisa cada 2-3 días</p>
-                  <p className="text-sm text-slate-600">Las necesidades cambian con el crecimiento de las plantas</p>
+                  <p className="font-bold text-slate-800">Maximización de producción</p>
+                  <p className="text-sm text-slate-600">Condiciones ideales para crecimiento acelerado</p>
                 </div>
               </div>
             </div>
@@ -2542,7 +2598,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
     );
   };
 
-  // =================== PESTAÑA DE MEDICIONES REESCRITA COMPLETAMENTE ===================
+  // =================== PESTAÑA DE MEDICIONES ===================
 
   const MeasurementsTab = () => {
     // Helper function to get numeric value for slider
@@ -2831,9 +2887,18 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           <div className="text-center space-y-10 animate-fade-in">
             <div className="flex justify-center">
               <div className="relative">
-                <div className="w-80 h-80 rounded-full overflow-hidden shadow-2xl">
+                <div className="w-80 h-80 rounded-full overflow-hidden shadow-2xl border-4 border-emerald-400">
                   <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
-                    <Sprout className="text-white" size={120} />
+                    {/* Reemplazamos el icono con la imagen personalizada */}
+                    <div className="relative w-64 h-64">
+                      <Image
+                        src="/mi-imagen.jpg"
+                        alt="HydroCaru Logo"
+                        fill
+                        className="object-cover rounded-full"
+                        priority
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2940,8 +3005,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                         <p className="text-sm text-slate-600">Rutina a partir del día 2</p>
                         <p className="text-sm text-emerald-600 font-bold mt-1">• Medir pH y EC 1 vez al día (mañana, aireador apagado)</p>
                         <p className="text-sm text-emerald-600 font-bold">• Rellenar agua evaporada solo con agua destilada</p>
-                        <p className="text-sm text-emerald-600 font-bold">• Cada 7-10 días: recargar nutrientes si EC baja 30%</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Cada 10 días: recargar nutrientes si EC baja 30%</p>
                         <p className="text-sm text-emerald-600 font-bold">• Cada 2 semanas: cambio completo de solución</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Cada 12 días: rotación de niveles (Ciclo 36 días)</p>
                       </div>
                     </div>
                   </div>
@@ -3003,6 +3069,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
                       <span><strong>Ajuste EC:</strong> +3.2ml A+B por cada 0.1 mS/cm de diferencia</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <span><strong>Rotación cada 12 días:</strong> Ciclo completo de 36 días (12+12+12)</span>
                     </li>
                   </ul>
                 </div>
@@ -3127,6 +3197,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     <br />• Protocolo: 45ml de A y B → EC objetivo 1.4 mS/cm (CORREGIDO)
                     <br />• <strong>NO se requiere CalMag</strong> - Los nutrientes ya contienen Ca y Mg
                     <br />• Ajuste EC: +3.2ml A+B por cada 0.1 mS/cm de diferencia
+                    <br />• Rotación: Cada 12 días (Ciclo completo 36 días)
                   </p>
                 </div>
               </Card>
@@ -3268,6 +3339,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                         • Agua destilada si {'>'} 1.6<br />
                         • 45ml A+B por 18L agua destilada<br />
                         • <strong>NO CalMag</strong> - Ya incluido en AQUA VEGA
+                        • <strong>Rotación cada 12 días</strong> - Ciclo 36 días
                       </p>
                     </div>
                   </div>
@@ -3310,8 +3382,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   <TreePine className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800">Sistema Escalonado 5-5-5 - EC FIJO</h3>
-                  <p className="text-sm text-slate-600">15 plantas en 3 niveles - Mismo rango EC para todas</p>
+                  <h3 className="font-bold text-slate-800">Sistema Escalonado 5-5-5 - CICLO 36 DÍAS</h3>
+                  <p className="text-sm text-slate-600">15 plantas en 3 niveles - Rotación cada 12 días</p>
                 </div>
               </div>
 
@@ -3327,7 +3399,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Nivel
+                        Nivel (12 días por nivel)
                       </label>
                       <div className="flex gap-2">
                         {[1, 2, 3].map(level => (
@@ -3344,7 +3416,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                           >
                             Nivel {level}
                             <div className="text-xs opacity-80">
-                              EC: 1350-1500 µS/cm
+                              {level === 1 ? "Días 1-12" : 
+                               level === 2 ? "Días 13-24" : 
+                               "Días 25-36"}
                             </div>
                           </button>
                         ))}
@@ -3439,7 +3513,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
                 {plants.length > 0 && (
                   <div>
-                    <h4 className="font-bold text-slate-800 mb-4">Plantas Actuales - EC FIJO 1350-1500 µS/cm</h4>
+                    <h4 className="font-bold text-slate-800 mb-4">Plantas Actuales - CICLO 36 DÍAS</h4>
                     <div className="space-y-3">
                       {plants.map(plant => (
                         <div key={plant.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
@@ -3455,11 +3529,11 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                                     plant.l === 2 ? 'bg-green-100 text-green-700' :
                                       'bg-emerald-100 text-emerald-700'
                                 }>
-                                  Nivel {plant.l}
+                                  Nivel {plant.l} ({plant.l === 1 ? "1-12d" : plant.l === 2 ? "13-24d" : "25-36d"})
                                 </Badge>
                               </div>
                               <p className="text-sm text-slate-600">
-                                EC fija: 1350-1500 µS/cm
+                                EC fija: 1350-1500 µS/cm • Rotación cada 12 días
                               </p>
                             </div>
                           </div>
@@ -3518,17 +3592,26 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
   const DashboardTab = () => (
     <div className="space-y-8 animate-fade-in">
-      {/* Header con imagen */}
+      {/* Header con imagen personalizada */}
       <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
         <div className="flex-shrink-0">
-          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 overflow-hidden shadow-2xl flex items-center justify-center">
-            <Sprout className="text-white" size={64} />
+          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 overflow-hidden shadow-2xl flex items-center justify-center border-4 border-emerald-300">
+            {/* Reemplazamos el icono con la imagen personalizada */}
+            <div className="relative w-28 h-28">
+              <Image
+                src="/mi-imagen.jpg"
+                alt="HydroCaru Logo"
+                fill
+                className="object-cover rounded-full"
+                priority
+              />
+            </div>
           </div>
         </div>
         
         <div className="flex-grow">
           <h1 className="text-3xl font-bold text-slate-800">Panel de Control</h1>
-          <p className="text-slate-600">Sistema hidropónico con EC fija 1350-1500 µS/cm</p>
+          <p className="text-slate-600">Sistema hidropónico con EC fija 1350-1500 µS/cm • Rotación cada 12 días</p>
           
           <div className="flex items-center gap-3 mt-4">
             <Badge className={
@@ -3543,6 +3626,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
 
             <Badge className="bg-blue-100 text-blue-800">
               {plants.length}/15 plantas
+            </Badge>
+
+            <Badge className="bg-emerald-100 text-emerald-800">
+              Ciclo 36 días
             </Badge>
           </div>
         </div>
@@ -3595,21 +3682,21 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Estado del Cultivo</h3>
-              <p className="text-sm text-slate-600">Sistema 5-5-5 con EC fija</p>
+              <p className="text-sm text-slate-600">Sistema 5-5-5 con rotación 12 días</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Plántulas (N1):</span>
+              <span className="text-slate-700">Plántulas (N1 - 12d):</span>
               <span className="font-bold text-cyan-600">{plantStats.seedlingCount}/5</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Crecimiento (N2):</span>
+              <span className="text-slate-700">Crecimiento (N2 - 12d):</span>
               <span className="font-bold text-green-600">{plantStats.growthCount}/5</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Maduras (N3):</span>
+              <span className="text-slate-700">Maduras (N3 - 12d):</span>
               <span className="font-bold text-emerald-600">{plantStats.matureCount}/5</span>
             </div>
           </div>
@@ -3620,7 +3707,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <span className="font-bold text-blue-600">{plants.length}/15</span>
             </div>
             <p className="text-xs text-slate-500 mt-2">
-              EC fija: 1350-1500 µS/cm para todas
+              EC fija: 1350-1500 µS/cm • Rotación cada 12 días
             </p>
           </div>
         </Card>
@@ -3721,7 +3808,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
           className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
         >
           <RotateCcw className="mr-2" />
-          Rotar Niveles
+          Rotar Niveles (12 días)
         </Button>
 
         <Button
@@ -3770,8 +3857,8 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
     return (
       <div className="space-y-8 animate-fade-in">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre - PROTOCOLO 18L</h2>
-          <p className="text-slate-600">Sistema escalonado 5-5-5 con EC fija 1350-1500 µS/cm</p>
+          <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre - CICLO 36 DÍAS</h2>
+          <p className="text-slate-600">Sistema escalonado 5-5-5 con rotación cada 12 días</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -3782,7 +3869,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">Nivel 1 - Plántulas</h3>
-                <p className="text-sm text-slate-600">EC fija: 1350-1500 µS/cm</p>
+                <p className="text-sm text-slate-600">Días 1-12 • EC: 1350-1500 µS/cm</p>
               </div>
             </div>
 
@@ -3795,7 +3882,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     </div>
                     <div>
                       <p className="font-medium text-slate-800">{plant.v}</p>
-                      <p className="text-xs text-slate-500">Posición {plant.p} • EC: 1350-1500</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p} • Días 1-12</p>
                     </div>
                   </div>
                   <Button
@@ -3811,7 +3898,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               {plants.filter(p => p.l === 1).length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-slate-500">No hay plántulas</p>
-                  <p className="text-xs text-slate-400">EC fija: 1350-1500 µS/cm</p>
+                  <p className="text-xs text-slate-400">Días 1-12 • EC: 1350-1500 µS/cm</p>
                 </div>
               )}
             </div>
@@ -3824,7 +3911,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">Nivel 2 - Crecimiento</h3>
-                <p className="text-sm text-slate-600">EC fija: 1350-1500 µS/cm</p>
+                <p className="text-sm text-slate-600">Días 13-24 • EC: 1350-1500 µS/cm</p>
               </div>
             </div>
 
@@ -3837,7 +3924,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     </div>
                     <div>
                       <p className="font-medium text-slate-800">{plant.v}</p>
-                      <p className="text-xs text-slate-500">Posición {plant.p} • EC: 1350-1500</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p} • Días 13-24</p>
                     </div>
                   </div>
                   <Button
@@ -3853,7 +3940,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               {plants.filter(p => p.l === 2).length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-slate-500">No hay plantas en crecimiento</p>
-                  <p className="text-xs text-slate-400">EC fija: 1350-1500 µS/cm</p>
+                  <p className="text-xs text-slate-400">Días 13-24 • EC: 1350-1500 µS/cm</p>
                 </div>
               )}
             </div>
@@ -3866,7 +3953,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">Nivel 3 - Maduración</h3>
-                <p className="text-sm text-slate-600">EC fija: 1350-1500 µS/cm</p>
+                <p className="text-sm text-slate-600">Días 25-36 • EC: 1350-1500 µS/cm</p>
               </div>
             </div>
 
@@ -3879,7 +3966,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                     </div>
                     <div>
                       <p className="font-medium text-slate-800">{plant.v}</p>
-                      <p className="text-xs text-slate-500">Posición {plant.p} • EC: 1350-1500</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p} • Días 25-36</p>
                     </div>
                   </div>
                   <Button
@@ -3895,7 +3982,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               {plants.filter(p => p.l === 3).length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-slate-500">No hay plantas maduras</p>
-                  <p className="text-xs text-slate-400">EC fija: 1350-1500 µS/cm</p>
+                  <p className="text-xs text-slate-400">Días 25-36 • EC: 1350-1500 µS/cm</p>
                 </div>
               )}
             </div>
@@ -3924,7 +4011,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nivel
+                  Nivel (12 días por nivel)
                 </label>
                 <div className="flex gap-2">
                   {[1, 2, 3].map(level => (
@@ -3940,6 +4027,9 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                         }`}
                     >
                       Nivel {level}
+                      <div className="text-xs opacity-80">
+                        {level === 1 ? "1-12d" : level === 2 ? "13-24d" : "25-36d"}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -4018,9 +4108,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   
                   alert(`✅ Planta añadida exitosamente:
 • Variedad: ${localSelPos.v}
-• Nivel: ${localSelPos.l}
+• Nivel: ${localSelPos.l} (${localSelPos.l === 1 ? "Días 1-12" : localSelPos.l === 2 ? "Días 13-24" : "Días 25-36"})
 • Posición: ${localSelPos.p}
-• EC fija: 1350-1500 µS/cm`);
+• EC fija: 1350-1500 µS/cm
+• Rotación: Cada 12 días`);
                 } else {
                   let missing = [];
                   if (!localSelPos.l) missing.push("nivel");
@@ -4045,7 +4136,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
           >
             <RotateCcw className="mr-2" />
-            Rotar Niveles
+            Rotar Niveles (Cada 12 días)
           </Button>
 
           <Button
@@ -4164,6 +4255,11 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <div className="mt-2 p-3 bg-amber-50 rounded-lg">
                 <p className="text-sm text-amber-700">
                   ⚠️ <strong>AJUSTE EC:</strong> +3.2ml de A y B por cada 0.1 mS/cm de diferencia
+                </p>
+              </div>
+              <div className="mt-2 p-3 bg-cyan-50 rounded-lg">
+                <p className="text-sm text-cyan-700">
+                  🔄 <strong>ROTACIÓN CADA 12 DÍAS:</strong> Ciclo completo de 36 días (12+12+12)
                 </p>
               </div>
             </div>
@@ -4319,7 +4415,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 )}
                 {day.events.includes('rotation') && (
                   <div className="text-xs bg-amber-50 text-amber-700 p-1 rounded">
-                    🔄 Rotar
+                    🔄 Rotar 12d
                   </div>
                 )}
                 {day.events.includes('clean') && (
@@ -4361,6 +4457,13 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   day.date > now
                 );
 
+                // Buscar próxima rotación
+                const nextRotation = calendarDays.find(day => 
+                  day.isCurrentMonth && 
+                  day.events.includes('rotation') && 
+                  day.date > now
+                );
+
                 if (nextMeasure) {
                   nextTasks.push({
                     type: 'measure',
@@ -4388,18 +4491,29 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                   });
                 }
 
+                if (nextRotation) {
+                  nextTasks.push({
+                    type: 'rotation',
+                    date: nextRotation.date,
+                    title: 'Próxima rotación de niveles',
+                    description: 'Rotación cada 12 días - Ciclo 36 días'
+                  });
+                }
+
                 return nextTasks
                   .sort((a, b) => a.date - b.date)
-                  .slice(0, 3)
+                  .slice(0, 4)
                   .map((task, index) => (
                     <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         task.type === 'measure' ? 'bg-cyan-100 text-cyan-700' :
                         task.type === 'recharge' ? 'bg-emerald-100 text-emerald-700' :
-                        'bg-purple-100 text-purple-700'
+                        task.type === 'change' ? 'bg-purple-100 text-purple-700' :
+                        'bg-amber-100 text-amber-700'
                       }`}>
                         {task.type === 'measure' ? '📊' :
                          task.type === 'recharge' ? '⚡' :
+                         task.type === 'change' ? '🔄' :
                          '🔄'}
                       </div>
                       <div>
@@ -4415,7 +4529,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 bg-white rounded-xl border-2 border-slate-200">
               <h4 className="font-bold text-slate-800 mb-2">Último Cambio</h4>
               <p className="text-slate-600">
@@ -4444,7 +4558,20 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 })()}
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                Protocolo: Recargar cada 7-10 días
+                Protocolo: Recargar cada 10 días
+              </p>
+            </div>
+
+            <div className="p-4 bg-white rounded-xl border-2 border-slate-200">
+              <h4 className="font-bold text-slate-800 mb-2">Última Rotación</h4>
+              <p className="text-slate-600">
+                {new Date(lastRot).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                {Math.floor((new Date() - new Date(lastRot)) / (1000 * 3600 * 24))} días desde última rotación
+              </p>
+              <p className="text-xs text-amber-600 mt-2">
+                Protocolo: Rotación cada 12 días
               </p>
             </div>
 
@@ -4638,11 +4765,15 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Ajuste EC corregido:</strong> +3.2ml de A y B por cada 0.1 mS/cm de diferencia (antes +9ml era incorrecto).</span>
               </li>
+              <li className="flex items-start gap-2">
+                <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Rotación cada 12 días:</strong> Ciclo completo de 36 días garantiza producción continua.</span>
+              </li>
             </ul>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-            <h4 className="font-bold text-emerald-700 mb-3">🌱 Ventajas del EC Fijo</h4>
+            <h4 className="font-bold text-emerald-700 mb-3">🌱 Ventajas del EC Fijo y Rotación 12 Días</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
@@ -4650,7 +4781,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Estabilidad:</strong> Las plantas se adaptan mejor a condiciones constantes. Menos estrés = mejor crecimiento.</span>
+                <span><strong>Producción continua:</strong> Con rotación cada 12 días, siempre tendrás plantas en todas las etapas.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
@@ -4659,6 +4790,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Ahorro de nutrientes:</strong> Con la dosis corregida (45ml vs 63ml) ahorrarás un 29% en nutrientes.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Planificación precisa:</strong> Sabes exactamente cuándo cosechar y cuándo añadir nuevas plantas.</span>
               </li>
             </ul>
           </div>
@@ -4682,27 +4817,35 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Plantas amarillas:</strong> Si usaste la dosis anterior (63ml), probablemente EC demasiado alta. Diluir con agua destilada.</span>
               </li>
+              <li className="flex items-start gap-2">
+                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Crecimiento lento:</strong> Verificar temperatura agua (20°C ideal) y programa de riego (3 minutos por ciclo).</span>
+              </li>
             </ul>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-            <h4 className="font-bold text-purple-700 mb-3">🎯 Consejos para Riego con Observación 6s</h4>
+            <h4 className="font-bold text-purple-700 mb-3">⏰ Programa de Riego Optimizado - 3 minutos por ciclo</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>6 segundos empapan:</strong> Tu observación es clave. Usa 6s como base y ajusta ±1-2s según condiciones.</span>
+                <span><strong>3 minutos garantizados:</strong> Tiempo suficiente para que los nutrientes lleguen a todas las raíces de la torre.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Verificar humedad:</strong> La lana de roca debe estar húmeda pero no chorreando 1 hora después del riego.</span>
+                <span><strong>Horario optimizado:</strong> 08:30-20:30 cada hora + 00:00, 03:00 y 05:30 para crecimiento continuo.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Ajuste por temperatura:</strong> En verano (+1-2s), en invierno (-1-2s). Monitorizar humedad.</span>
+                <span><strong>Ajuste por temperatura:</strong> En verano aumentar a 3.5 minutos, en invierno reducir a 2.5 minutos.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Control visual:</strong> Observa las raíces. Blancas = sanas, marrones = exceso de agua.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Verificar humedad:</strong> La lana de roca debe estar húmeda pero no chorreando 1 hora después del riego.</span>
               </li>
             </ul>
           </div>
@@ -4721,6 +4864,10 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
               <li className="flex items-start gap-2">
                 <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
                 <span><strong>Cambio completo cada 2 semanas:</strong> Elimina acumulación de sales y mantiene sistema saludable.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <span><strong>Rotación cada 12 días:</strong> Mantiene producción continua y optimiza espacio.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
@@ -4746,12 +4893,21 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
         <div className="container mx-auto p-4 max-w-6xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center">
-                <Sprout className="text-white" size={24} />
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center overflow-hidden border-2 border-emerald-300">
+                {/* Reemplazamos el icono con la imagen personalizada */}
+                <div className="relative w-9 h-9">
+                  <Image
+                    src="/mi-imagen.jpg"
+                    alt="HydroCaru Logo"
+                    fill
+                    className="object-cover rounded-full"
+                    priority
+                  />
+                </div>
               </div>
               <div>
                 <h1 className="font-bold text-slate-800">HydroCaru</h1>
-                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 45ml AQUA VEGA A+B</p>
+                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 45ml AQUA VEGA A+B | Rotación 12 días</p>
               </div>
             </div>
 
@@ -4996,6 +5152,7 @@ Próxima recarga: en 7-10 días o cuando EC baje a ~1.0 mS/cm`);
                 <br />• EC fija: 1350-1500 µS/cm
                 <br />• <strong>Protocolo corregido:</strong> 45ml A+B (antes 63ml era incorrecto)
                 <br />• <strong>NO se requiere CalMag</strong>
+                <br />• <strong>Rotación cada 12 días</strong> - Ciclo 36 días
               </p>
             </div>
           </Card>
