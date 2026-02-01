@@ -489,7 +489,7 @@ const generateCalendar = (plants, lastRot, lastClean) => {
       day.events.push('change');
     }
 
-    // Rotación según crecimiento - MODIFICADO A 12 DÍAS
+    // Rotación según crecimiento - MODIFICADO A 12 DÍAS - AHORA COMO RECOMENDACIÓN
     const daysFromLastRot = Math.floor((dayDate - lastRotDate) / (1000 * 3600 * 24));
     if (daysFromLastRot > 0 && daysFromLastRot % 12 === 0) {
       day.events.push('rotation');
@@ -1185,7 +1185,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="space-y-4">
             <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-              <h4 className="font-bold text-blue-700 mb-3">📋 Proceso de Rotación - CADA 12 DÍAS</h4>
+              <h4 className="font-bold text-blue-700 mb-3">📋 Proceso de Rotación - RECOMENDACIÓN CADA 12 DÍAS</h4>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-rose-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -1193,7 +1193,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Nivel 3 → Cosecha</p>
-                    <p className="text-sm text-slate-600">Plantas maduras se cosechan después de 36 días</p>
+                    <p className="text-sm text-slate-600">Plantas maduras se cosechan después de aproximadamente 36 días</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -1202,7 +1202,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Nivel 2 → Nivel 3</p>
-                    <p className="text-sm text-slate-600">Plantas en crecimiento pasan a maduración (días 13-24)</p>
+                    <p className="text-sm text-slate-600">Plantas en crecimiento pasan a maduración (aproximadamente días 13-24)</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -1211,7 +1211,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Nivel 1 → Nivel 2</p>
-                    <p className="text-sm text-slate-600">Plántulas pasan a crecimiento (días 1-12)</p>
+                    <p className="text-sm text-slate-600">Plántulas pasan a crecimiento (aproximadamente días 1-12)</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -1220,7 +1220,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                   </div>
                   <div>
                     <p className="font-bold text-slate-800">Añadir nuevas plántulas</p>
-                    <p className="text-sm text-slate-600">Nuevas plantas en nivel 1 (5 máximo) cada 12 días</p>
+                    <p className="text-sm text-slate-600">Nuevas plantas en nivel 1 (5 máximo) según estado de crecimiento</p>
                   </div>
                 </div>
               </div>
@@ -1268,7 +1268,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 
           <div className="space-y-4">
             <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-              <h4 className="font-bold text-purple-700 mb-3">📊 Resumen de Rotación - CICLO 36 DÍAS</h4>
+              <h4 className="font-bold text-purple-700 mb-3">📊 Resumen de Rotación - CICLO APROXIMADO 36 DÍAS</h4>
 
               <div className="space-y-4">
                 <div className="p-3 bg-white rounded-lg">
@@ -1303,21 +1303,24 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
                 </div>
 
                 <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-                  <h5 className="font-bold text-blue-700 mb-2">📅 Cronograma de Rotación</h5>
+                  <h5 className="font-bold text-blue-700 mb-2">📅 Cronograma de Rotación (RECOMENDADO)</h5>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-700">Nivel 1 (plántulas):</span>
-                      <span className="font-bold text-cyan-600">Días 1-12</span>
+                      <span className="font-bold text-cyan-600">Aprox. días 1-12</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-slate-700">Nivel 2 (crecimiento):</span>
-                      <span className="font-bold text-green-600">Días 13-24</span>
+                      <span className="font-bold text-green-600">Aprox. días 13-24</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-slate-700">Nivel 3 (maduración):</span>
-                      <span className="font-bold text-emerald-600">Días 25-36</span>
+                      <span className="font-bold text-emerald-600">Aprox. días 25-36</span>
                     </div>
                   </div>
+                  <p className="text-xs text-blue-600 mt-2">
+                    ⚠️ Los tiempos pueden variar según condiciones climáticas y horas de sol
+                  </p>
                 </div>
               </div>
             </div>
@@ -1379,7 +1382,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
               disabled={newSeedlings.length === 0}
             >
               <RotateCcw className="mr-2" />
-              Confirmar Rotación (Cada 12 días)
+              Confirmar Rotación (Según estado de crecimiento)
             </Button>
           </div>
         </div>
@@ -1441,7 +1444,7 @@ export default function HydroAppFinal() {
     lastMeasurement: new Date().toISOString()
   });
 
-  // Estado para los inputs temporales en la pestaña de mediciones
+  // Estado para los inputs temporales en la pestaña de mediciones - AHORA CON INPUT CONTROLADO
   const [tempMeasurements, setTempMeasurements] = useState({
     manualPH: "5,8",
     manualEC: "1400",
@@ -1581,11 +1584,13 @@ export default function HydroAppFinal() {
     // 7. Cerrar modal y mostrar confirmación
     setShowRotationModal(false);
 
-    alert(`✅ Rotación completada exitosamente (Cada 12 días):
-• ${plants.filter(p => p.l === 3).length} plantas cosechadas (nivel 3 - 36 días)
-• ${plants.filter(p => p.l === 2).length} plantas movidas a nivel 3 (días 25-36)
-• ${plants.filter(p => p.l === 1).length} plantas movidas a nivel 2 (días 13-24)
-• ${newSeedlings.length} nuevas plántulas añadidas al nivel 1 (días 1-12)`);
+    alert(`✅ Rotación completada exitosamente:
+• ${plants.filter(p => p.l === 3).length} plantas cosechadas (nivel 3)
+• ${plants.filter(p => p.l === 2).length} plantas movidas a nivel 3
+• ${plants.filter(p => p.l === 1).length} plantas movidas a nivel 2
+• ${newSeedlings.length} nuevas plántulas añadidas al nivel 1
+
+⚠️ Nota: El tiempo de crecimiento puede variar según condiciones climáticas y horas de sol.`);
 
     setTab("tower");
   };
@@ -1620,7 +1625,9 @@ export default function HydroAppFinal() {
   // Función para convertir string con coma a número
   const parseDecimal = (value) => {
     if (typeof value !== 'string') return parseFloat(value);
-    return parseFloat(value.replace(',', '.'));
+    // Permitir tanto punto como coma como separador decimal
+    const normalizedValue = value.replace(',', '.');
+    return parseFloat(normalizedValue);
   };
 
   // Función para formatear número a string con coma
@@ -1631,55 +1638,43 @@ export default function HydroAppFinal() {
     return value;
   };
 
-  // Función para actualizar mediciones temporales desde inputs
-  const updateTempMeasurement = (field, value) => {
+  // =================== FUNCIONES CORREGIDAS PARA INPUTS ===================
+  
+  // Función para manejar cambios en los inputs de mediciones
+  const handleMeasurementInputChange = (field, value) => {
     // Permitir números, coma y un solo decimal
-    const sanitizedValue = value.replace(/[^0-9,]/g, '');
-    // Asegurar solo una coma
-    const parts = sanitizedValue.split(',');
-    let finalValue = parts[0];
-    if (parts.length > 1) {
-      finalValue = parts[0] + ',' + parts[1].substring(0, 1);
-    }
+    // Permitir escritura continua sin cortes
+    let sanitizedValue = value;
     
-    setTempMeasurements(prev => ({
-      ...prev,
-      [field]: finalValue
-    }));
-  };
-
-  // Función para actualizar mediciones desde sliders
-  const updateMeasurementFromSlider = (field, value) => {
-    const stringValue = formatDecimal(value);
+    // Reemplazar punto por coma para consistencia
+    sanitizedValue = sanitizedValue.replace('.', ',');
     
-    // Actualizar ambos estados inmediatamente
-    setMeasurements(prev => ({
-      ...prev,
-      [field]: stringValue
-    }));
+    // Permitir números, coma, y máximo un decimal después de la coma
+    const regex = /^(\d+)(,?\d{0,2})?$/;
     
-    setTempMeasurements(prev => ({
-      ...prev,
-      [field]: stringValue
-    }));
-
-    // Actualizar config si corresponde
-    if (field === 'manualPH') {
-      setConfig(prev => ({ ...prev, ph: stringValue }));
-    } else if (field === 'manualEC') {
-      setConfig(prev => ({ ...prev, ec: stringValue }));
-    } else if (field === 'manualTemp') {
-      setConfig(prev => ({ ...prev, temp: stringValue }));
-    } else if (field === 'manualVolume') {
-      setConfig(prev => ({ ...prev, currentVol: stringValue }));
+    // Si el valor está vacío o cumple con la expresión regular, actualizar
+    if (sanitizedValue === '' || regex.test(sanitizedValue)) {
+      setTempMeasurements(prev => ({
+        ...prev,
+        [field]: sanitizedValue
+      }));
     }
   };
 
-  // Función para guardar mediciones cuando se pierde el foco del input
+  // Función para guardar medición individual al perder foco
   const saveMeasurementOnBlur = (field) => {
-    let value = tempMeasurements[field];
+    const value = tempMeasurements[field];
     
-    // Convertir coma a punto para parsear
+    if (value === '') {
+      // Si está vacío, restaurar el valor anterior
+      setTempMeasurements(prev => ({
+        ...prev,
+        [field]: measurements[field]
+      }));
+      return;
+    }
+    
+    // Convertir a número
     const numericValue = parseDecimal(value);
     
     if (!isNaN(numericValue)) {
@@ -1710,6 +1705,33 @@ export default function HydroAppFinal() {
     }
   };
 
+  // Función para actualizar mediciones desde sliders
+  const updateMeasurementFromSlider = (field, value) => {
+    const stringValue = formatDecimal(value);
+    
+    // Actualizar ambos estados inmediatamente
+    setMeasurements(prev => ({
+      ...prev,
+      [field]: stringValue
+    }));
+    
+    setTempMeasurements(prev => ({
+      ...prev,
+      [field]: stringValue
+    }));
+
+    // Actualizar config si corresponde
+    if (field === 'manualPH') {
+      setConfig(prev => ({ ...prev, ph: stringValue }));
+    } else if (field === 'manualEC') {
+      setConfig(prev => ({ ...prev, ec: stringValue }));
+    } else if (field === 'manualTemp') {
+      setConfig(prev => ({ ...prev, temp: stringValue }));
+    } else if (field === 'manualVolume') {
+      setConfig(prev => ({ ...prev, currentVol: stringValue }));
+    }
+  };
+
   // Función para guardar todas las mediciones manuales
   const saveAllManualMeasurements = () => {
     const now = new Date().toISOString();
@@ -1728,6 +1750,13 @@ export default function HydroAppFinal() {
     
     fieldsToSync.forEach(field => {
       const value = tempMeasurements[field];
+      
+      // Si el campo está vacío, usar el valor anterior
+      if (value === '') {
+        updatedMeasurements[field] = measurements[field];
+        return;
+      }
+      
       const numericValue = parseDecimal(value);
       
       if (!isNaN(numericValue)) {
@@ -1746,6 +1775,8 @@ export default function HydroAppFinal() {
         }
       } else {
         allValid = false;
+        // Restaurar valor anterior si no es válido
+        updatedMeasurements[field] = measurements[field];
       }
     });
     
@@ -1834,7 +1865,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
     return getSeason();
   }, []);
 
-  // =================== ALERTAS ACTUALIZADAS - MODIFICADAS PARA 12 DÍAS ===================
+  // =================== ALERTAS ACTUALIZADAS - MODIFICADAS PARA RECOMENDACIÓN DE ROTACIÓN ===================
 
   const alerts = useMemo(() => {
     const vAct = parseDecimal(measurements.manualVolume || config.currentVol) || 0;
@@ -2013,19 +2044,20 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
       });
     }
 
-    // Alerta de rotación (cada 12 días)
+    // ALERTA DE ROTACIÓN MODIFICADA: AHORA ES UNA RECOMENDACIÓN, NO OBLIGACIÓN
     const lastRotDate = new Date(lastRot);
     const daysSinceRot = Math.floor((now - lastRotDate) / (1000 * 3600 * 24));
     
     if (daysSinceRot >= 10) {
+      // Cambiado de "urgente" a "recomendada"
       res.push({
-        title: daysSinceRot >= 12 ? "¡ROTACIÓN URGENTE!" : "ROTACIÓN PRÓXIMA",
+        title: "RECOMENDACIÓN: ROTACIÓN",
         value: `${daysSinceRot} días`,
-        description: daysSinceRot >= 12 ? "Realizar rotación de niveles" : "Programar rotación en próximos días",
-        color: daysSinceRot >= 12 ? "bg-gradient-to-r from-orange-700 to-red-800" : "bg-gradient-to-r from-amber-600 to-orange-600",
+        description: `Considerar rotación de niveles. El tiempo puede variar según clima y horas de sol.`,
+        color: "bg-gradient-to-r from-blue-600 to-cyan-700",
         icon: <RotateCcw className="text-white" size={28} />,
-        priority: daysSinceRot >= 12 ? 1 : 2,
-        details: "Rotación cada 12 días: N1→N2→N3→Cosecha"
+        priority: 3, // Prioridad baja, solo recomendación
+        details: "Recomendación cada 12 días según condiciones óptimas de crecimiento"
       });
     }
 
@@ -2659,7 +2691,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     );
   };
 
-  // =================== PESTAÑA DE MEDICIONES ===================
+  // =================== PESTAÑA DE MEDICIONES - CORREGIDA PARA ESCRITURA CONTINUA ===================
 
   const MeasurementsTab = () => {
     // Helper function to get numeric value for slider
@@ -2786,7 +2818,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualPH}
-                            onChange={(e) => updateTempMeasurement('manualPH', e.target.value)}
+                            onChange={(e) => handleMeasurementInputChange('manualPH', e.target.value)}
                             onBlur={() => saveMeasurementOnBlur('manualPH')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                             className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
@@ -2810,7 +2842,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.phCorrectionMinus}
-                              onChange={(e) => updateTempMeasurement('phCorrectionMinus', e.target.value)}
+                              onChange={(e) => handleMeasurementInputChange('phCorrectionMinus', e.target.value)}
                               onBlur={() => saveMeasurementOnBlur('phCorrectionMinus')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                               className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
@@ -2827,7 +2859,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.phCorrectionPlus}
-                              onChange={(e) => updateTempMeasurement('phCorrectionPlus', e.target.value)}
+                              onChange={(e) => handleMeasurementInputChange('phCorrectionPlus', e.target.value)}
                               onBlur={() => saveMeasurementOnBlur('phCorrectionPlus')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                               className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
@@ -2905,7 +2937,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualEC}
-                            onChange={(e) => updateTempMeasurement('manualEC', e.target.value)}
+                            onChange={(e) => handleMeasurementInputChange('manualEC', e.target.value)}
                             onBlur={() => saveMeasurementOnBlur('manualEC')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                             className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -2929,7 +2961,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.ecCorrectionA}
-                              onChange={(e) => updateTempMeasurement('ecCorrectionA', e.target.value)}
+                              onChange={(e) => handleMeasurementInputChange('ecCorrectionA', e.target.value)}
                               onBlur={() => saveMeasurementOnBlur('ecCorrectionA')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                               className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
@@ -2946,7 +2978,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.ecCorrectionB}
-                              onChange={(e) => updateTempMeasurement('ecCorrectionB', e.target.value)}
+                              onChange={(e) => handleMeasurementInputChange('ecCorrectionB', e.target.value)}
                               onBlur={() => saveMeasurementOnBlur('ecCorrectionB')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                               className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
@@ -2963,7 +2995,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.ecCorrectionWater}
-                              onChange={(e) => updateTempMeasurement('ecCorrectionWater', e.target.value)}
+                              onChange={(e) => handleMeasurementInputChange('ecCorrectionWater', e.target.value)}
                               onBlur={() => saveMeasurementOnBlur('ecCorrectionWater')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                               className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
@@ -3041,7 +3073,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualVolume}
-                            onChange={(e) => updateTempMeasurement('manualVolume', e.target.value)}
+                            onChange={(e) => handleMeasurementInputChange('manualVolume', e.target.value)}
                             onBlur={() => saveMeasurementOnBlur('manualVolume')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                             className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
@@ -3073,7 +3105,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                           type="text"
                           inputMode="decimal"
                           value={tempMeasurements.ecCorrectionWater}
-                          onChange={(e) => updateTempMeasurement('ecCorrectionWater', e.target.value)}
+                          onChange={(e) => handleMeasurementInputChange('ecCorrectionWater', e.target.value)}
                           onBlur={() => saveMeasurementOnBlur('ecCorrectionWater')}
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                           className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
@@ -3152,7 +3184,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualWaterTemp}
-                            onChange={(e) => updateTempMeasurement('manualWaterTemp', e.target.value)}
+                            onChange={(e) => handleMeasurementInputChange('manualWaterTemp', e.target.value)}
                             onBlur={() => saveMeasurementOnBlur('manualWaterTemp')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                             className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
@@ -3236,7 +3268,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         type="text"
                         inputMode="decimal"
                         value={tempMeasurements.manualTemp}
-                        onChange={(e) => updateTempMeasurement('manualTemp', e.target.value)}
+                        onChange={(e) => handleMeasurementInputChange('manualTemp', e.target.value)}
                         onBlur={() => saveMeasurementOnBlur('manualTemp')}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -3275,7 +3307,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         type="text"
                         inputMode="decimal"
                         value={tempMeasurements.manualHumidity}
-                        onChange={(e) => updateTempMeasurement('manualHumidity', e.target.value)}
+                        onChange={(e) => handleMeasurementInputChange('manualHumidity', e.target.value)}
                         onBlur={() => saveMeasurementOnBlur('manualHumidity')}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -3516,7 +3548,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         <p className="text-sm text-emerald-600 font-bold">• Rellenar agua evaporada solo con agua destilada</p>
                         <p className="text-sm text-emerald-600 font-bold">• Cada 10 días: recargar nutrientes si EC baja 30%</p>
                         <p className="text-sm text-emerald-600 font-bold">• Cada 2 semanas: cambio completo de solución</p>
-                        <p className="text-sm text-emerald-600 font-bold">• Cada 12 días: rotación de niveles (Ciclo 36 días)</p>
+                        <p className="text-sm text-emerald-600 font-bold">• Cada 12 días: rotación de niveles (Ciclo aproximado 36 días)</p>
                       </div>
                     </div>
                   </div>
@@ -3581,7 +3613,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-green-500 mt-0.5" size={16} />
-                      <span><strong>Rotación cada 12 días:</strong> Ciclo completo de 36 días (12+12+12)</span>
+                      <span><strong>Rotación según crecimiento:</strong> Aproximadamente cada 12 días, según condiciones climáticas</span>
                     </li>
                   </ul>
                 </div>
@@ -3706,7 +3738,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     <br />• Protocolo: 45ml de A y B → EC objetivo 1.4 mS/cm (CORREGIDO)
                     <br />• <strong>NO se requiere CalMag</strong> - Los nutrientes ya contienen Ca y Mg
                     <br />• Ajuste EC: +3.2ml A+B por cada 0.1 mS/cm de diferencia
-                    <br />• Rotación: Cada 12 días (Ciclo completo 36 días)
+                    <br />• Rotación: Según estado de crecimiento (aprox. 12 días)
                   </p>
                 </div>
               </Card>
@@ -3848,7 +3880,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         • Agua destilada si {'>'} 1.6<br />
                         • 45ml A+B por 18L agua destilada<br />
                         • <strong>NO CalMag</strong> - Ya incluido en AQUA VEGA
-                        • <strong>Rotación cada 12 días</strong> - Ciclo 36 días
+                        • <strong>Rotación según crecimiento</strong> - Aproximadamente 12 días según clima
                       </p>
                     </div>
                   </div>
@@ -3891,8 +3923,8 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   <TreePine className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800">Sistema Escalonado 5-5-5 - CICLO 36 DÍAS</h3>
-                  <p className="text-sm text-slate-600">15 plantas en 3 niveles - Rotación cada 12 días</p>
+                  <h3 className="font-bold text-slate-800">Sistema Escalonado 5-5-5 - CICLO APROXIMADO 36 DÍAS</h3>
+                  <p className="text-sm text-slate-600">15 plantas en 3 niveles - Rotación según estado de crecimiento</p>
                 </div>
               </div>
 
@@ -3908,7 +3940,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Nivel (12 días por nivel)
+                        Nivel (según estado de crecimiento)
                       </label>
                       <div className="flex gap-2">
                         {[1, 2, 3].map(level => (
@@ -3925,9 +3957,9 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                           >
                             Nivel {level}
                             <div className="text-xs opacity-80">
-                              {level === 1 ? "Días 1-12" : 
-                               level === 2 ? "Días 13-24" : 
-                               "Días 25-36"}
+                              {level === 1 ? "Aprox. días 1-12" : 
+                               level === 2 ? "Aprox. días 13-24" : 
+                               "Aprox. días 25-36"}
                             </div>
                           </button>
                         ))}
@@ -4022,7 +4054,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
 
                 {plants.length > 0 && (
                   <div>
-                    <h4 className="font-bold text-slate-800 mb-4">Plantas Actuales - CICLO 36 DÍAS</h4>
+                    <h4 className="font-bold text-slate-800 mb-4">Plantas Actuales - CICLO APROXIMADO 36 DÍAS</h4>
                     <div className="space-y-3">
                       {plants.map(plant => (
                         <div key={plant.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
@@ -4038,11 +4070,11 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                                     plant.l === 2 ? 'bg-green-100 text-green-700' :
                                       'bg-emerald-100 text-emerald-700'
                                 }>
-                                  Nivel {plant.l} ({plant.l === 1 ? "1-12d" : plant.l === 2 ? "13-24d" : "25-36d"})
+                                  Nivel {plant.l} ({plant.l === 1 ? "aprox. 1-12d" : plant.l === 2 ? "aprox. 13-24d" : "aprox. 25-36d"})
                                 </Badge>
                               </div>
                               <p className="text-sm text-slate-600">
-                                EC fija: 1350-1500 µS/cm • Rotación cada 12 días
+                                EC fija: 1350-1500 µS/cm • Rotación según crecimiento
                               </p>
                             </div>
                           </div>
@@ -4120,7 +4152,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
         
         <div className="flex-grow">
           <h1 className="text-3xl font-bold text-slate-800">Panel de Control</h1>
-          <p className="text-slate-600">Sistema hidropónico con EC fija 1350-1500 µS/cm • Rotación cada 12 días</p>
+          <p className="text-slate-600">Sistema hidropónico con EC fija 1350-1500 µS/cm • Rotación según crecimiento</p>
           
           <div className="flex items-center gap-3 mt-4">
             <Badge className={
@@ -4138,7 +4170,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             </Badge>
 
             <Badge className="bg-emerald-100 text-emerald-800">
-              Ciclo 36 días
+              Ciclo aproximado 36 días
             </Badge>
           </div>
         </div>
@@ -4191,21 +4223,21 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
             <div>
               <h3 className="font-bold text-slate-800">Estado del Cultivo</h3>
-              <p className="text-sm text-slate-600">Sistema 5-5-5 con rotación 12 días</p>
+              <p className="text-sm text-slate-600">Sistema 5-5-5 con rotación según crecimiento</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Plántulas (N1 - 12d):</span>
+              <span className="text-slate-700">Plántulas (N1 - aprox. 12d):</span>
               <span className="font-bold text-cyan-600">{plantStats.seedlingCount}/5</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Crecimiento (N2 - 12d):</span>
+              <span className="text-slate-700">Crecimiento (N2 - aprox. 12d):</span>
               <span className="font-bold text-green-600">{plantStats.growthCount}/5</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-700">Maduras (N3 - 12d):</span>
+              <span className="text-slate-700">Maduras (N3 - aprox. 12d):</span>
               <span className="font-bold text-emerald-600">{plantStats.matureCount}/5</span>
             </div>
           </div>
@@ -4216,7 +4248,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               <span className="font-bold text-blue-600">{plants.length}/15</span>
             </div>
             <p className="text-xs text-slate-500 mt-2">
-              EC fija: 1350-1500 µS/cm • Rotación cada 12 días
+              EC fija: 1350-1500 µS/cm • Rotación según estado de crecimiento
             </p>
           </div>
         </Card>
@@ -4317,7 +4349,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
           className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
         >
           <RotateCcw className="mr-2" />
-          Rotar Niveles (12 días)
+          Rotar Niveles (Según crecimiento)
         </Button>
 
         <Button
@@ -4366,8 +4398,8 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     return (
       <div className="space-y-8 animate-fade-in">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre - CICLO 36 DÍAS</h2>
-          <p className="text-slate-600">Sistema escalonado 5-5-5 con rotación cada 12 días</p>
+          <h2 className="text-2xl font-bold text-slate-800">Gestión de la Torre - CICLO APROXIMADO 36 DÍAS</h2>
+          <p className="text-slate-600">Sistema escalonado 5-5-5 con rotación según estado de crecimiento</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -4378,7 +4410,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">Nivel 1 - Plántulas</h3>
-                <p className="text-sm text-slate-600">Días 1-12 • EC: 1350-1500 µS/cm</p>
+                <p className="text-sm text-slate-600">Aprox. días 1-12 • EC: 1350-1500 µS/cm</p>
               </div>
             </div>
 
@@ -4391,7 +4423,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     </div>
                     <div>
                       <p className="font-medium text-slate-800">{plant.v}</p>
-                      <p className="text-xs text-slate-500">Posición {plant.p} • Días 1-12</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p} • Aprox. días 1-12</p>
                     </div>
                   </div>
                   <Button
@@ -4407,7 +4439,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               {plants.filter(p => p.l === 1).length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-slate-500">No hay plántulas</p>
-                  <p className="text-xs text-slate-400">Días 1-12 • EC: 1350-1500 µS/cm</p>
+                  <p className="text-xs text-slate-400">Aprox. días 1-12 • EC: 1350-1500 µS/cm</p>
                 </div>
               )}
             </div>
@@ -4420,7 +4452,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">Nivel 2 - Crecimiento</h3>
-                <p className="text-sm text-slate-600">Días 13-24 • EC: 1350-1500 µS/cm</p>
+                <p className="text-sm text-slate-600">Aprox. días 13-24 • EC: 1350-1500 µS/cm</p>
               </div>
             </div>
 
@@ -4433,7 +4465,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     </div>
                     <div>
                       <p className="font-medium text-slate-800">{plant.v}</p>
-                      <p className="text-xs text-slate-500">Posición {plant.p} • Días 13-24</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p} • Aprox. días 13-24</p>
                     </div>
                   </div>
                   <Button
@@ -4449,7 +4481,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               {plants.filter(p => p.l === 2).length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-slate-500">No hay plantas en crecimiento</p>
-                  <p className="text-xs text-slate-400">Días 13-24 • EC: 1350-1500 µS/cm</p>
+                  <p className="text-xs text-slate-400">Aprox. días 13-24 • EC: 1350-1500 µS/cm</p>
                 </div>
               )}
             </div>
@@ -4462,7 +4494,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div>
                 <h3 className="font-bold text-slate-800">Nivel 3 - Maduración</h3>
-                <p className="text-sm text-slate-600">Días 25-36 • EC: 1350-1500 µS/cm</p>
+                <p className="text-sm text-slate-600">Aprox. días 25-36 • EC: 1350-1500 µS/cm</p>
               </div>
             </div>
 
@@ -4475,7 +4507,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     </div>
                     <div>
                       <p className="font-medium text-slate-800">{plant.v}</p>
-                      <p className="text-xs text-slate-500">Posición {plant.p} • Días 25-36</p>
+                      <p className="text-xs text-slate-500">Posición {plant.p} • Aprox. días 25-36</p>
                     </div>
                   </div>
                   <Button
@@ -4491,7 +4523,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               {plants.filter(p => p.l === 3).length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-slate-500">No hay plantas maduras</p>
-                  <p className="text-xs text-slate-400">Días 25-36 • EC: 1350-1500 µS/cm</p>
+                  <p className="text-xs text-slate-400">Aprox. días 25-36 • EC: 1350-1500 µS/cm</p>
                 </div>
               )}
             </div>
@@ -4520,7 +4552,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nivel (12 días por nivel)
+                  Nivel (según estado de crecimiento)
                 </label>
                 <div className="flex gap-2">
                   {[1, 2, 3].map(level => (
@@ -4537,7 +4569,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     >
                       Nivel {level}
                       <div className="text-xs opacity-80">
-                        {level === 1 ? "1-12d" : level === 2 ? "13-24d" : "25-36d"}
+                        {level === 1 ? "aprox. 1-12d" : level === 2 ? "aprox. 13-24d" : "aprox. 25-36d"}
                       </div>
                     </button>
                   ))}
@@ -4617,10 +4649,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   
                   alert(`✅ Planta añadida exitosamente:
 • Variedad: ${localSelPos.v}
-• Nivel: ${localSelPos.l} (${localSelPos.l === 1 ? "Días 1-12" : localSelPos.l === 2 ? "Días 13-24" : "Días 25-36"})
+• Nivel: ${localSelPos.l} (${localSelPos.l === 1 ? "Aprox. días 1-12" : localSelPos.l === 2 ? "Aprox. días 13-24" : "Aprox. días 25-36"})
 • Posición: ${localSelPos.p}
 • EC fija: 1350-1500 µS/cm
-• Rotación: Cada 12 días`);
+• Rotación: Según estado de crecimiento`);
                 } else {
                   let missing = [];
                   if (!localSelPos.l) missing.push("nivel");
@@ -4645,7 +4677,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
           >
             <RotateCcw className="mr-2" />
-            Rotar Niveles (Cada 12 días)
+            Rotar Niveles (Según crecimiento)
           </Button>
 
           <Button
@@ -4768,7 +4800,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div className="mt-2 p-3 bg-cyan-50 rounded-lg">
                 <p className="text-sm text-cyan-700">
-                  🔄 <strong>ROTACIÓN CADA 12 DÍAS:</strong> Ciclo completo de 36 días (12+12+12)
+                  🔄 <strong>ROTACIÓN SEGÚN CRECIMIENTO:</strong> Aproximadamente cada 12 días, según condiciones climáticas
                 </p>
               </div>
             </div>
@@ -4933,8 +4965,8 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                       </div>
                     )}
                     {day.events.includes('rotation') && (
-                      <div className="text-xs bg-amber-50 text-amber-700 p-1 rounded">
-                        🔄 Rotar 12d
+                      <div className="text-xs bg-blue-50 text-blue-700 p-1 rounded">
+                        🔄 Rotación
                       </div>
                     )}
                     {day.events.includes('clean') && (
@@ -5015,8 +5047,8 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     nextTasks.push({
                       type: 'rotation',
                       date: nextRotation.date,
-                      title: 'Próxima rotación de niveles',
-                      description: 'Rotación cada 12 días - Ciclo 36 días'
+                      title: 'Próxima rotación de niveles (RECOMENDACIÓN)',
+                      description: 'Considerar rotación según estado de crecimiento y condiciones climáticas'
                     });
                   }
 
@@ -5029,7 +5061,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                           task.type === 'measure' ? 'bg-cyan-100 text-cyan-700' :
                           task.type === 'recharge' ? 'bg-emerald-100 text-emerald-700' :
                           task.type === 'change' ? 'bg-purple-100 text-purple-700' :
-                          'bg-amber-100 text-amber-700'
+                          'bg-blue-100 text-blue-700'
                         }`}>
                           {task.type === 'measure' ? '📊' :
                            task.type === 'recharge' ? '⚡' :
@@ -5090,8 +5122,8 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 <p className="text-xs text-slate-500 mt-1">
                   {Math.floor((new Date() - new Date(lastRot)) / (1000 * 3600 * 24))} días desde última rotación
                 </p>
-                <p className="text-xs text-amber-600 mt-2">
-                  Protocolo: Rotación cada 12 días
+                <p className="text-xs text-blue-600 mt-2">
+                  Recomendación: Rotar según estado de crecimiento
                 </p>
               </div>
 
@@ -5170,7 +5202,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                       <Badge className={
                         record.type === 'clean' ? 'bg-purple-100 text-purple-800' :
                         record.type === 'recharge' ? 'bg-emerald-100 text-emerald-800' :
-                        record.type === 'rotation' ? 'bg-amber-100 text-amber-800' :
+                        record.type === 'rotation' ? 'bg-blue-100 text-blue-800' :
                         'bg-blue-100 text-blue-800'
                       }>
                         {record.type || 'medición'}
@@ -5317,13 +5349,13 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Rotación cada 12 días:</strong> Ciclo completo de 36 días garantiza producción continua.</span>
+                <span><strong>Rotación según crecimiento:</strong> Observar las plantas y rotar según su estado, no estrictamente cada 12 días. En invierno o con menos horas de sol, el crecimiento será más lento.</span>
               </li>
             </ul>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-            <h4 className="font-bold text-emerald-700 mb-3">🌱 Ventajas del EC Fijo y Rotación 12 Días</h4>
+            <h4 className="font-bold text-emerald-700 mb-3">🌱 Ventajas del EC Fijo y Rotación según Crecimiento</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
@@ -5331,7 +5363,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Producción continua:</strong> Con rotación cada 12 días, siempre tendrás plantas en todas las etapas.</span>
+                <span><strong>Adaptabilidad climática:</strong> Al rotar según crecimiento y no por días fijos, el sistema se adapta a las condiciones climáticas reales.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
@@ -5343,7 +5375,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Planificación precisa:</strong> Sabes exactamente cuándo cosechar y cuándo añadir nuevas plantas.</span>
+                <span><strong>Observación visual:</strong> Aprende a identificar cuándo las plantas están listas para rotar por su tamaño y desarrollo, no solo por el calendario.</span>
               </li>
             </ul>
           </div>
@@ -5369,7 +5401,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Crecimiento lento:</strong> Verificar temperatura agua (20°C ideal) y programa de riego (3 minutos por ciclo).</span>
+                <span><strong>Crecimiento lento:</strong> Verificar temperatura agua (20°C ideal) y programa de riego (3 minutos por ciclo). En invierno o días nublados, el crecimiento será naturalmente más lento.</span>
               </li>
             </ul>
           </div>
@@ -5417,7 +5449,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </li>
               <li className="flex items-start gap-2">
                 <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
-                <span><strong>Rotación cada 12 días:</strong> Mantiene producción continua y optimiza espacio.</span>
+                <span><strong>Rotación según crecimiento:</strong> Observar desarrollo de las plantas y rotar cuando alcancen el tamaño adecuado para cada nivel.</span>
               </li>
               <li className="flex items-start gap-2">
                 <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
@@ -5457,7 +5489,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
               <div>
                 <h1 className="font-bold text-slate-800">HydroCaru</h1>
-                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 45ml AQUA VEGA A+B | Rotación 12 días</p>
+                <p className="text-xs text-slate-600">EC fija 1350-1500 µS/cm | Sin CalMag | 45ml AQUA VEGA A+B | Rotación según crecimiento</p>
               </div>
             </div>
 
@@ -5712,7 +5744,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 <br />• EC fija: 1350-1500 µS/cm
                 <br />• <strong>Protocolo corregido:</strong> 45ml A+B (antes 63ml era incorrecto)
                 <br />• <strong>NO se requiere CalMag</strong>
-                <br />• <strong>Rotación cada 12 días</strong> - Ciclo 36 días
+                <br />• <strong>Rotación según crecimiento</strong> - Aproximadamente 12 días según condiciones climáticas
               </p>
             </div>
           </Card>
