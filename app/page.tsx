@@ -4439,14 +4439,6 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
       {/* Panel de medidores primero (parámetros actuales) */}
       <DashboardMetricsPanel config={config} measurements={measurements} />
 
-      {/* Panel de cálculo EC fijo */}
-      <StagedECCalculator
-        plants={plants}
-        onECCalculated={handleECCalculated}
-        selectedMethod={selectedECMethod}
-        onMethodChange={handleECMethodChange}
-      />
-
       {/* Alertas */}
       {alerts.length > 0 && (
         <div className="space-y-4">
