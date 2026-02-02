@@ -5836,7 +5836,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
       {step >= 5 && (
         <div className="sticky top-16 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
           <div className="container mx-auto p-4 max-w-6xl">
-            <div className="grid grid-cols-8 w-full gap-2">
+            <div className="grid grid-cols-9 w-full gap-2">
               {[
                 {
                   key: "dashboard",
@@ -5894,6 +5894,13 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
                   inactiveColor: "from-violet-100 to-purple-100",
                   colorName: "violet"
                 },
+                {         
+                  key: "clima",
+                  icon: <CloudSun size={20} />,
+                  activeColor: "from-teal-500 to-cyan-600",
+                  inactiveColor: "from-teal-100 to-cyan-100",
+                  colorName: "teal"
+                },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -5929,6 +5936,8 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
             {tab === "calendar" && <CalendarTab />}
             {tab === "history" && <HistoryTab />}
             {tab === "proTips" && <ProTipsTab />}
+            {tab === "clima" && <ClimaTab />}
+
           </>
         )}
       </main>
