@@ -6022,3 +6022,103 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
     </div>
   );
 }
+  const ClimaTab = () => {
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-slate-800">🌤️ Climatología - Castellón de la Plana</h2>
+        <p className="text-slate-600">Información meteorológica para optimizar tu cultivo</p>
+      </div>
+      
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <CloudSun className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Condiciones Actuales</h3>
+            <p className="text-slate-600">Datos climáticos de Castellón</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+            <h4 className="font-bold text-blue-700">🌡️ Temperatura</h4>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600">22°C</div>
+              <p className="text-sm text-slate-600 mt-2">Ideal para crecimiento</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
+            <h4 className="font-bold text-green-700">💧 Humedad</h4>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-600">65%</div>
+              <p className="text-sm text-slate-600 mt-2">Rango óptimo</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+            <h4 className="font-bold text-amber-700">💨 Viento</h4>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-amber-600">12 km/h</div>
+              <p className="text-sm text-slate-600 mt-2">Brisa suave</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl">
+          <h4 className="font-bold text-slate-800 mb-3">📋 Recomendaciones para Castellón</h4>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+              <div className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">
+                1
+              </div>
+              <p className="text-slate-700"><strong>Clima mediterráneo:</strong> Ideal para cultivo todo el año</p>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+              <div className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">
+                2
+              </div>
+              <p className="text-slate-700"><strong>Protección vientos:</strong> Asegurar torre en días ventosos</p>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
+              <div className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">
+                3
+              </div>
+              <p className="text-slate-700"><strong>Riego en verano:</strong> Aumentar frecuencia en julio-agosto</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+      
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center">
+            <Calendar className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Pronóstico 7 Días</h3>
+            <p className="text-slate-600">Patrones típicos de Castellón</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
+          {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((dia, index) => (
+            <div key={index} className="p-3 bg-white rounded-xl border border-slate-200 text-center">
+              <p className="font-bold text-slate-800">{dia}</p>
+              <p className="text-2xl my-2">🌤️</p>
+              <div className="flex justify-between text-sm">
+                <span className="text-red-600 font-bold">24°</span>
+                <span className="text-blue-600">16°</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
