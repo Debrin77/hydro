@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef } from "react"
-import Image from 'next/image'
 import {
   Sprout, Activity, Layers, Beaker, Calendar,
   Plus, Trash2, FlaskConical, ArrowDownCircle, Check,
@@ -10,7 +9,7 @@ import {
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun,
   RefreshCw, Skull, Info, Calculator, Filter,
   Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun,
-  Wind as WindIcon, Clipboard, ThermometerSnowflake, TreePine, Settings,
+  WindIcon, Clipboard, ThermometerSnowflake, TreePine, Settings,
   Home, BarChart3, X, RotateCcw, AlertCircle,
   Droplet, Leaf, TimerReset, ThermometerCold,
   ChevronDown, ChevronUp, Eye, EyeOff, CloudRain as Rain,
@@ -81,7 +80,7 @@ const Progress = ({ value, className = "" }) => (
   <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
     <div
       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-      style={{ width: `${value}%` }}
+      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
     />
   </div>
 )
@@ -678,8 +677,14 @@ const calculateIrrigation = (plants, temp, humidity, season) => {
  */
 const getUserLocation = () => {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Geolocalización no soportada"));
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      // Fallback a coordenadas de Castellón de la Plana si no hay geolocalización
+      resolve({
+        latitude: 39.98567,
+        longitude: -0.04935,
+        accuracy: 5000,
+        isFallback: true
+      });
       return;
     }
 
@@ -930,13 +935,13 @@ const StagedECCalculator = ({ plants, onECCalculated, selectedMethod, onMethodCh
           {[1, 2, 3].map(level => {
             const levelData = ecByLevel[`level${level}`];
             const levelName = level === 1 ? "Plántulas" : level === 2 ? "Crecimiento" : "Maduras";
-            const levelColor = level === 1 ? "cyan" : level === 2 ? "green" : "emerald";
+            const levelColorClass = level === 1 ? "bg-cyan-500" : level === 2 ? "bg-green-500" : "bg-emerald-500";
             
             return (
               <div key={level} className="p-4 bg-white rounded-lg border border-slate-200">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full bg-${levelColor}-500`}></div>
+                    <div className={`w-3 h-3 rounded-full ${levelColorClass}`}></div>
                     <div>
                       <h5 className="font-bold text-slate-800">{levelName}</h5>
                       <p className="text-sm text-slate-600">
@@ -1242,6 +1247,10 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
     return colors[color];
   };
 
+  const colorClass = colors[color] || colors.blue;
+  const bgColorClass = bgColors[color] || bgColors.blue;
+  const fillColorClass = fillColors[color] || fillColors.blue;
+
   return (
     <div className={`flex flex-col items-center ${sizes[size]}`}>
       <div className="relative">
@@ -1253,7 +1262,7 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
             r="32"
             fill="none"
             strokeWidth="6"
-            className={bgColors[color]}
+            className={bgColorClass}
             strokeLinecap="round"
           />
 
@@ -1264,7 +1273,7 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
             r="32"
             fill="none"
             strokeWidth="6"
-            className={fillColors[color]}
+            className={fillColorClass}
             strokeLinecap="round"
             strokeDasharray={strokeDasharray}
             strokeDashoffset={strokeDashoffset}
@@ -1340,8 +1349,8 @@ const WeatherAlertsPanel = ({ alerts, protectionActions, location, onRefresh }) 
           <div>
             <h2 className="font-bold text-slate-800 text-xl">Protección Meteorológica - Castellón</h2>
             <p className="text-slate-600">
-              Monitoreo AEMET • Ubicación: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
-              {location.isFallback && " (Castellón por defecto)"}
+              Monitoreo AEMET • Ubicación: {location?.latitude?.toFixed(4) || "39.9857"}, {location?.longitude?.toFixed(4) || "-0.0494"}
+              {location?.isFallback && " (Castellón por defecto)"}
             </p>
           </div>
         </div>
@@ -1363,17 +1372,17 @@ const WeatherAlertsPanel = ({ alerts, protectionActions, location, onRefresh }) 
           <div className="flex items-center justify-between">
             <span className="text-slate-700">Nivel Actual</span>
             <Badge className={
-              alerts.some(a => a.level === "red") ? "bg-red-100 text-red-800" :
-              alerts.some(a => a.level === "orange") ? "bg-orange-100 text-orange-800" :
-              alerts.some(a => a.level === "yellow") ? "bg-yellow-100 text-yellow-800" :
+              alerts?.some(a => a.level === "red") ? "bg-red-100 text-red-800" :
+              alerts?.some(a => a.level === "orange") ? "bg-orange-100 text-orange-800" :
+              alerts?.some(a => a.level === "yellow") ? "bg-yellow-100 text-yellow-800" :
               "bg-green-100 text-green-800"
             }>
-              {alerts.some(a => a.level === "red") ? "ROJO" :
-               alerts.some(a => a.level === "orange") ? "NARANJA" :
-               alerts.some(a => a.level === "yellow") ? "AMARILLO" : "SIN RIESGO"}
+              {alerts?.some(a => a.level === "red") ? "ROJO" :
+               alerts?.some(a => a.level === "orange") ? "NARANJA" :
+               alerts?.some(a => a.level === "yellow") ? "AMARILLO" : "SIN RIESGO"}
             </Badge>
           </div>
-          <p className="text-2xl font-bold text-slate-800 mt-2">{alerts.length}</p>
+          <p className="text-2xl font-bold text-slate-800 mt-2">{alerts?.length || 0}</p>
           <p className="text-sm text-slate-600">Alertas activas</p>
         </div>
         
@@ -1383,7 +1392,7 @@ const WeatherAlertsPanel = ({ alerts, protectionActions, location, onRefresh }) 
             <span className="text-slate-700">Viento</span>
           </div>
           <p className="text-2xl font-bold text-slate-800">
-            {alerts.filter(a => a.phenomenon === "wind").length}
+            {alerts?.filter(a => a.phenomenon === "wind").length || 0}
           </p>
           <p className="text-sm text-slate-600">Alertas</p>
         </div>
@@ -1394,7 +1403,7 @@ const WeatherAlertsPanel = ({ alerts, protectionActions, location, onRefresh }) 
             <span className="text-slate-700">Lluvia</span>
           </div>
           <p className="text-2xl font-bold text-slate-800">
-            {alerts.filter(a => a.phenomenon === "rain").length}
+            {alerts?.filter(a => a.phenomenon === "rain").length || 0}
           </p>
           <p className="text-sm text-slate-600">Alertas</p>
         </div>
@@ -1405,14 +1414,14 @@ const WeatherAlertsPanel = ({ alerts, protectionActions, location, onRefresh }) 
             <span className="text-slate-700">Tormentas</span>
           </div>
           <p className="text-2xl font-bold text-slate-800">
-            {alerts.filter(a => a.phenomenon === "storm").length}
+            {alerts?.filter(a => a.phenomenon === "storm").length || 0}
           </p>
           <p className="text-sm text-slate-600">Alertas</p>
         </div>
       </div>
       
       {/* Alertas Activas */}
-      {alerts.length > 0 ? (
+      {alerts && alerts.length > 0 ? (
         <div className="mb-6">
           <h3 className="font-bold text-slate-800 mb-4">⚠️ Alertas Meteorológicas Activas</h3>
           <div className="space-y-3">
@@ -1472,7 +1481,7 @@ const WeatherAlertsPanel = ({ alerts, protectionActions, location, onRefresh }) 
       <div>
         <h3 className="font-bold text-slate-800 mb-4">🛡️ Acciones Recomendadas para la Torre</h3>
         <div className="space-y-4">
-          {protectionActions.map(action => (
+          {protectionActions?.map(action => (
             <div key={action.id} className="p-4 bg-white rounded-xl border-2 border-slate-200">
               <div className="flex items-start gap-3 mb-3">
                 <div className="flex-shrink-0">
@@ -2246,7 +2255,7 @@ export default function HydroAppFinal() {
     if (typeof value !== 'string') return parseFloat(value);
     // Permitir tanto punto como coma como separador decimal
     const normalizedValue = value.replace(',', '.');
-    return parseFloat(normalizedValue);
+    return parseFloat(normalizedValue) || 0;
   };
 
   // Función para formatear número a string con coma
@@ -2475,9 +2484,9 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
       const res = [];
   
       // Añadir alertas meteorológicas importantes al principio
-      const importantWeatherAlerts = weatherData.alerts.filter(alert => 
+      const importantWeatherAlerts = weatherData.alerts?.filter(alert => 
         ["red", "orange"].includes(alert.level)
-      );
+      ) || [];
       
       importantWeatherAlerts.forEach(alert => {
         const alertConfig = {
@@ -2495,7 +2504,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
         // Insertar al principio por prioridad
         res.unshift(alertConfig);
       });
-  
+
       // Alerta para agua destilada
       res.push({
         title: "PROTOCOLO 18L ACTIVADO",
@@ -2505,7 +2514,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
         icon: <FlaskConical className="text-white" size={28} />,
         priority: 3
       });
-  
+
       // Alertas de volumen
       if (vAct < vTot * 0.25) {
         res.push({
@@ -2527,7 +2536,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           priority: 2
         });
       }
-  
+
       // Alertas de temperatura agua
       if (waterTemp > 22) {
         res.push({
@@ -2549,7 +2558,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           priority: 2
         });
       }
-  
+
       // Alertas de temperatura ambiente
       if (temp > 28) {
         res.push({
@@ -2571,7 +2580,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           priority: 2
         });
       }
-  
+
       // Alertas de pH
       if (ph > 6.5 || ph < 5.5) {
         const action = ph > 6.5 ? "pH-" : "pH+";
@@ -2590,7 +2599,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           details: phAdjustment.method
         });
       }
-  
+
       // Alertas de EC
       const ecAlert = checkECAlert(ec);
       if (ecAlert) {
@@ -2626,7 +2635,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           });
         }
       }
-  
+
       // Alerta de recarga de nutrientes
       const daysSinceLastRecharge = history.filter(h => 
         h.type === 'recharge' || (h.notes && h.notes.includes('recarga'))
@@ -2645,12 +2654,12 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           });
         }
       }
-  
+
       // Alerta de cambio completo
       const lastCleanDate = new Date(lastClean);
       const now = new Date();
       const daysSinceClean = Math.floor((now - lastCleanDate) / (1000 * 3600 * 24));
-  
+
       if (daysSinceClean >= 12) {
         res.push({
           title: daysSinceClean >= 14 ? "¡CAMBIO COMPLETO URGENTE!" : "CAMBIO COMPLETO PRÓXIMO",
@@ -2661,7 +2670,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           priority: daysSinceClean >= 14 ? 1 : 3
         });
       }
-  
+
       // ALERTA DE ROTACIÓN MODIFICADA: AHORA ES UNA RECOMENDACIÓN, NO OBLIGACIÓN
       const lastRotDate = new Date(lastRot);
       const daysSinceRot = Math.floor((now - lastRotDate) / (1000 * 3600 * 24));
@@ -2678,16 +2687,16 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
           details: "Recomendación cada 12 días según condiciones óptimas de crecimiento"
         });
       }
-  
+
       return res.sort((a, b) => a.priority - b.priority);
     }, [config, lastClean, lastRot, history, phAdjustment, aquaVegaDosage, measurements, weatherData.alerts]);
-  
+
     // =================== FUNCIÓN PARA REGISTRAR LIMPIEZA ===================
-  
+
     const handleRegisterClean = () => {
       const now = new Date().toISOString();
       setLastClean(now);
-  
+
       const cleanRecord = {
         id: generatePlantId(),
         date: now,
@@ -2695,18 +2704,18 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
         description: "Limpieza y cambio completo de solución",
         notes: "Protocolo 18L: cambio completo cada 2 semanas"
       };
-  
+
       setHistory([cleanRecord, ...history.slice(0, 49)]);
-  
+
       alert(`✅ Cambio completo registrado:
 Fecha: ${new Date(now).toLocaleDateString()}
 Hora: ${new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
 
 Próximo cambio recomendado: en 14 días`);
     };
-  
+
     // =================== FUNCIÓN PARA REGISTRAR RECARGA ===================
-  
+
     const handleRegisterRecharge = () => {
       const now = new Date().toISOString();
       
@@ -2718,9 +2727,9 @@ Próximo cambio recomendado: en 14 días`);
         notes: `Recarga estándar: +13ml A y B para 18L`,
         dosage: { a: 13, b: 13 }
       };
-  
+
       setHistory([rechargeRecord, ...history.slice(0, 49)]);
-  
+
       alert(`✅ Recarga de nutrientes registrada:
 • +13ml AQUA VEGA A
 • +13ml AQUA VEGA B
@@ -2728,130 +2737,10 @@ Próximo cambio recomendado: en 14 días`);
 
 Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     };
-  
-    // =================== COMPONENTES DE PESTAÑAS ===================
-  
-    const DashboardTab = () => {
-      return (
-        <div className="space-y-8 animate-fade-in">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">Panel Principal - Sistema Hidropónico</h2>
-            <p className="text-slate-600">Vista completa del estado del sistema y alertas activas</p>
-          </div>
-  
-          {/* Panel de métricas */}
-          <div className="mb-8">
-            <DashboardMetricsPanel config={config} measurements={measurements} />
-          </div>
-  
-          {/* Calculadora de EC */}
-          <StagedECCalculator
-            plants={plants}
-            onECCalculated={handleECCalculated}
-            selectedMethod={selectedECMethod}
-            onMethodChange={handleECMethodChange}
-          />
-  
-          {/* Panel de alertas */}
-          {alerts.length > 0 && (
-            <Card className="p-6 rounded-2xl mb-8 border-2 border-red-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center">
-                  <AlertTriangle className="text-white" size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-800">Alertas Activas del Sistema</h3>
-                  <p className="text-slate-600">Atención requerida para estas alertas</p>
-                </div>
-              </div>
-  
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {alerts.map((alert, index) => (
-                  <div key={index} className={`p-4 rounded-xl ${alert.color} text-white`}>
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="p-2 bg-white/20 rounded-lg">
-                        {alert.icon}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-white">{alert.title}</h4>
-                        <p className="text-sm text-white/90 mt-1">{alert.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold">{alert.value}</span>
-                      {alert.details && (
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded">
-                          {alert.details}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-  
-          {/* Protocolo 18L */}
-          <Protocolo18LPanel
-            volume={measurements.manualVolume || config.currentVol}
-            aquaVegaDosage={aquaVegaDosage}
-          />
-  
-          {/* Estadísticas de plantas */}
-          <Card className="p-6 rounded-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
-                <TreePine className="text-white" size={24} />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800">Estadísticas del Cultivo</h3>
-                <p className="text-slate-600">Resumen de plantas y distribución por nivel</p>
-              </div>
-            </div>
-  
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
-                <h4 className="font-bold text-cyan-700 mb-3">🌱 Plántulas</h4>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-cyan-600 mb-2">{plantStats.seedlingCount}</div>
-                  <p className="text-sm text-slate-600">Nivel 1</p>
-                  <p className="text-xs text-slate-500 mt-2">Aprox. días 1-12</p>
-                </div>
-              </div>
-  
-              <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-                <h4 className="font-bold text-emerald-700 mb-3">📈 Crecimiento</h4>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-emerald-600 mb-2">{plantStats.growthCount}</div>
-                  <p className="text-sm text-slate-600">Nivel 2</p>
-                  <p className="text-xs text-slate-500 mt-2">Aprox. días 13-24</p>
-                </div>
-              </div>
-  
-              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
-                <h4 className="font-bold text-green-700 mb-3">🌿 Maduras</h4>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-600 mb-2">{plantStats.matureCount}</div>
-                  <p className="text-sm text-slate-600">Nivel 3</p>
-                  <p className="text-xs text-slate-500 mt-2">Aprox. días 25-36</p>
-                </div>
-              </div>
-  
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-                <h4 className="font-bold text-purple-700 mb-3">📊 Total</h4>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-purple-600 mb-2">{plantStats.total}</div>
-                  <p className="text-sm text-slate-600">Plantas activas</p>
-                  <p className="text-xs text-slate-500 mt-2">Máximo 15 (5 por nivel)</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      );
-    };
 
-    const DashboardMetricsPanel = ({ config, measurements }) => {
+    // =================== COMPONENTES DE PESTAÑAS ===================
+
+    const DashboardTab = ({ config, measurements }) => {
       const getStatusText = (label, value) => {
         const numValue = parseDecimal(value);
         if (label === "pH") {
@@ -2876,10 +2765,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
         }
         return "";
       };
-  
+
       const systemRange = calculateSystemECRange();
       const ecAlert = checkECAlert(parseDecimal(measurements.manualEC));
-  
+
       return (
         <Card className="p-6 rounded-2xl mb-8">
           <div className="flex items-center gap-3 mb-6">
@@ -2891,7 +2780,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               <p className="text-slate-600">Valores según protocolo corregido para cultivo de lechuga</p>
             </div>
           </div>
-  
+
           <div className="space-y-8">
             {/* Medidor de pH */}
             <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
@@ -2946,7 +2835,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
               </div>
             </div>
-  
+
             {/* Medidor de EC */}
             <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
               <div className="flex-shrink-0 order-1 md:order-2">
@@ -3006,7 +2895,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
               </div>
             </div>
-  
+
             {/* Medidor de Temperatura Agua */}
             <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
               <div className="flex-shrink-0 order-1 md:order-2">
@@ -3072,7 +2961,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
               </div>
             </div>
-  
+
             {/* Medidor de Volumen */}
             <div className="flex flex-row items-center gap-4 p-4 bg-gradient-to-b from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
               <div className="flex-shrink-0 order-1 md:order-2">
@@ -3134,7 +3023,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               </div>
             </div>
           </div>
-  
+
           {/* Resumen de estado */}
           <div className="mt-6 p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-200">
             <h4 className="font-bold text-slate-700 mb-4 text-lg">📊 Resumen del Estado del Sistema</h4>
@@ -3150,7 +3039,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   {new Date(measurements.lastMeasurement).toLocaleDateString()}
                 </p>
               </div>
-  
+
               <div className="p-4 bg-white rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-700">Tipo de agua:</span>
@@ -3162,7 +3051,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   Protocolo: 45ml A+B por 18L (CORREGIDO)
                 </p>
               </div>
-  
+
               <div className="p-4 bg-white rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-700">Temp agua:</span>
@@ -3182,7 +3071,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                       "✅ Ideal"}
                 </p>
               </div>
-  
+
               <div className="p-4 bg-white rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-700">Humedad:</span>
@@ -3205,7 +3094,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
         </Card>
       );
     };
-  
+
     const IrrigationTab = () => {
       const irrigationData = useMemo(() => {
         return calculateIrrigation(
@@ -3215,14 +3104,14 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
           season
         );
       }, [plants, measurements.manualTemp, measurements.manualHumidity, season]);
-  
+
       return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-8">
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Programa de Riego Optimizado - 3 minutos por ciclo</h2>
             <p className="text-slate-600">Nuevo programa: 08:30-20:30 cada hora, luego 00:00, 03:00 y 05:30</p>
           </div>
-  
+
           <Card className="p-6 rounded-2xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
@@ -3233,7 +3122,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 <p className="text-sm text-slate-600">3 minutos por ciclo para garantizar que los nutrientes lleguen a todas las raíces</p>
               </div>
             </div>
-  
+
             <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
               <h4 className="font-bold text-emerald-700 mb-3">✅ PROGRAMA OPTIMIZADO CONFIRMADO</h4>
               <p className="text-slate-700">
@@ -3242,7 +3131,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 <strong>Horario:</strong> 08:30 a 20:30 cada hora + 00:00, 03:00 y 05:30.
               </p>
             </div>
-  
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
                 <h4 className="font-bold text-blue-700 mb-3">⏱️ Tiempo por Ciclo</h4>
@@ -3257,7 +3146,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   </div>
                 </div>
               </div>
-  
+
               <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
                 <h4 className="font-bold text-emerald-700 mb-3">🔄 Frecuencia Total</h4>
                 <div className="text-center">
@@ -3268,7 +3157,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   </p>
                 </div>
               </div>
-  
+
               <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
                 <h4 className="font-bold text-amber-700 mb-3">💧 Consumo Estimado</h4>
                 <div className="text-center">
@@ -3280,7 +3169,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
               </div>
             </div>
-  
+
             <div className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-200">
               <h3 className="font-bold text-slate-800 mb-6 text-center">📋 HORARIO COMPLETO DE RIEGO</h3>
               
@@ -3300,7 +3189,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   </div>
                 ))}
               </div>
-  
+
               <div className="space-y-4">
                 {irrigationData.recommendations.map((rec, index) => (
                   <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-slate-200">
@@ -3311,7 +3200,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   </div>
                 ))}
               </div>
-  
+
               <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
                 <h4 className="font-bold text-amber-700 mb-3">⚙️ AJUSTES POR CONDICIONES AMBIENTALES</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3334,7 +3223,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
               </div>
             </div>
-  
+
             <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
               <h3 className="font-bold text-purple-800 mb-4">📊 RESUMEN DEL PROGRAMA DE RIEGO</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3347,7 +3236,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     Cada hora exacta
                   </p>
                 </div>
-  
+
                 <div className="p-3 bg-white rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-700">Ciclos nocturnos:</span>
@@ -3357,7 +3246,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     00:00, 03:00 y 05:30
                   </p>
                 </div>
-  
+
                 <div className="p-3 bg-white rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-700">Tiempo total de riego:</span>
@@ -3367,7 +3256,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     {Math.floor(parseDecimal(irrigationData.pumpMinutesPerDay) / 60)}h {parseDecimal(irrigationData.pumpMinutesPerDay) % 60}min
                   </p>
                 </div>
-  
+
                 <div className="p-3 bg-white rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-700">Consumo agua estimado:</span>
@@ -3379,7 +3268,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
               </div>
             </div>
-  
+
             <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200">
               <h3 className="font-bold text-emerald-800 mb-4">🎯 BENEFICIOS DEL NUEVO PROGRAMA</h3>
               <div className="space-y-3">
@@ -3392,7 +3281,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     <p className="text-sm text-slate-600">3 minutos aseguran distribución completa en la torre</p>
                   </div>
                 </div>
-  
+
                 <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
                   <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
                     2
@@ -3402,7 +3291,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     <p className="text-sm text-slate-600">Ciclos nocturnos mantienen hidratación constante</p>
                   </div>
                 </div>
-  
+
                 <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
                   <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
                     3
@@ -3412,7 +3301,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     <p className="text-sm text-slate-600">Frecuencia adecuada evita sequía entre riegos</p>
                   </div>
                 </div>
-  
+
                 <div className="flex items-start gap-3 p-3 bg-white rounded-lg">
                   <div className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
                     4
@@ -3428,11 +3317,11 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
         </div>
       );
     };
-  
+
     // =================== PESTAÑA DE METEOROLOGÍA ===================
-  
+
     const MeteorologyTab = () => (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Monitoreo Meteorológico Avanzado</h2>
           <p className="text-slate-600">Protección activa de la torre hidropónica basada en alertas AEMET</p>
@@ -3464,28 +3353,28 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   <div className="flex justify-between">
                     <span className="text-slate-600">Latitud:</span>
                     <span className="font-bold text-slate-800">
-                      {weatherData.location.latitude.toFixed(6)}
+                      {weatherData.location?.latitude?.toFixed(6) || "39.985670"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Longitud:</span>
                     <span className="font-bold text-slate-800">
-                      {weatherData.location.longitude.toFixed(6)}
+                      {weatherData.location?.longitude?.toFixed(6) || "-0.049350"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Precisión:</span>
                     <span className="font-bold text-slate-800">
-                      ±{Math.round(weatherData.location.accuracy)} metros
+                      ±{Math.round(weatherData.location?.accuracy || 5000)} metros
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">Estado:</span>
                     <Badge className={
-                      weatherData.location.isFallback ? "bg-amber-100 text-amber-800" :
+                      weatherData.location?.isFallback ? "bg-amber-100 text-amber-800" :
                       "bg-green-100 text-green-800"
                     }>
-                      {weatherData.location.isFallback ? "Castellón por defecto" : "Ubicación precisa"}
+                      {weatherData.location?.isFallback ? "Castellón por defecto" : "Ubicación precisa"}
                     </Badge>
                   </div>
                 </div>
@@ -3576,7 +3465,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             </div>
           </div>
           
-          {weatherData.alerts.length === 0 ? (
+          {weatherData.alerts?.length === 0 ? (
             <div className="text-center py-8">
               <CloudSun className="mx-auto text-slate-300 mb-3" size={48} />
               <p className="text-slate-500">No hay alertas meteorológicas recientes</p>
@@ -3644,7 +3533,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
         </Card>
       </div>
     );
-  
+
   // =================== PESTAÑA DE TORRE ===================
 
   const TowerTab = () => {
@@ -3671,8 +3560,15 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
       setPlants(plants.filter(p => p.id !== id));
     };
 
+    // Mapeo de colores para los niveles
+    const levelColors = {
+      1: { bg: "from-cyan-500 to-cyan-600", text: "text-cyan-600" },
+      2: { bg: "from-green-500 to-green-600", text: "text-green-600" },
+      3: { bg: "from-emerald-500 to-emerald-600", text: "text-emerald-600" }
+    };
+
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Torre Hidropónica - Sistema 5-5-5</h2>
           <p className="text-slate-600">Gestión visual de las plantas en cada nivel (aproximadamente 12 días por nivel)</p>
@@ -3681,13 +3577,13 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map(level => {
             const levelName = level === 1 ? "Plántulas" : level === 2 ? "Crecimiento" : "Maduras";
-            const levelColor = level === 1 ? "cyan" : level === 2 ? "green" : "emerald";
+            const levelColor = levelColors[level];
             const levelDays = level === 1 ? "Aprox. 12 días" : level === 2 ? "Aprox. 12 días" : "Aprox. 12 días";
             
             return (
               <Card key={level} className="p-6 rounded-2xl">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-12 h-12 bg-gradient-to-br from-${levelColor}-500 to-${levelColor}-600 rounded-xl flex items-center justify-center`}>
+                  <div className={`w-12 h-12 bg-gradient-to-br ${levelColor.bg} rounded-xl flex items-center justify-center`}>
                     {level === 1 ? <Sprout className="text-white" size={24} /> :
                      level === 2 ? <Leaf className="text-white" size={24} /> :
                      <TreePine className="text-white" size={24} />}
@@ -3701,7 +3597,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-700">Plantas:</span>
-                    <span className={`font-bold text-${levelColor}-600`}>{levels[level].length}/5</span>
+                    <span className={`font-bold ${levelColor.text}`}>{levels[level].length}/5</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-700">Posiciones ocupadas:</span>
@@ -3849,7 +3745,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     }, [calculatorPH, calculatorVolume]);
 
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Calculadora de Nutrientes</h2>
           <p className="text-slate-600">Calcula las dosis exactas de AQUA VEGA A y B para tu volumen específico</p>
@@ -4028,7 +3924,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
 
   const MeasurementsTab = () => {
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Registro de Mediciones</h2>
           <p className="text-slate-600">Introduce y gestiona las mediciones diarias del sistema</p>
@@ -4310,7 +4206,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     };
 
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Calendario de Mantenimiento</h2>
           <p className="text-slate-600">Planificación de tareas para el mes de {monthName}</p>
@@ -4502,7 +4398,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     };
 
     return (
-      <div className="space-y-8 animate-fade-in">
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Historial del Sistema</h2>
           <p className="text-slate-600">Registro completo de todas las actividades realizadas</p>
@@ -4674,18 +4570,16 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     switch (step) {
       case 0:
         return (
-          <div className="text-center space-y-10 animate-fade-in">
+          <div className="text-center space-y-10">
             <div className="flex justify-center">
               <div className="relative">
                 <div className="w-80 h-80 rounded-full overflow-hidden shadow-2xl border-4 border-emerald-400">
                   <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center">
                     <div className="relative w-64 h-64">
-                      <Image
+                      <img
                         src="/mi-imagen.jpg"
                         alt="HydroCaru Logo"
-                        fill
-                        className="object-cover rounded-full"
-                        priority
+                        className="object-cover rounded-full w-full h-full"
                       />
                     </div>
                   </div>
@@ -4716,7 +4610,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
       
       case 1:
         return (
-          <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
+          <div className="max-w-2xl mx-auto space-y-8">
             <div>
               <h2 className="text-2xl font-bold text-slate-800">Paso 1: Configuración del Depósito</h2>
               <p className="text-slate-600">Define las características principales del sistema</p>
@@ -4808,7 +4702,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
       
       case 2:
         return (
-          <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
+          <div className="max-w-2xl mx-auto space-y-8">
             <div>
               <h2 className="text-2xl font-bold text-slate-800">Paso 2: Configuración Inicial</h2>
               <p className="text-slate-600">Establece los valores objetivo del sistema</p>
@@ -4887,7 +4781,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
       
       case 3:
         return (
-          <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
+          <div className="max-w-2xl mx-auto space-y-8">
             <div>
               <h2 className="text-2xl font-bold text-slate-800">Paso 3: Valores Iniciales</h2>
               <p className="text-slate-600">Introduce los valores actuales del sistema</p>
@@ -4970,7 +4864,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
       
       case 4:
         return (
-          <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
+          <div className="max-w-2xl mx-auto space-y-8">
             <div>
               <h2 className="text-2xl font-bold text-slate-800">Paso 4: Configuración Completa</h2>
               <p className="text-slate-600">Revisa y confirma la configuración del sistema</p>
@@ -5113,12 +5007,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center overflow-hidden border-2 border-emerald-300">
                 <div className="relative w-9 h-9">
-                  <Image
+                  <img
                     src="/mi-imagen.jpg"
                     alt="HydroCaru Logo"
-                    fill
-                    className="object-cover rounded-full"
-                    priority
+                    className="object-cover rounded-full w-full h-full"
                   />
                 </div>
               </div>
@@ -5248,7 +5140,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
         ) : (
           // Panel principal con pestañas
           <>
-            {tab === "dashboard" && <DashboardTab />}
+            {tab === "dashboard" && <DashboardTab config={config} measurements={measurements} />}
             {tab === "meteorology" && <MeteorologyTab />}
             {tab === "tower" && <TowerTab />}
             {tab === "calculator" && <CalculatorTab />}
