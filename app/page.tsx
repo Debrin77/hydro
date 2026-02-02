@@ -152,7 +152,7 @@ const processOpenMeteoData = (data) => {
     temperature: Math.round(current.temperature_2m),
     feelsLike: Math.round(current.apparent_temperature),
     humidity: current.relative_humidity_2m,
-    windSpeed: Math.round(current.wind_speed_10m * 3.6), // m/s a km/h
+    windSpeed: Math.round(current.wind_speed_10m),
     windDirection: getWindDirection(current.wind_direction_10m),
     pressure: Math.round(current.pressure_msl),
     conditions: weatherInfo.description,
@@ -223,7 +223,7 @@ const processDailyForecast = (daily) => {
       maxTemp: Math.round(daily.temperature_2m_max[i]),
       minTemp: Math.round(daily.temperature_2m_min[i]),
       precipitation: daily.precipitation_sum[i] || 0,
-      avgWind: Math.round(daily.wind_speed_10m_max[i] * 3.6) // m/s a km/h
+      avgWind: Math.round(daily.wind_speed_10m_max[i]) 
     });
   }
   
