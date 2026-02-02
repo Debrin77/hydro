@@ -6289,13 +6289,18 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
                 Datos proporcionados por Open-Meteo
               </p>
               <Button
-                onClick={loadWeatherData}
-                variant="outline"
-                size="sm"
-              >
-                <RefreshCw className="mr-2" size={16} />
-                Actualizar datos
-              </Button>
+  onClick={() => {
+    // 1. Elimina la caché ANTIGUA
+    localStorage.removeItem('hydro_weather_cache');
+    // 2. Fuerza la actualización
+    loadWeatherData();
+  }}
+  variant="outline"
+  size="sm"
+>
+  <RefreshCw className="mr-2" size={16} />
+  Actualizar datos AHORA
+</Button>
             </div>
           </Card>
         </>
