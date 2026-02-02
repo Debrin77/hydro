@@ -223,7 +223,7 @@ const processDailyForecast = (daily) => {
       maxTemp: Math.round(daily.temperature_2m_max[i]),
       minTemp: Math.round(daily.temperature_2m_min[i]),
       precipitation: daily.precipitation_sum[i] || 0,
-      avgWind: Math.round(daily.wind_speed_10m_max[i]) 
+      avgWind: Math.round(daily.wind_speed_10m_max[i]) // ya está en km/h
     });
   }
   
@@ -287,7 +287,7 @@ const generateWeatherAlerts = (weatherData) => {
     });
   }
   
-  if (weatherData.windSpeed > 30) {
+  if (weatherData.windSpeed > 40) {
     alerts.push({
       type: 'high_wind',
       severity: 'high',
