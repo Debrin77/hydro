@@ -106,6 +106,265 @@ const Switch = ({ checked, onCheckedChange }) => (
 // CONFIGURACIÓN BASE - AGUA DESTILADA ÚNICA
 // ============================================================================
 
+// ============================================================================
+// CONFIGURACIÓN OPEN-METEO (NO REQUIERE API KEY)
+// ============================================================================
+
+const WEATHER_CONFIG = {
+  LAT: 39.986, // Castellón de la Plana
+  LON: -0.051,
+  TIMEZONE: 'Europe/Madrid',
+  BASE_URL: 'https://api.open-meteo.com/v1'
+};
+
+// Función para obtener datos REALES de Open-Meteo
+const fetchOpenMeteoData = async () => {
+  try {
+    const { LAT, LON, TIMEZONE, BASE_URL } = WEATHER_CONFIG;
+    
+    const url = `${BASE_URL}/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,pressure_msl,wind_speed_10m,wind_direction_10m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,wind_speed_10m_max&timezone=${TIMEZONE}&forecast_days=7`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error('Error en la respuesta de Open-Meteo');
+    }
+    
+    const data = await response.json();
+    
+    return processOpenMeteoData(data);
+    
+  } catch (error) {
+    console.error('Error obteniendo datos de Open-Meteo:', error);
+    return getMockWeatherData(); // Fallback a datos simulados
+  }
+};
+
+// Procesar datos de Open-Meteo
+const processOpenMeteoData = (data) => {
+  const current = data.current;
+  const daily = data.daily;
+  
+  const weatherInfo = getWeatherInfoFromCode(current.weather_code, current.is_day);
+  
+  const weatherData = {
+    location: "Castellón de la Plana",
+    temperature: Math.round(current.temperature_2m),
+    feelsLike: Math.round(current.apparent_temperature),
+    humidity: current.relative_humidity_2m,
+    windSpeed: Math.round(current.wind_speed_10m * 3.6), // m/s a km/h
+    windDirection: getWindDirection(current.wind_direction_10m),
+    pressure: Math.round(current.pressure_msl),
+    conditions: weatherInfo.description,
+    icon: weatherInfo.icon,
+    sunrise: formatTime(daily.sunrise[0]),
+    sunset: formatTime(daily.sunset[0]),
+    lastUpdated: new Date().toLocaleTimeString('es-ES', { 
+      hour: '2-digit', minute: '2-digit' 
+    }),
+    source: "Open-Meteo (datos reales)",
+    forecast: processDailyForecast(daily),
+    alerts: []
+  };
+  
+  weatherData.alerts = generateWeatherAlerts(weatherData);
+  
+  return weatherData;
+};
+
+// Convertir código WMO a texto/icono
+const getWeatherInfoFromCode = (code, isDay) => {
+  const codes = {
+    0: { day: { icon: '☀️', desc: 'Despejado' }, night: { icon: '🌙', desc: 'Despejado' } },
+    1: { day: { icon: '🌤️', desc: 'Mayormente despejado' }, night: { icon: '🌤️', desc: 'Mayormente despejado' } },
+    2: { day: { icon: '⛅', desc: 'Parcialmente nublado' }, night: { icon: '⛅', desc: 'Parcialmente nublado' } },
+    3: { day: { icon: '☁️', desc: 'Nublado' }, night: { icon: '☁️', desc: 'Nublado' } },
+    45: { day: { icon: '🌫️', desc: 'Niebla' }, night: { icon: '🌫️', desc: 'Niebla' } },
+    48: { day: { icon: '🌫️', desc: 'Niebla escarchada' }, night: { icon: '🌫️', desc: 'Niebla escarchada' } },
+    51: { day: { icon: '🌦️', desc: 'Llovizna ligera' }, night: { icon: '🌦️', desc: 'Llovizna ligera' } },
+    53: { day: { icon: '🌦️', desc: 'Llovizna moderada' }, night: { icon: '🌦️', desc: 'Llovizna moderada' } },
+    55: { day: { icon: '🌦️', desc: 'Llovizna intensa' }, night: { icon: '🌦️', desc: 'Llovizna intensa' } },
+    61: { day: { icon: '🌧️', desc: 'Lluvia ligera' }, night: { icon: '🌧️', desc: 'Lluvia ligera' } },
+    63: { day: { icon: '🌧️', desc: 'Lluvia moderada' }, night: { icon: '🌧️', desc: 'Lluvia moderada' } },
+    65: { day: { icon: '🌧️', desc: 'Lluvia intensa' }, night: { icon: '🌧️', desc: 'Lluvia intensa' } },
+    71: { day: { icon: '🌨️', desc: 'Nieve ligera' }, night: { icon: '🌨️', desc: 'Nieve ligera' } },
+    73: { day: { icon: '🌨️', desc: 'Nieve moderada' }, night: { icon: '🌨️', desc: 'Nieve moderada' } },
+    75: { day: { icon: '🌨️', desc: 'Nieve intensa' }, night: { icon: '🌨️', desc: 'Nieve intensa' } },
+    80: { day: { icon: '🌦️', desc: 'Chubascos ligeros' }, night: { icon: '🌦️', desc: 'Chubascos ligeros' } },
+    81: { day: { icon: '🌦️', desc: 'Chubascos moderados' }, night: { icon: '🌦️', desc: 'Chubascos moderados' } },
+    82: { day: { icon: '🌦️', desc: 'Chubascos fuertes' }, night: { icon: '🌦️', desc: 'Chubascos fuertes' } },
+    85: { day: { icon: '🌨️', desc: 'Nevadas ligeras' }, night: { icon: '🌨️', desc: 'Nevadas ligeras' } },
+    86: { day: { icon: '🌨️', desc: 'Nevadas fuertes' }, night: { icon: '🌨️', desc: 'Nevadas fuertes' } },
+    95: { day: { icon: '⛈️', desc: 'Tormenta eléctrica' }, night: { icon: '⛈️', desc: 'Tormenta eléctrica' } },
+    96: { day: { icon: '⛈️', desc: 'Tormenta con granizo' }, night: { icon: '⛈️', desc: 'Tormenta con granizo' } },
+    99: { day: { icon: '⛈️', desc: 'Tormenta fuerte con granizo' }, night: { icon: '⛈️', desc: 'Tormenta fuerte con granizo' } }
+  };
+  
+  const info = codes[code] || codes[3]; // Por defecto nublado
+  return isDay ? info.day : info.night;
+};
+
+// Formatear tiempo ISO a HH:MM
+const formatTime = (isoString) => {
+  const date = new Date(isoString);
+  return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+};
+
+// Procesar pronóstico diario
+const processDailyForecast = (daily) => {
+  const forecast = [];
+  
+  for (let i = 0; i < 7; i++) {
+    const weatherInfo = getWeatherInfoFromCode(daily.weather_code[i], 1); // Siempre día para pronóstico
+    forecast.push({
+      day: new Date(daily.time[i]).toLocaleDateString('es-ES', { weekday: 'short' }),
+      condition: weatherInfo.icon,
+      description: weatherInfo.description,
+      maxTemp: Math.round(daily.temperature_2m_max[i]),
+      minTemp: Math.round(daily.temperature_2m_min[i]),
+      precipitation: daily.precipitation_sum[i] || 0,
+      avgWind: Math.round(daily.wind_speed_10m_max[i] * 3.6) // m/s a km/h
+    });
+  }
+  
+  return forecast;
+};
+
+// Convertir grados a dirección del viento
+const getWindDirection = (degrees) => {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(degrees / 22.5) % 16;
+  return directions[index];
+};
+
+// Generar alertas climáticas
+const generateWeatherAlerts = (weatherData) => {
+  const alerts = [];
+  
+  if (weatherData.temperature > 30) {
+    alerts.push({
+      type: 'heat',
+      severity: 'high',
+      message: `Temperatura muy alta (${weatherData.temperature}°C). Riesgo de estrés térmico.`,
+      recommendations: [
+        'Aumentar frecuencia de riego en un 20%',
+        'Verificar volumen de agua en depósito',
+        'Considerar sombra temporal'
+      ]
+    });
+  } else if (weatherData.temperature < 5) {
+    alerts.push({
+      type: 'cold',
+      severity: 'high',
+      message: `Temperatura baja (${weatherData.temperature}°C). Riesgo de daño por frío.`,
+      recommendations: [
+        'Proteger plantas del frío',
+        'Verificar temperatura del agua',
+        'Reducir riego si es necesario'
+      ]
+    });
+  }
+  
+  if (weatherData.humidity < 40) {
+    alerts.push({
+      type: 'low_humidity',
+      severity: 'medium',
+      message: `Humedad baja (${weatherData.humidity}%). Las plantas pueden perder agua rápido.`,
+      recommendations: [
+        'Mantener riego nocturno',
+        'Considerar humidificador si es interior'
+      ]
+    });
+  } else if (weatherData.humidity > 80) {
+    alerts.push({
+      type: 'high_humidity',
+      severity: 'medium',
+      message: `Humedad alta (${weatherData.humidity}%). Riesgo de hongos.`,
+      recommendations: [
+        'Asegurar buena ventilación',
+        'Reducir riego si es necesario'
+      ]
+    });
+  }
+  
+  if (weatherData.windSpeed > 30) {
+    alerts.push({
+      type: 'high_wind',
+      severity: 'high',
+      message: `Viento fuerte (${weatherData.windSpeed} km/h).`,
+      recommendations: [
+        'Asegurar estructura de la torre',
+        'Proteger plantas del viento directo'
+      ]
+    });
+  }
+  
+  if (weatherData.forecast) {
+    const rainToday = weatherData.forecast[0]?.precipitation > 5;
+    const rainTomorrow = weatherData.forecast[1]?.precipitation > 5;
+    
+    if (rainToday) {
+      alerts.push({
+        type: 'rain',
+        severity: 'medium',
+        message: `Lluvia prevista hoy (${weatherData.forecast[0].precipitation}mm).`,
+        recommendations: [
+          'Reducir riego programado',
+          'Verificar drenaje del sistema',
+          'Proteger equipos eléctricos'
+        ]
+      });
+    }
+    
+    if (rainTomorrow) {
+      alerts.push({
+        type: 'rain_tomorrow',
+        severity: 'low',
+        message: `Lluvia prevista mañana (${weatherData.forecast[1].precipitation}mm).`,
+        recommendations: [
+          'Planificar reducción de riego',
+          'Preparar protección si es necesario'
+        ]
+      });
+    }
+  }
+  
+  return alerts;
+};
+
+// Datos simulados como fallback
+const getMockWeatherData = () => {
+  const now = new Date();
+  const mockData = {
+    location: "Castellón de la Plana",
+    temperature: 22 + Math.sin(now.getHours() / 24 * Math.PI) * 5,
+    feelsLike: 23,
+    humidity: 65 + Math.random() * 10,
+    windSpeed: 12 + Math.random() * 5,
+    windDirection: 'NE',
+    pressure: 1015,
+    conditions: "Parcialmente nublado",
+    icon: "⛅",
+    sunrise: "07:30",
+    sunset: "18:45",
+    lastUpdated: now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    source: "Datos simulados (Open-Meteo no disponible)",
+    forecast: [
+      { day: "Lun", condition: "🌤️", maxTemp: 24, minTemp: 16, description: "Parcialmente nublado", precipitation: 0, avgWind: 12 },
+      { day: "Mar", condition: "☀️", maxTemp: 26, minTemp: 17, description: "Soleado", precipitation: 0, avgWind: 10 },
+      { day: "Mié", condition: "🌤️", maxTemp: 25, minTemp: 18, description: "Parcialmente nublado", precipitation: 0, avgWind: 15 },
+      { day: "Jue", condition: "☁️", maxTemp: 23, minTemp: 17, description: "Nublado", precipitation: 0, avgWind: 8 },
+      { day: "Vie", condition: "🌧️", maxTemp: 20, minTemp: 15, description: "Lluvia ligera", precipitation: 2.5, avgWind: 20 },
+      { day: "Sáb", condition: "🌧️", maxTemp: 19, minTemp: 14, description: "Lluvia", precipitation: 15.8, avgWind: 18 },
+      { day: "Dom", condition: "🌤️", maxTemp: 22, minTemp: 16, description: "Parcialmente nublado", precipitation: 0, avgWind: 10 },
+    ],
+    alerts: []
+  };
+  
+  mockData.alerts = generateWeatherAlerts(mockData);
+  
+  return mockData;
+};
 const WATER_TYPES = {
   "osmosis": {
     name: "Agua Destilada",
@@ -1406,7 +1665,12 @@ export default function HydroAppFinal() {
   const [showRotationModal, setShowRotationModal] = useState(false);
   const [selectedECMethod, setSelectedECMethod] = useState(null);
   const [showAddPlantForm, setShowAddPlantForm] = useState(false);
-
+// =================== ESTADOS PARA DATOS CLIMÁTICOS ===================
+const [weatherData, setWeatherData] = useState(null);
+const [weatherLoading, setWeatherLoading] = useState(false);
+const [weatherError, setWeatherError] = useState(null);
+const [lastWeatherUpdate, setLastWeatherUpdate] = useState(null);
+  
   // Configuración del sistema con valores iniciales según protocolo 18L
   const [config, setConfig] = useState({
     totalVol: "18",
@@ -1458,6 +1722,63 @@ export default function HydroAppFinal() {
 
   // =================== EFECTOS Y PERSISTENCIA ===================
 
+  // =================== FUNCIONES PARA CARGAR DATOS CLIMÁTICOS ===================
+
+// Cargar datos climáticos
+const loadWeatherData = async () => {
+  // Verificar caché (10 minutos)
+  const cached = localStorage.getItem('hydro_weather_cache');
+  if (cached) {
+    const { data, timestamp } = JSON.parse(cached);
+    const age = Date.now() - timestamp;
+    
+    if (age < 10 * 60 * 1000) { // 10 minutos
+      setWeatherData(data);
+      setLastWeatherUpdate(new Date(timestamp));
+      return;
+    }
+  }
+  
+  // Cargar nuevos datos
+  setWeatherLoading(true);
+  setWeatherError(null);
+  
+  try {
+    const data = await fetchOpenMeteoData();
+    setWeatherData(data);
+    setLastWeatherUpdate(new Date());
+    
+    // Guardar en caché
+    localStorage.setItem('hydro_weather_cache', JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.error('Error cargando datos climáticos:', error);
+    setWeatherError('No se pudieron cargar datos climáticos en tiempo real');
+    
+    // Usar datos simulados como fallback
+    const mockData = getMockWeatherData();
+    setWeatherData(mockData);
+    setLastWeatherUpdate(new Date());
+  } finally {
+    setWeatherLoading(false);
+  }
+};
+
+// Efecto para cargar datos climáticos cuando se selecciona la pestaña
+useEffect(() => {
+  if (step >= 5 && tab === "clima") {
+    loadWeatherData();
+    
+    // Actualizar cada 10 minutos
+    const interval = setInterval(() => {
+      loadWeatherData();
+    }, 10 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }
+}, [step, tab]);
   useEffect(() => {
     try {
       const saved = localStorage.getItem("hydro_caru_app");
@@ -2044,8 +2365,51 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
       });
     }
 
+      // =================== ALERTAS CLIMÁTICAS ===================
+  // Añadir alertas climáticas si existen
+  if (weatherData?.alerts && weatherData.alerts.length > 0) {
+    weatherData.alerts.forEach(alert => {
+      let color, icon, priority;
+      
+      switch (alert.severity) {
+        case 'high':
+          color = "bg-gradient-to-r from-red-700 to-orange-800";
+          icon = <AlertTriangle className="text-white" size={28} />;
+          priority = 1;
+          break;
+        case 'medium':
+          color = "bg-gradient-to-r from-amber-600 to-orange-600";
+          icon = <AlertTriangle className="text-white" size={28} />;
+          priority = 2;
+          break;
+        default:
+          color = "bg-gradient-to-r from-blue-600 to-cyan-600";
+          icon = <CloudSun className="text-white" size={28} />;
+          priority = 3;
+      }
+      
+      res.push({
+        title: alert.type === 'heat' ? "🌡️ ALERTA DE CALOR" :
+               alert.type === 'cold' ? "❄️ ALERTA DE FRÍO" :
+               alert.type === 'low_humidity' ? "💧 HUMEDAD BAJA" :
+               alert.type === 'high_humidity' ? "💧 HUMEDAD ALTA" :
+               alert.type === 'high_wind' ? "💨 VIENTO FUERTE" :
+               alert.type === 'rain' ? "🌧️ LLUVIA HOY" :
+               alert.type === 'rain_tomorrow' ? "🌧️ LLUVIA MAÑANA" : "⚠️ ALERTA CLIMÁTICA",
+        value: weatherData.temperature + "°C",
+        description: alert.message,
+        color,
+        icon,
+        priority,
+        details: alert.recommendations?.join(' • ')
+      });
+    });
+  }
+
+  return res.sort((a, b) => a.priority - b.priority);  // ← ESTA LÍNEA YA EXISTÍA
+}, [config, lastClean, lastRot, history, phAdjustment, aquaVegaDosage, measurements, weatherData]);  // ← AÑADE weatherData AQUÍ
     return res.sort((a, b) => a.priority - b.priority);
-  }, [config, lastClean, lastRot, history, phAdjustment, aquaVegaDosage, measurements]);
+  }, [config, lastClean, lastRot, history, phAdjustment, aquaVegaDosage, measurements, weatherData]);
 
   // =================== FUNCIÓN PARA REGISTRAR LIMPIEZA ===================
 
