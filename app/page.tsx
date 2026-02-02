@@ -931,19 +931,19 @@ const Protocolo18LPanel = ({ volume, aquaVegaDosage }) => {
         <h3 className="font-bold text-emerald-700 mb-3">✅ Ventajas del Protocolo 18L Corregido</h3>
         <ul className="space-y-2 text-sm text-slate-700">
           <li className="flex items-start gap-2">
-            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <Check className="text-emerald-500 mt=0.5" size={16} />
             <span><strong>EC constante:</strong> Simplifica el manejo, mismo rango para todas las plantas</span>
           </li>
           <li className="flex items-start gap-2">
-            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <Check className="text-emerald-500 mt=0.5" size={16} />
             <span><strong>Sin CalMag:</strong> AQUA VEGA A/B para aguas blandas ya contiene Ca y Mg en proporción óptima</span>
           </li>
           <li className="flex items-start gap-2">
-            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <Check className="text-emerald-500 mt=0.5" size={16} />
             <span><strong>Protocolo exacto:</strong> 45ml de A y B por 18L = 2.5ml por litro (CORREGIDO)</span>
           </li>
           <li className="flex items-start gap-2">
-            <Check className="text-emerald-500 mt-0.5" size={16} />
+            <Check className="text-emerald-500 mt=0.5" size={16} />
             <span><strong>Estabilidad:</strong> Medición diaria y ajustes mínimos mantienen el sistema estable</span>
           </li>
         </ul>
@@ -1058,14 +1058,14 @@ const CircularGauge = ({ value, max, min = 0, label, unit, color = "blue", size 
           <div className={`text-lg sm:text-2xl font-bold ${getValueColor()}`}>
             {value}
           </div>
-          <div className="text-xs sm:text-sm text-slate-500 mt-0.5">{unit}</div>
+          <div className="text-xs sm:text-sm text-slate-500 mt=0.5">{unit}</div>
         </div>
       </div>
 
       {/* Etiqueta */}
-      <div className="mt-2 sm:mt-3 text-center space-y-0.5 sm:space-y-1">
+      <div className="mt-2 sm:mt-3 text-center space-y=0.5 sm:space-y=1">
         <div className="text-xs sm:text-sm font-bold text-slate-800">{label}</div>
-        <div className="text-xs text-slate-500 space-y-0.5">
+        <div className="text-xs text-slate-500 space-y=0.5">
           {label === "pH" && (
             <div className="flex flex-col">
               <span>Ideal: 5.5-6.5</span>
@@ -1304,7 +1304,7 @@ const RotationModal = ({ isOpen, onClose, onConfirm, plants }) => {
 
                 <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
                   <h5 className="font-bold text-blue-700 mb-2">📅 Cronograma de Rotación</h5>
-                  <div className="space-y-2">
+                  <div className="space-y=2">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-700">Nivel 1 (plántulas):</span>
                       <span className="font-bold text-cyan-600">Días 1-12</span>
@@ -1620,35 +1620,107 @@ export default function HydroAppFinal() {
   // Función para convertir string con coma a número
   const parseDecimal = (value) => {
     if (typeof value !== 'string') return parseFloat(value);
-    return parseFloat(value.replace(',', '.'));
+    // Reemplazar coma por punto para parseo
+    const stringValue = value.replace(',', '.');
+    return parseFloat(stringValue);
   };
 
   // Función para formatear número a string con coma
   const formatDecimal = (value) => {
     if (typeof value === 'number') {
-      return value.toString().replace('.', ',');
+      // Formatear a string con coma decimal
+      const parts = value.toString().split('.');
+      if (parts.length === 2) {
+        return `${parts[0]},${parts[1]}`;
+      }
+      return `${parts[0]},0`;
+    }
+    // Si ya es string, asegurarse de que tenga coma
+    if (value.includes('.')) {
+      return value.replace('.', ',');
+    }
+    if (!value.includes(',')) {
+      return `${value},0`;
     }
     return value;
   };
 
-  // Función para actualizar mediciones temporales desde inputs
-  const updateTempMeasurement = (field, value) => {
-    // Permitir números, coma y un solo decimal
-    const sanitizedValue = value.replace(/[^0-9,]/g, '');
-    // Asegurar solo una coma
-    const parts = sanitizedValue.split(',');
-    let finalValue = parts[0];
-    if (parts.length > 1) {
-      finalValue = parts[0] + ',' + parts[1].substring(0, 1);
+  // Función para validar y formatear input de medición
+  const handleMeasurementChange = (field, value) => {
+    // Permitir números, coma, punto y backspace
+    const sanitizedValue = value.replace(/[^0-9,.]/g, '');
+    
+    // Reemplazar punto por coma si se escribe punto
+    let formattedValue = sanitizedValue.replace('.', ',');
+    
+    // Asegurar solo una coma decimal
+    const parts = formattedValue.split(',');
+    if (parts.length > 2) {
+      formattedValue = parts[0] + ',' + parts.slice(1).join('');
     }
     
+    // Limitar a un decimal después de la coma
+    if (parts.length === 2 && parts[1].length > 1) {
+      formattedValue = parts[0] + ',' + parts[1].substring(0, 1);
+    }
+
+    // Actualizar el estado temporal inmediatamente
     setTempMeasurements(prev => ({
       ...prev,
-      [field]: finalValue
+      [field]: formattedValue
     }));
   };
 
-  // Función para actualizar mediciones desde sliders
+  // Función para guardar medición cuando se pierde el foco
+  const saveMeasurement = (field) => {
+    const tempValue = tempMeasurements[field];
+    
+    if (tempValue === '' || tempValue === undefined) {
+      // Si está vacío, restaurar valor anterior
+      setTempMeasurements(prev => ({
+        ...prev,
+        [field]: measurements[field]
+      }));
+      return;
+    }
+
+    const numericValue = parseDecimal(tempValue);
+    
+    if (!isNaN(numericValue)) {
+      const formattedValue = formatDecimal(numericValue);
+      
+      // Actualizar estado principal
+      setMeasurements(prev => ({
+        ...prev,
+        [field]: formattedValue
+      }));
+
+      // Actualizar config si corresponde
+      if (field === 'manualPH') {
+        setConfig(prev => ({ ...prev, ph: formattedValue }));
+      } else if (field === 'manualEC') {
+        setConfig(prev => ({ ...prev, ec: formattedValue }));
+      } else if (field === 'manualTemp') {
+        setConfig(prev => ({ ...prev, temp: formattedValue }));
+      } else if (field === 'manualVolume') {
+        setConfig(prev => ({ ...prev, currentVol: formattedValue }));
+      }
+
+      // Actualizar tempMeasurements con valor formateado
+      setTempMeasurements(prev => ({
+        ...prev,
+        [field]: formattedValue
+      }));
+    } else {
+      // Si no es un número válido, restaurar valor anterior
+      setTempMeasurements(prev => ({
+        ...prev,
+        [field]: measurements[field]
+      }));
+    }
+  };
+
+  // Función para actualizar desde slider
   const updateMeasurementFromSlider = (field, value) => {
     const stringValue = formatDecimal(value);
     
@@ -1675,41 +1747,6 @@ export default function HydroAppFinal() {
     }
   };
 
-  // Función para guardar mediciones cuando se pierde el foco del input
-  const saveMeasurementOnBlur = (field) => {
-    let value = tempMeasurements[field];
-    
-    // Convertir coma a punto para parsear
-    const numericValue = parseDecimal(value);
-    
-    if (!isNaN(numericValue)) {
-      const formattedValue = formatDecimal(numericValue);
-      
-      // Actualizar estado principal
-      setMeasurements(prev => ({
-        ...prev,
-        [field]: formattedValue
-      }));
-
-      // Actualizar config si corresponde
-      if (field === 'manualPH') {
-        setConfig(prev => ({ ...prev, ph: formattedValue }));
-      } else if (field === 'manualEC') {
-        setConfig(prev => ({ ...prev, ec: formattedValue }));
-      } else if (field === 'manualTemp') {
-        setConfig(prev => ({ ...prev, temp: formattedValue }));
-      } else if (field === 'manualVolume') {
-        setConfig(prev => ({ ...prev, currentVol: formattedValue }));
-      }
-    } else {
-      // Si no es un número válido, restaurar el valor anterior
-      setTempMeasurements(prev => ({
-        ...prev,
-        [field]: measurements[field]
-      }));
-    }
-  };
-
   // Función para guardar todas las mediciones manuales
   const saveAllManualMeasurements = () => {
     const now = new Date().toISOString();
@@ -1728,6 +1765,11 @@ export default function HydroAppFinal() {
     
     fieldsToSync.forEach(field => {
       const value = tempMeasurements[field];
+      if (value === '' || value === undefined) {
+        allValid = false;
+        return;
+      }
+      
       const numericValue = parseDecimal(value);
       
       if (!isNaN(numericValue)) {
@@ -2019,7 +2061,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
     
     if (daysSinceRot >= 10) {
       res.push({
-        title: daysSinceRot >= 12 ? "¡ROTACIÓN URGENTE!" : "ROTACIÓN PRÓXIMA",
+        title: daysSinceRot >= 12 ? "¡ROTACIÓN URGENTE!" : "ROTACIÓN PRÓXIMO",
         value: `${daysSinceRot} días`,
         description: daysSinceRot >= 12 ? "Realizar rotación de niveles" : "Programar rotación en próximos días",
         color: daysSinceRot >= 12 ? "bg-gradient-to-r from-orange-700 to-red-800" : "bg-gradient-to-r from-amber-600 to-orange-600",
@@ -2547,7 +2589,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3 bg-white rounded-lg">
                   <h5 className="font-bold text-red-600 mb-2">EN VERANO O DÍAS CALUROSOS (&gt;28°C):</h5>
-                  <ul className="text-sm text-slate-700 space-y-1">
+                  <ul className="text-sm text-slate-700 space-y=1">
                     <li>• Aumentar a 3.5 minutos por ciclo</li>
                     <li>• Añadir 2-3 ciclos adicionales</li>
                     <li>• Verificar humedad de lana de roca</li>
@@ -2555,7 +2597,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                 </div>
                 <div className="p-3 bg-white rounded-lg">
                   <h5 className="font-bold text-blue-600 mb-2">EN INVIERNO O DÍAS FRÍOS (&lt;15°C):</h5>
-                  <ul className="text-sm text-slate-700 space-y-1">
+                  <ul className="text-sm text-slate-700 space-y=1">
                     <li>• Reducir a 2.5 minutos por ciclo</li>
                     <li>• Eliminar 1-2 ciclos nocturnos</li>
                     <li>• Verificar que no haya exceso de humedad</li>
@@ -2567,7 +2609,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
 
           <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
             <h3 className="font-bold text-purple-800 mb-4">📊 RESUMEN DEL PROGRAMA DE RIEGO</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols=1 md:grid-cols-2 gap=4">
               <div className="p-3 bg-white rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-700">Ciclos diurnos (08:30-20:30):</span>
@@ -2659,7 +2701,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     );
   };
 
-  // =================== PESTAÑA DE MEDICIONES ===================
+  // =================== PESTAÑA DE MEDICIONES CORREGIDA ===================
 
   const MeasurementsTab = () => {
     // Helper function to get numeric value for slider
@@ -2786,10 +2828,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualPH}
-                            onChange={(e) => updateTempMeasurement('manualPH', e.target.value)}
-                            onBlur={() => saveMeasurementOnBlur('manualPH')}
+                            onChange={(e) => handleMeasurementChange('manualPH', e.target.value)}
+                            onBlur={() => saveMeasurement('manualPH')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
                               needsCorrection('manualPH', tempMeasurements.manualPH) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
@@ -2810,10 +2852,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.phCorrectionMinus}
-                              onChange={(e) => updateTempMeasurement('phCorrectionMinus', e.target.value)}
-                              onBlur={() => saveMeasurementOnBlur('phCorrectionMinus')}
+                              onChange={(e) => handleMeasurementChange('phCorrectionMinus', e.target.value)}
+                              onBlur={() => saveMeasurement('phCorrectionMinus')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
+                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-pink-500 ${
                                 needsCorrection('manualPH', tempMeasurements.manualPH) && parseDecimal(tempMeasurements.manualPH) > 6.5
                                   ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
                                   : 'border-slate-300 text-pink-600 focus:ring-pink-500'
@@ -2827,10 +2869,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.phCorrectionPlus}
-                              onChange={(e) => updateTempMeasurement('phCorrectionPlus', e.target.value)}
-                              onBlur={() => saveMeasurementOnBlur('phCorrectionPlus')}
+                              onChange={(e) => handleMeasurementChange('phCorrectionPlus', e.target.value)}
+                              onBlur={() => saveMeasurement('phCorrectionPlus')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
+                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-blue-500 ${
                                 needsCorrection('manualPH', tempMeasurements.manualPH) && parseDecimal(tempMeasurements.manualPH) < 5.5
                                   ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
                                   : 'border-slate-300 text-blue-600 focus:ring-blue-500'
@@ -2905,10 +2947,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualEC}
-                            onChange={(e) => updateTempMeasurement('manualEC', e.target.value)}
-                            onBlur={() => saveMeasurementOnBlur('manualEC')}
+                            onChange={(e) => handleMeasurementChange('manualEC', e.target.value)}
+                            onBlur={() => saveMeasurement('manualEC')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                               needsCorrection('manualEC', tempMeasurements.manualEC) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
@@ -2929,10 +2971,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.ecCorrectionA}
-                              onChange={(e) => updateTempMeasurement('ecCorrectionA', e.target.value)}
-                              onBlur={() => saveMeasurementOnBlur('ecCorrectionA')}
+                              onChange={(e) => handleMeasurementChange('ecCorrectionA', e.target.value)}
+                              onBlur={() => saveMeasurement('ecCorrectionA')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
+                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-emerald-500 ${
                                 needsCorrection('manualEC', tempMeasurements.manualEC) && parseDecimal(tempMeasurements.manualEC) < 1350
                                   ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
                                   : 'border-slate-300 text-emerald-600 focus:ring-emerald-500'
@@ -2946,10 +2988,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.ecCorrectionB}
-                              onChange={(e) => updateTempMeasurement('ecCorrectionB', e.target.value)}
-                              onBlur={() => saveMeasurementOnBlur('ecCorrectionB')}
+                              onChange={(e) => handleMeasurementChange('ecCorrectionB', e.target.value)}
+                              onBlur={() => saveMeasurement('ecCorrectionB')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
+                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-green-500 ${
                                 needsCorrection('manualEC', tempMeasurements.manualEC) && parseDecimal(tempMeasurements.manualEC) < 1350
                                   ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
                                   : 'border-slate-300 text-green-600 focus:ring-green-500'
@@ -2963,10 +3005,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               type="text"
                               inputMode="decimal"
                               value={tempMeasurements.ecCorrectionWater}
-                              onChange={(e) => updateTempMeasurement('ecCorrectionWater', e.target.value)}
-                              onBlur={() => saveMeasurementOnBlur('ecCorrectionWater')}
+                              onChange={(e) => handleMeasurementChange('ecCorrectionWater', e.target.value)}
+                              onBlur={() => saveMeasurement('ecCorrectionWater')}
                               onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
+                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
                                 needsCorrection('manualEC', tempMeasurements.manualEC) && parseDecimal(tempMeasurements.manualEC) > 1500
                                   ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
                                   : 'border-slate-300 text-cyan-600 focus:ring-cyan-500'
@@ -3041,10 +3083,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualVolume}
-                            onChange={(e) => updateTempMeasurement('manualVolume', e.target.value)}
-                            onBlur={() => saveMeasurementOnBlur('manualVolume')}
+                            onChange={(e) => handleMeasurementChange('manualVolume', e.target.value)}
+                            onBlur={() => saveMeasurement('manualVolume')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
                               needsCorrection('manualVolume', tempMeasurements.manualVolume) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
@@ -3073,10 +3115,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                           type="text"
                           inputMode="decimal"
                           value={tempMeasurements.ecCorrectionWater}
-                          onChange={(e) => updateTempMeasurement('ecCorrectionWater', e.target.value)}
-                          onBlur={() => saveMeasurementOnBlur('ecCorrectionWater')}
+                          onChange={(e) => handleMeasurementChange('ecCorrectionWater', e.target.value)}
+                          onBlur={() => saveMeasurement('ecCorrectionWater')}
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                          className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 ${
+                          className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
                             needsCorrection('manualVolume', tempMeasurements.manualVolume)
                               ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
                               : 'border-slate-300 text-cyan-600 focus:ring-cyan-500'
@@ -3152,10 +3194,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             type="text"
                             inputMode="decimal"
                             value={tempMeasurements.manualWaterTemp}
-                            onChange={(e) => updateTempMeasurement('manualWaterTemp', e.target.value)}
-                            onBlur={() => saveMeasurementOnBlur('manualWaterTemp')}
+                            onChange={(e) => handleMeasurementChange('manualWaterTemp', e.target.value)}
+                            onBlur={() => saveMeasurement('manualWaterTemp')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
                               needsCorrection('manualWaterTemp', tempMeasurements.manualWaterTemp) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
@@ -3236,10 +3278,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         type="text"
                         inputMode="decimal"
                         value={tempMeasurements.manualTemp}
-                        onChange={(e) => updateTempMeasurement('manualTemp', e.target.value)}
-                        onBlur={() => saveMeasurementOnBlur('manualTemp')}
+                        onChange={(e) => handleMeasurementChange('manualTemp', e.target.value)}
+                        onBlur={() => saveMeasurement('manualTemp')}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         placeholder="20"
                       />
                     </div>
@@ -3275,10 +3317,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         type="text"
                         inputMode="decimal"
                         value={tempMeasurements.manualHumidity}
-                        onChange={(e) => updateTempMeasurement('manualHumidity', e.target.value)}
-                        onBlur={() => saveMeasurementOnBlur('manualHumidity')}
+                        onChange={(e) => handleMeasurementChange('manualHumidity', e.target.value)}
+                        onBlur={() => saveMeasurement('manualHumidity')}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="65"
                       />
                     </div>
@@ -3526,27 +3568,27 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   <h4 className="font-bold text-red-700 text-lg mb-3">🚫 ERRORES COMUNES QUE DEBES EVITAR</h4>
                   <ul className="space-y-2 text-slate-700">
                     <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
+                      <X className="text-red-500 mt=0.5" size={16} />
                       <span><strong>Nunca</strong> usar agua que no sea destilada</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
+                      <X className="text-red-500 mt=0.5" size={16} />
                       <span><strong>Nunca</strong> usar otros nutrientes que no sean AQUA VEGA A y B para aguas blandas</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
+                      <X className="text-red-500 mt=0.5" size={16} />
                       <span><strong>Nunca</strong> ajustar el pH antes de estabilizar la EC a 1.4 mS/cm</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
+                      <X className="text-red-500 mt=0.5" size={16} />
                       <span><strong>Nunca</strong> omitir los tiempos de mezcla y estabilización</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
+                      <X className="text-red-500 mt=0.5" size={16} />
                       <span><strong>Nunca</strong> añadir CalMag - AQUA VEGA ya contiene Ca y Mg en proporción óptima</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <X className="text-red-500 mt-0.5" size={16} />
+                      <X className="text-red-500 mt=0.5" size={16} />
                       <span><strong>Nunca</strong> usar 63ml A+B (error anterior) - La dosis correcta es 45ml A+B</span>
                     </li>
                   </ul>
@@ -3556,31 +3598,31 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                   <h4 className="font-bold text-green-700 text-lg mb-3">✅ CONSEJOS DE ÉXITO CON PROTOCOLO CORREGIDO</h4>
                   <ul className="space-y-2 text-slate-700">
                     <li className="flex items-start gap-2">
-                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <Check className="text-green-500 mt=0.5" size={16} />
                       <span><strong>Dosis correcta:</strong> 45ml de A y B para 18L (2.5ml/L)</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <Check className="text-green-500 mt=0.5" size={16} />
                       <span><strong>Sin CalMag:</strong> AQUA VEGA A/B para aguas blandas contiene Ca y Mg equilibrados</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <Check className="text-green-500 mt=0.5" size={16} />
                       <span><strong>Medición precisa:</strong> Siempre con aireador apagado 30 segundos antes</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <Check className="text-green-500 mt=0.5" size={16} />
                       <span><strong>Titulación pH:</strong> Ajustar gota a gota (0.5ml por paso) para evitar sobrecorrección</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <Check className="text-green-500 mt=0.5" size={16} />
                       <span><strong>Rellenar solo agua destilada:</strong> Mantiene estabilidad sin alterar nutrientes</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <Check className="text-green-500 mt=0.5" size={16} />
                       <span><strong>Ajuste EC:</strong> +3.2ml A+B por cada 0.1 mS/cm de diferencia</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <Check className="text-green-500 mt-0.5" size={16} />
+                      <Check className="text-green-500 mt=0.5" size={16} />
                       <span><strong>Rotación cada 12 días:</strong> Ciclo completo de 36 días (12+12+12)</span>
                     </li>
                   </ul>
@@ -5300,23 +5342,23 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             <h4 className="font-bold text-cyan-700 mb-3">💧 Manejo del Protocolo 18L Corregido</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-cyan-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Dosis CORREGIDA:</strong> 45ml A+B para 18L (2.5ml/L). El anterior cálculo de 63ml era incorrecto.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-cyan-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>EC constante:</strong> Simplifica enormemente el manejo. Mismo rango (1350-1500 µS/cm) para todas las variedades y etapas.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-cyan-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Sin CalMag:</strong> AQUA VEGA A/B para aguas blandas ya contiene Ca y Mg en proporción óptima. No añadir suplementos.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-cyan-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Ajuste EC corregido:</strong> +3,2ml de A y B por cada 0.1 mS/cm de diferencia (antes +9ml era incorrecto).</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-cyan-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-cyan-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Rotación cada 12 días:</strong> Ciclo completo de 36 días garantiza producción continua.</span>
               </li>
             </ul>
@@ -5326,23 +5368,23 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             <h4 className="font-bold text-emerald-700 mb-3">🌱 Ventajas del EC Fijo y Rotación 12 Días</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-emerald-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Simplicidad:</strong> No necesitas calcular diferentes EC para diferentes variedades o etapas.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-emerald-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Producción continua:</strong> Con rotación cada 12 días, siempre tendrás plantas en todas las etapas.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-emerald-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Mejor calidad:</strong> EC constante produce lechugas más uniformes y de mejor textura.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-emerald-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Ahorro de nutrientes:</strong> Con la dosis corregida (45ml vs 63ml) ahorrarás un 29% en nutrientes.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                <Check className="text-emerald-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Planificación precisa:</strong> Sabes exactamente cuándo cosechar y cuándo añadir nuevas plantas.</span>
               </li>
             </ul>
@@ -5352,23 +5394,23 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             <h4 className="font-bold text-amber-700 mb-3">⚡ Solución de Problemas - Protocolo 18L Corregido</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                <AlertTriangle className="text-amber-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>EC baja (&lt;1.3 mS/cm):</strong> Añadir +3,2ml de AQUA VEGA A y B por cada 0.1 mS/cm de diferencia. Mezclar, airear 5min, medir.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                <AlertTriangle className="text-amber-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>EC alta (&gt;1.6 mS/cm):</strong> Añadir 100-200ml de agua destilada. Mezclar, airear 5min, medir.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                <AlertTriangle className="text-amber-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>pH inestable:</strong> Normal con agua destilada. Mantener en rango 5.5-6.5.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                <AlertTriangle className="text-amber-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Plantas amarillas:</strong> Si usaste la dosis anterior (63ml), probablemente EC demasiado alta. Diluir con agua destilada.</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                <AlertTriangle className="text-amber-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Crecimiento lento:</strong> Verificar temperatura agua (20°C ideal) y programa de riego (3 minutos por ciclo).</span>
               </li>
             </ul>
@@ -5378,23 +5420,23 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             <h4 className="font-bold text-purple-700 mb-3">⏰ Programa de Riego Optimizado - 3 minutos por ciclo</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>3 minutos garantizados:</strong> Tiempo suficiente para que los nutrientes lleguen a todas las raíces de la torre.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Horario optimizado:</strong> 08:30-20:30 cada hora + 00:00, 03:00 y 05:30 para crecimiento continuo.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Ajuste por temperatura:</strong> En verano aumentar a 3.5 minutos, en invierno reducir a 2.5 minutos.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Control visual:</strong> Observa las raíces. Blancas = sanas, marrones = exceso de agua.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Sprout className="text-purple-500 mt-1 flex-shrink-0" size={16} />
+                <Sprout className="text-purple-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Verificar humedad:</strong> La lana de roca debe estar húmeda pero no chorreando 1 hora después del riego.</span>
               </li>
             </ul>
@@ -5404,27 +5446,27 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
             <h4 className="font-bold text-blue-700 mb-3">🔧 Mantenimiento del Sistema - Protocolo 18L</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Medición diaria:</strong> 1 vez al día, por la mañana, con aireador apagado unos minutos.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Rellenar solo agua destilada:</strong> Mantiene estabilidad. La EC bajará ligeramente, es normal.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Cambio completo cada 2 semanas:</strong> Elimina acumulación de sales y mantiene sistema saludable.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Rotación cada 12 días:</strong> Mantiene producción continua y optimiza espacio.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Calibración mensual:</strong> Calibrar medidores con soluciones estándar para máxima precisión.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Settings className="text-blue-500 mt-1 flex-shrink-0" size={16} />
+                <Settings className="text-blue-500 mt=1 flex-shrink-0" size={16} />
                 <span><strong>Revisión semanal:</strong> Limpiar filtros, verificar bombas y conexiones.</span>
               </li>
             </ul>
