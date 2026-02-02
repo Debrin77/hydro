@@ -2676,775 +2676,1007 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
 
   // =================== PESTAÑA DE MEDICIONES CORREGIDA - SIN SLIDERS ===================
 
-  const MeasurementsTab = () => {
-    // Helper function para obtener recomendaciones de corrección
-    const getCorrectionRecommendation = (param, value) => {
-      const numericValue = parseDecimal(value);
-      
-      if (param === 'manualPH') {
-        if (numericValue < 5.5) {
-          return "pH bajo. Añadir pH+ (base suave) gota a gota.";
-        } else if (numericValue > 6.5) {
-          return `pH alto. Añadir ácido cítrico: ${phAdjustment.phMinus}ml recomendados.`;
-        }
-      } else if (param === 'manualEC') {
-        const ecAlert = checkECAlert(numericValue);
-        if (ecAlert) {
-          if (ecAlert.type === 'low') {
-            const mlPerPoint = 3.2;
-            const pointsLow = (FIXED_EC_RANGE.target - numericValue) / 100;
-            const mlToAdd = Math.round(pointsLow * mlPerPoint * 2);
-            return `EC baja. Añadir ${mlToAdd}ml de AQUA VEGA A y B.`;
-          } else if (ecAlert.type === 'high') {
-            const waterToAdd = Math.round(((numericValue - FIXED_EC_RANGE.target) / 100) * 100);
-            return `EC alta. Añadir ${waterToAdd}ml de agua destilada.`;
-          }
-        }
-      } else if (param === 'manualVolume') {
-        const totalVol = parseDecimal(config.totalVol);
-        const percentage = (numericValue / totalVol) * 100;
-        if (percentage < 45) {
-          const waterToAdd = totalVol - numericValue;
-          return `Volumen bajo. Añadir ${Math.round(waterToAdd)}L de agua destilada.`;
-        }
-      } else if (param === 'manualWaterTemp') {
-        if (numericValue < 18) {
-          return "Temp. agua baja. Ajustar calentador a 20°C.";
-        } else if (numericValue > 22) {
-          return "Temp. agua alta. Reducir calentador a 20°C.";
+ const MeasurementsTab = () => {
+  // Estado local para manejar inputs sin interferencias
+  const [localInputs, setLocalInputs] = useState({});
+  
+  // Inicializar localInputs con los valores actuales cuando se monta el componente
+  useEffect(() => {
+    setLocalInputs({
+      manualPH: measurements.manualPH,
+      manualEC: measurements.manualEC,
+      manualTemp: measurements.manualTemp,
+      manualWaterTemp: measurements.manualWaterTemp,
+      manualVolume: measurements.manualVolume,
+      manualHumidity: measurements.manualHumidity,
+      phCorrectionMinus: measurements.phCorrectionMinus,
+      phCorrectionPlus: measurements.phCorrectionPlus,
+      ecCorrectionA: measurements.ecCorrectionA,
+      ecCorrectionB: measurements.ecCorrectionB,
+      ecCorrectionWater: measurements.ecCorrectionWater
+    });
+  }, [measurements]);
+
+  // Función para manejar cambios en tiempo real SIN FORMATAR
+  const handleInputChange = (field, value) => {
+    // Permitir cualquier carácter para escritura libre
+    setLocalInputs(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Función para formatear y guardar cuando el input pierde el foco
+  const handleInputBlur = (field, value) => {
+    if (value === '' || value === undefined) {
+      // Restaurar valor anterior si está vacío
+      setLocalInputs(prev => ({
+        ...prev,
+        [field]: measurements[field]
+      }));
+      return;
+    }
+
+    // Reemplazar punto por coma para consistencia
+    let formattedValue = value.replace(/\./g, ',');
+    
+    // Asegurar que solo tenga una coma
+    const parts = formattedValue.split(',');
+    if (parts.length > 2) {
+      formattedValue = parts[0] + ',' + parts.slice(1).join('');
+    }
+    
+    // Si no tiene coma y es un número, añadir ",0"
+    if (!formattedValue.includes(',') && !isNaN(parseFloat(formattedValue.replace(',', '.')))) {
+      formattedValue = formattedValue + ',0';
+    }
+    
+    // Limitar decimales a 1 después de la coma
+    if (parts.length === 2 && parts[1].length > 1) {
+      formattedValue = parts[0] + ',' + parts[1].substring(0, 1);
+    }
+
+    // Validar que sea un número válido
+    const numericValue = parseDecimal(formattedValue);
+    
+    if (!isNaN(numericValue)) {
+      // Actualizar estado local con valor formateado
+      setLocalInputs(prev => ({
+        ...prev,
+        [field]: formattedValue
+      }));
+
+      // Actualizar estado principal
+      setMeasurements(prev => ({
+        ...prev,
+        [field]: formattedValue
+      }));
+
+      // Actualizar config si corresponde
+      if (field === 'manualPH') {
+        setConfig(prev => ({ ...prev, ph: formattedValue }));
+      } else if (field === 'manualEC') {
+        setConfig(prev => ({ ...prev, ec: formattedValue }));
+      } else if (field === 'manualTemp') {
+        setConfig(prev => ({ ...prev, temp: formattedValue }));
+      } else if (field === 'manualVolume') {
+        setConfig(prev => ({ ...prev, currentVol: formattedValue }));
+      }
+    } else {
+      // Si no es válido, restaurar valor anterior
+      setLocalInputs(prev => ({
+        ...prev,
+        [field]: measurements[field]
+      }));
+    }
+  };
+
+  // Función para guardar medición con Enter
+  const handleKeyDown = (field, e) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  };
+
+  // Helper function para obtener recomendaciones de corrección
+  const getCorrectionRecommendation = (param, value) => {
+    const numericValue = parseDecimal(value);
+    
+    if (param === 'manualPH') {
+      if (numericValue < 5.5) {
+        return "pH bajo. Añadir pH+ (base suave) gota a gota.";
+      } else if (numericValue > 6.5) {
+        const phAdjust = calculatePHAdjustment(
+          numericValue,
+          parseDecimal(config.targetPH),
+          parseDecimal(measurements.manualVolume || config.currentVol)
+        );
+        return `pH alto. Añadir ácido cítrico: ${phAdjust.phMinus}ml recomendados.`;
+      }
+    } else if (param === 'manualEC') {
+      const ecAlert = checkECAlert(numericValue);
+      if (ecAlert) {
+        if (ecAlert.type === 'low') {
+          const mlPerPoint = 3.2;
+          const pointsLow = (FIXED_EC_RANGE.target - numericValue) / 100;
+          const mlToAdd = Math.round(pointsLow * mlPerPoint * 2);
+          return `EC baja. Añadir ${mlToAdd}ml de AQUA VEGA A y B.`;
+        } else if (ecAlert.type === 'high') {
+          const waterToAdd = Math.round(((numericValue - FIXED_EC_RANGE.target) / 100) * 100);
+          return `EC alta. Añadir ${waterToAdd}ml de agua destilada.`;
         }
       }
-      
-      return "✅ Valor en rango. No se requiere corrección.";
-    };
+    } else if (param === 'manualVolume') {
+      const totalVol = parseDecimal(config.totalVol);
+      const percentage = (numericValue / totalVol) * 100;
+      if (percentage < 45) {
+        const waterToAdd = totalVol - numericValue;
+        return `Volumen bajo. Añadir ${Math.round(waterToAdd)}L de agua destilada.`;
+      }
+    } else if (param === 'manualWaterTemp') {
+      if (numericValue < 18) {
+        return "Temp. agua baja. Ajustar calentador a 20°C.";
+      } else if (numericValue > 22) {
+        return "Temp. agua alta. Reducir calentador a 20°C.";
+      }
+    }
+    
+    return "✅ Valor en rango. No se requiere corrección.";
+  };
 
-    // Verificar si un parámetro necesita corrección
-    const needsCorrection = (param, value) => {
-      const numericValue = parseDecimal(value);
-      
-      if (param === 'manualPH') {
-        return numericValue < 5.5 || numericValue > 6.5;
-      } else if (param === 'manualEC') {
-        const ecAlert = checkECAlert(numericValue);
-        return ecAlert !== null;
-      } else if (param === 'manualVolume') {
-        const totalVol = parseDecimal(config.totalVol);
-        const percentage = (numericValue / totalVol) * 100;
-        return percentage < 45;
-      } else if (param === 'manualWaterTemp') {
-        return numericValue < 18 || numericValue > 22;
+  // Verificar si un parámetro necesita corrección
+  const needsCorrection = (param, value) => {
+    const numericValue = parseDecimal(value);
+    
+    if (param === 'manualPH') {
+      return numericValue < 5.5 || numericValue > 6.5;
+    } else if (param === 'manualEC') {
+      const ecAlert = checkECAlert(numericValue);
+      return ecAlert !== null;
+    } else if (param === 'manualVolume') {
+      const totalVol = parseDecimal(config.totalVol);
+      const percentage = (numericValue / totalVol) * 100;
+      return percentage < 45;
+    } else if (param === 'manualWaterTemp') {
+      return numericValue < 18 || numericValue > 22;
+    }
+    
+    return false;
+  };
+
+  // Botones rápidos para valores comunes
+  const QuickValueButtons = ({ field, values }) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {values.map((value) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => {
+            const stringValue = formatDecimal(value);
+            // Actualizar estado local
+            setLocalInputs(prev => ({
+              ...prev,
+              [field]: stringValue
+            }));
+            // Actualizar estado principal
+            setMeasurements(prev => ({
+              ...prev,
+              [field]: stringValue
+            }));
+            // Actualizar config si corresponde
+            if (field === 'manualPH') {
+              setConfig(prev => ({ ...prev, ph: stringValue }));
+            } else if (field === 'manualEC') {
+              setConfig(prev => ({ ...prev, ec: stringValue }));
+            } else if (field === 'manualTemp') {
+              setConfig(prev => ({ ...prev, temp: stringValue }));
+            } else if (field === 'manualVolume') {
+              setConfig(prev => ({ ...prev, currentVol: stringValue }));
+            }
+          }}
+          className="px-3 py-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
+        >
+          {value}
+        </button>
+      ))}
+    </div>
+  );
+
+  // Función para guardar todas las mediciones
+  const saveAllManualMeasurements = () => {
+    const now = new Date().toISOString();
+    
+    // Primero sincronizar todos los campos
+    const fieldsToSync = [
+      'manualPH', 'manualEC', 'manualTemp', 
+      'manualWaterTemp', 'manualVolume', 'manualHumidity',
+      'phCorrectionMinus', 'phCorrectionPlus',
+      'ecCorrectionA', 'ecCorrectionB', 'ecCorrectionWater'
+    ];
+    
+    let allValid = true;
+    const updatedMeasurements = { ...measurements };
+    
+    fieldsToSync.forEach(field => {
+      const value = localInputs[field];
+      if (value === '' || value === undefined) {
+        allValid = false;
+        return;
       }
       
-      return false;
+      // Formatear el valor
+      let formattedValue = value.replace(/\./g, ',');
+      const parts = formattedValue.split(',');
+      
+      if (parts.length === 2 && parts[1].length > 1) {
+        formattedValue = parts[0] + ',' + parts[1].substring(0, 1);
+      }
+      
+      const numericValue = parseDecimal(formattedValue);
+      
+      if (!isNaN(numericValue)) {
+        updatedMeasurements[field] = formattedValue;
+        
+        // Actualizar config si corresponde
+        if (field === 'manualPH') {
+          setConfig(prev => ({ ...prev, ph: formattedValue }));
+        } else if (field === 'manualEC') {
+          setConfig(prev => ({ ...prev, ec: formattedValue }));
+        } else if (field === 'manualTemp') {
+          setConfig(prev => ({ ...prev, temp: formattedValue }));
+        } else if (field === 'manualVolume') {
+          setConfig(prev => ({ ...prev, currentVol: formattedValue }));
+        }
+      } else {
+        allValid = false;
+      }
+    });
+    
+    if (!allValid) {
+      alert("Algunos valores no son números válidos. Por favor, corrige los campos en rojo.");
+      return;
+    }
+    
+    // Actualizar estados
+    setMeasurements({
+      ...updatedMeasurements,
+      lastMeasurement: now
+    });
+    
+    // Guardar en historial
+    const measurementRecord = {
+      id: generatePlantId(),
+      date: now,
+      ph: updatedMeasurements.manualPH,
+      ec: updatedMeasurements.manualEC,
+      temp: updatedMeasurements.manualTemp,
+      waterTemp: updatedMeasurements.manualWaterTemp,
+      volume: updatedMeasurements.manualVolume,
+      humidity: updatedMeasurements.manualHumidity,
+      corrections: {
+        phMinus: updatedMeasurements.phCorrectionMinus,
+        phPlus: updatedMeasurements.phCorrectionPlus,
+        ecA: updatedMeasurements.ecCorrectionA,
+        ecB: updatedMeasurements.ecCorrectionB,
+        ecWater: updatedMeasurements.ecCorrectionWater
+      },
+      notes: "Medición manual completa",
+      type: "measurement"
     };
+    
+    setHistory([measurementRecord, ...history.slice(0, 49)]);
 
-    // Botones rápidos para valores comunes
-    const QuickValueButtons = ({ field, values }) => (
-      <div className="flex flex-wrap gap-2 mt-2">
-        {values.map((value) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => {
-              const stringValue = formatDecimal(value);
-              setTempMeasurements(prev => ({
-                ...prev,
-                [field]: stringValue
-              }));
-            }}
-            className="px-3 py-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
-          >
-            {value}
-          </button>
-        ))}
+    alert(`✅ Medición completa guardada:
+pH: ${updatedMeasurements.manualPH}
+EC: ${updatedMeasurements.manualEC} µS/cm
+Temp ambiente: ${updatedMeasurements.manualTemp}°C
+Temp agua: ${updatedMeasurements.manualWaterTemp}°C
+Volumen: ${updatedMeasurements.manualVolume}L
+Humedad: ${updatedMeasurements.manualHumidity}%
+
+Correcciones aplicadas:
+pH-: ${updatedMeasurements.phCorrectionMinus}ml
+pH+: ${updatedMeasurements.phCorrectionPlus}ml
+EC A: ${updatedMeasurements.ecCorrectionA}ml
+EC B: ${updatedMeasurements.ecCorrectionB}ml
+Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
+  };
+
+  // Si localInputs no está inicializado, mostrar loading
+  if (Object.keys(localInputs).length === 0) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
 
-    return (
-      <div className="space-y-8 animate-fade-in">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales - Protocolo 18L</h2>
-          <p className="text-slate-600">Registra las mediciones actuales de tu sistema según protocolo diario</p>
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Mediciones Manuales - Protocolo 18L</h2>
+        <p className="text-slate-600">Registra las mediciones actuales de tu sistema según protocolo diario</p>
+      </div>
+
+      <Card className="p-6 rounded-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+            <Clipboard className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-800">Registro de Mediciones Diarias</h3>
+            <p className="text-slate-600">Protocolo: Medir 1 vez al día (mañana, aireador apagado)</p>
+          </div>
         </div>
 
-        <Card className="p-6 rounded-2xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <Clipboard className="text-white" size={24} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-800">Registro de Mediciones Diarias</h3>
-              <p className="text-slate-600">Protocolo: Medir 1 vez al día (mañana, aireador apagado)</p>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-8">
-              {/* pH del Agua */}
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                        <Activity className="text-white" size={20} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-purple-700">pH del Agua</h4>
-                        <p className="text-sm text-slate-600">Objetivo: 5.8 | Rango: 5.5-6.5</p>
-                      </div>
+        <div className="space-y-6">
+          <div className="space-y-8">
+            {/* pH del Agua */}
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                      <Activity className="text-white" size={20} />
                     </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Valor medido
-                        </label>
-                        <div className="flex flex-col">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={tempMeasurements.manualPH}
-                            onChange={(e) => handleMeasurementChange('manualPH', e.target.value)}
-                            onBlur={() => saveMeasurement('manualPH')}
-                            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
-                              needsCorrection('manualPH', tempMeasurements.manualPH) 
-                                ? 'border-red-500 bg-red-50' 
-                                : 'border-slate-300'
-                            }`}
-                            placeholder="5,8"
-                          />
-                          <QuickValueButtons field="manualPH" values={[5.5, 5.8, 6.0, 6.5]} />
-                        </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                          Rango ideal: 5,5 - 6,5 | Objetivo: 5,8
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Corrección aplicada (ml)
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">pH- (ácido cítrico)</p>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={tempMeasurements.phCorrectionMinus}
-                              onChange={(e) => handleMeasurementChange('phCorrectionMinus', e.target.value)}
-                              onBlur={() => saveMeasurement('phCorrectionMinus')}
-                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-pink-500 ${
-                                needsCorrection('manualPH', tempMeasurements.manualPH) && parseDecimal(tempMeasurements.manualPH) > 6.5
-                                  ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
-                                  : 'border-slate-300 text-pink-600 focus:ring-pink-500'
-                              }`}
-                              placeholder="0,0"
-                            />
-                            <QuickValueButtons field="phCorrectionMinus" values={[0.5, 1.0, 2.0, 3.0]} />
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">pH+ (base)</p>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={tempMeasurements.phCorrectionPlus}
-                              onChange={(e) => handleMeasurementChange('phCorrectionPlus', e.target.value)}
-                              onBlur={() => saveMeasurement('phCorrectionPlus')}
-                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-blue-500 ${
-                                needsCorrection('manualPH', tempMeasurements.manualPH) && parseDecimal(tempMeasurements.manualPH) < 5.5
-                                  ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
-                                  : 'border-slate-300 text-blue-600 focus:ring-blue-500'
-                              }`}
-                              placeholder="0,0"
-                            />
-                            <QuickValueButtons field="phCorrectionPlus" values={[0.5, 1.0, 2.0]} />
-                          </div>
-                        </div>
-                      </div>
+                    <div>
+                      <h4 className="font-bold text-purple-700">pH del Agua</h4>
+                      <p className="text-sm text-slate-600">Objetivo: 5.8 | Rango: 5.5-6.5</p>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-white rounded-lg border border-slate-200">
-                    <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
-                    <div className={`p-3 rounded-lg mb-3 ${
-                      needsCorrection('manualPH', tempMeasurements.manualPH)
-                        ? 'bg-amber-50 border border-amber-200'
-                        : 'bg-green-50 border border-green-200'
-                    }`}>
-                      <p className="text-sm font-medium text-slate-700">
-                        {getCorrectionRecommendation('manualPH', tempMeasurements.manualPH)}
-                      </p>
-                    </div>
-                    
-                    {needsCorrection('manualPH', tempMeasurements.manualPH) && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-slate-600">
-                          <strong>Valor actual:</strong> {tempMeasurements.manualPH}
-                        </p>
-                        <p className="text-xs text-slate-600">
-                          <strong>Valor objetivo:</strong> {config.targetPH}
-                        </p>
-                        <p className="text-xs text-amber-600 font-bold">
-                          ⚠️ Requiere corrección
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-purple-700">
-                        <strong>Método de titulación:</strong>
-                        <br />
-                        • Añadir 0,5ml de ácido cítrico (≈10 gotas)
-                        <br />
-                        • Mezclar 2 minutos con aireador
-                        <br />
-                        • Esperar 30 segundos, medir
-                        <br />
-                        • Repetir hasta pH 5,8
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Conductividad (EC) */}
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                        <Zap className="text-white" size={20} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-blue-700">Conductividad (EC)</h4>
-                        <p className="text-sm text-slate-600">Objetivo: 1400 µS/cm | Rango: 1350-1500</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Valor medido (µS/cm)
-                        </label>
-                        <div className="flex flex-col">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={tempMeasurements.manualEC}
-                            onChange={(e) => handleMeasurementChange('manualEC', e.target.value)}
-                            onBlur={() => saveMeasurement('manualEC')}
-                            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                              needsCorrection('manualEC', tempMeasurements.manualEC) 
-                                ? 'border-red-500 bg-red-50' 
-                                : 'border-slate-300'
-                            }`}
-                            placeholder="1400"
-                          />
-                          <QuickValueButtons field="manualEC" values={[1350, 1400, 1450, 1500]} />
-                        </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                          Rango fijo: 1350-1500 µS/cm | Objetivo: 1400 µS/cm
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Corrección aplicada (ml)
-                        </label>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">AQUA VEGA A</p>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={tempMeasurements.ecCorrectionA}
-                              onChange={(e) => handleMeasurementChange('ecCorrectionA', e.target.value)}
-                              onBlur={() => saveMeasurement('ecCorrectionA')}
-                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-emerald-500 ${
-                                needsCorrection('manualEC', tempMeasurements.manualEC) && parseDecimal(tempMeasurements.manualEC) < 1350
-                                  ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
-                                  : 'border-slate-300 text-emerald-600 focus:ring-emerald-500'
-                              }`}
-                              placeholder="0,0"
-                            />
-                            <QuickValueButtons field="ecCorrectionA" values={[3.2, 6.4, 9.6]} />
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">AQUA VEGA B</p>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={tempMeasurements.ecCorrectionB}
-                              onChange={(e) => handleMeasurementChange('ecCorrectionB', e.target.value)}
-                              onBlur={() => saveMeasurement('ecCorrectionB')}
-                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-green-500 ${
-                                needsCorrection('manualEC', tempMeasurements.manualEC) && parseDecimal(tempMeasurements.manualEC) < 1350
-                                  ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
-                                  : 'border-slate-300 text-green-600 focus:ring-green-500'
-                              }`}
-                              placeholder="0,0"
-                            />
-                            <QuickValueButtons field="ecCorrectionB" values={[3.2, 6.4, 9.6]} />
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">Agua destilada</p>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={tempMeasurements.ecCorrectionWater}
-                              onChange={(e) => handleMeasurementChange('ecCorrectionWater', e.target.value)}
-                              onBlur={() => saveMeasurement('ecCorrectionWater')}
-                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                              className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
-                                needsCorrection('manualEC', tempMeasurements.manualEC) && parseDecimal(tempMeasurements.manualEC) > 1500
-                                  ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
-                                  : 'border-slate-300 text-cyan-600 focus:ring-cyan-500'
-                              }`}
-                              placeholder="0,0"
-                            />
-                            <QuickValueButtons field="ecCorrectionWater" values={[100, 200, 300]} />
-                          </div>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                          Ajuste EC: +3,2ml A+B por cada 0,1 mS/cm de diferencia
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white rounded-lg border border-slate-200">
-                    <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
-                    <div className={`p-3 rounded-lg mb-3 ${
-                      needsCorrection('manualEC', tempMeasurements.manualEC)
-                        ? 'bg-amber-50 border border-amber-200'
-                        : 'bg-green-50 border border-green-200'
-                    }`}>
-                      <p className="text-sm font-medium text-slate-700">
-                        {getCorrectionRecommendation('manualEC', tempMeasurements.manualEC)}
-                      </p>
-                    </div>
-                    
-                    {needsCorrection('manualEC', tempMeasurements.manualEC) && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-slate-600">
-                          <strong>Valor actual:</strong> {tempMeasurements.manualEC} µS/cm
-                        </p>
-                        <p className="text-xs text-slate-600">
-                          <strong>Rango objetivo:</strong> 1350-1500 µS/cm
-                        </p>
-                        <p className="text-xs text-amber-600 font-bold">
-                          ⚠️ Requiere corrección
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-700">
-                        <strong>Protocolo 18L:</strong>
-                        <br />
-                        • 45ml AQUA VEGA A+B para 18L
-                        <br />
-                        • Objetivo: 1400 µS/cm (1,4 mS/cm)
-                        <br />
-                        • Rango fijo: 1350-1500 µS/cm
-                        <br />
-                        • Ajuste: +3,2ml A+B por cada 0,1 mS/cm
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Volumen de Agua */}
-              <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-                        <Droplets className="text-white" size={20} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-emerald-700">Volumen de Agua</h4>
-                        <p className="text-sm text-slate-600">Depósito: {config.totalVol}L | Mínimo: {formatDecimal(parseDecimal(config.totalVol) * 0.45)}L</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Volumen actual (L)
-                        </label>
-                        <div className="flex flex-col">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={tempMeasurements.manualVolume}
-                            onChange={(e) => handleMeasurementChange('manualVolume', e.target.value)}
-                            onBlur={() => saveMeasurement('manualVolume')}
-                            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
-                              needsCorrection('manualVolume', tempMeasurements.manualVolume) 
-                                ? 'border-red-500 bg-red-50' 
-                                : 'border-slate-300'
-                            }`}
-                            placeholder={config.currentVol}
-                          />
-                          <QuickValueButtons field="manualVolume" values={[9, 13.5, 18]} />
-                        </div>
-                        <div className="mt-3">
-                          <Progress
-                            value={(parseDecimal(tempMeasurements.manualVolume) / parseDecimal(config.totalVol)) * 100}
-                            className="h-3"
-                          />
-                          <div className="flex justify-between text-xs text-slate-500 mt-1">
-                            <span>0L</span>
-                            <span>{Math.round((parseDecimal(tempMeasurements.manualVolume) / parseDecimal(config.totalVol)) * 100)}%</span>
-                            <span>{config.totalVol}L</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Corrección agua destilada (ml)
-                        </label>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Valor medido
+                      </label>
+                      <div className="flex flex-col">
                         <input
                           type="text"
                           inputMode="decimal"
-                          value={tempMeasurements.ecCorrectionWater}
-                          onChange={(e) => handleMeasurementChange('ecCorrectionWater', e.target.value)}
-                          onBlur={() => saveMeasurement('ecCorrectionWater')}
-                          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                          className={`w-full px-4 py-3 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
-                            needsCorrection('manualVolume', tempMeasurements.manualVolume)
-                              ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
-                              : 'border-slate-300 text-cyan-600 focus:ring-cyan-500'
+                          value={localInputs.manualPH || ''}
+                          onChange={(e) => handleInputChange('manualPH', e.target.value)}
+                          onBlur={(e) => handleInputBlur('manualPH', e.target.value)}
+                          onKeyDown={(e) => handleKeyDown('manualPH', e)}
+                          className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                            needsCorrection('manualPH', localInputs.manualPH) 
+                              ? 'border-red-500 bg-red-50' 
+                              : 'border-slate-300'
                           }`}
-                          placeholder="0,0"
+                          placeholder="5,8"
                         />
-                        <p className="text-xs text-slate-500 mt-2">
-                          ml de agua destilada añadidos para rellenar
-                        </p>
-                        <QuickValueButtons field="ecCorrectionWater" values={[500, 1000, 2000]} />
+                        <QuickValueButtons field="manualPH" values={[5.5, 5.8, 6.0, 6.5]} />
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white rounded-lg border border-slate-200">
-                    <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
-                    <div className={`p-3 rounded-lg mb-3 ${
-                      needsCorrection('manualVolume', tempMeasurements.manualVolume)
-                        ? 'bg-amber-50 border border-amber-200'
-                        : 'bg-green-50 border border-green-200'
-                    }`}>
-                      <p className="text-sm font-medium text-slate-700">
-                        {getCorrectionRecommendation('manualVolume', tempMeasurements.manualVolume)}
+                      <p className="text-xs text-slate-500 mt-2">
+                        Rango ideal: 5,5 - 6,5 | Objetivo: 5,8
                       </p>
                     </div>
-                    
-                    {needsCorrection('manualVolume', tempMeasurements.manualVolume) && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-slate-600">
-                          <strong>Volumen actual:</strong> {tempMeasurements.manualVolume}L
-                        </p>
-                        <p className="text-xs text-slate-600">
-                          <strong>Volumen mínimo:</strong> {formatDecimal(parseDecimal(config.totalVol) * 0.45)}L
-                        </p>
-                        <p className="text-xs text-amber-600 font-bold">
-                          ⚠️ Requiere rellenar
-                        </p>
-                      </div>
-                    )}
 
-                    <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
-                      <p className="text-sm text-emerald-700">
-                        <strong>Nota importante:</strong>
-                        <br />
-                        • Rellenar solo con agua destilada
-                        <br />
-                        • La EC bajará ligeramente al rellenar (normal)
-                        <br />
-                        • Mantener mínimo 45% del volumen total
-                        <br />
-                        • Protocolo: 18L total, mínimo 8L
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Temperatura del Agua */}
-              <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                        <Thermometer className="text-white" size={20} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-cyan-700">Temperatura del Agua</h4>
-                        <p className="text-sm text-slate-600">Objetivo: 20°C | Rango: 18-22°C</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Temperatura medida (°C)
-                        </label>
-                        <div className="flex flex-col">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Corrección aplicada (ml)
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs text-slate-600 mb-1">pH- (ácido cítrico)</p>
                           <input
                             type="text"
                             inputMode="decimal"
-                            value={tempMeasurements.manualWaterTemp}
-                            onChange={(e) => handleMeasurementChange('manualWaterTemp', e.target.value)}
-                            onBlur={() => saveMeasurement('manualWaterTemp')}
-                            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
-                              needsCorrection('manualWaterTemp', tempMeasurements.manualWaterTemp) 
-                                ? 'border-red-500 bg-red-50' 
-                                : 'border-slate-300'
+                            value={localInputs.phCorrectionMinus || ''}
+                            onChange={(e) => handleInputChange('phCorrectionMinus', e.target.value)}
+                            onBlur={(e) => handleInputBlur('phCorrectionMinus', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown('phCorrectionMinus', e)}
+                            className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-pink-500 ${
+                              needsCorrection('manualPH', localInputs.manualPH) && parseDecimal(localInputs.manualPH) > 6.5
+                                ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
+                                : 'border-slate-300 text-pink-600 focus:ring-pink-500'
                             }`}
-                            placeholder="20"
+                            placeholder="0,0"
                           />
-                          <QuickValueButtons field="manualWaterTemp" values={[18, 20, 22]} />
+                          <QuickValueButtons field="phCorrectionMinus" values={[0.5, 1.0, 2.0, 3.0]} />
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                          Rango ideal: 18-22°C | Objetivo: 20°C
-                        </p>
-                      </div>
-
-                      <div>
-                        <div className="p-3 bg-cyan-50 rounded-lg">
-                          <p className="text-sm text-cyan-700">
-                            <strong>Nota:</strong> La temperatura del agua se ajusta con el calentador. 
-                            No hay corrección manual en ml. Ajustar calentador a 20°C.
-                          </p>
+                        <div>
+                          <p className="text-xs text-slate-600 mb-1">pH+ (base)</p>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={localInputs.phCorrectionPlus || ''}
+                            onChange={(e) => handleInputChange('phCorrectionPlus', e.target.value)}
+                            onBlur={(e) => handleInputBlur('phCorrectionPlus', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown('phCorrectionPlus', e)}
+                            className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-blue-500 ${
+                              needsCorrection('manualPH', localInputs.manualPH) && parseDecimal(localInputs.manualPH) < 5.5
+                                ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
+                                : 'border-slate-300 text-blue-600 focus:ring-blue-500'
+                            }`}
+                            placeholder="0,0"
+                          />
+                          <QuickValueButtons field="phCorrectionPlus" values={[0.5, 1.0, 2.0]} />
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white rounded-lg border border-slate-200">
-                    <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
-                    <div className={`p-3 rounded-lg mb-3 ${
-                      needsCorrection('manualWaterTemp', tempMeasurements.manualWaterTemp)
-                        ? 'bg-amber-50 border border-amber-200'
-                        : 'bg-green-50 border border-green-200'
-                    }`}>
-                      <p className="text-sm font-medium text-slate-700">
-                        {getCorrectionRecommendation('manualWaterTemp', tempMeasurements.manualWaterTemp)}
-                      </p>
-                    </div>
-                    
-                    {needsCorrection('manualWaterTemp', tempMeasurements.manualWaterTemp) && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-slate-600">
-                          <strong>Temperatura actual:</strong> {tempMeasurements.manualWaterTemp}°C
-                        </p>
-                        <p className="text-xs text-slate-600">
-                          <strong>Rango objetivo:</strong> 18-22°C
-                        </p>
-                        <p className="text-xs text-amber-600 font-bold">
-                          ⚠️ Ajustar calentador
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-700">
-                        <strong>Importancia temperatura:</strong>
-                        <br />
-                        • 18-22°C: Absorción óptima de nutrientes
-                        <br />
-                        • &lt;18°C: Crecimiento lento, riesgo de pudrición
-                        <br />
-                        • &gt;22°C: Baja oxigenación, estrés radicular
-                        <br />
-                        • Usar calentador con termostato a 20°C
-                      </p>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Temperatura y Humedad Ambiente */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
-                      <ThermometerSun className="text-white" size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-amber-700">Temperatura Ambiente</h4>
-                      <p className="text-sm text-slate-600">Ideal: 18-25°C</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Temperatura medida (°C)
-                    </label>
-                    <div className="flex flex-col">
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={tempMeasurements.manualTemp}
-                        onChange={(e) => handleMeasurementChange('manualTemp', e.target.value)}
-                        onBlur={() => saveMeasurement('manualTemp')}
-                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                        placeholder="20"
-                      />
-                      <QuickValueButtons field="manualTemp" values={[18, 22, 25, 28]} />
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                      Rango ideal: 18-25°C
+                <div className="p-4 bg-white rounded-lg border border-slate-200">
+                  <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
+                  <div className={`p-3 rounded-lg mb-3 ${
+                    needsCorrection('manualPH', localInputs.manualPH)
+                      ? 'bg-amber-50 border border-amber-200'
+                      : 'bg-green-50 border border-green-200'
+                  }`}>
+                    <p className="text-sm font-medium text-slate-700">
+                      {getCorrectionRecommendation('manualPH', localInputs.manualPH)}
                     </p>
                   </div>
-                </div>
-
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                      <CloudRain className="text-white" size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-blue-700">Humedad Relativa</h4>
-                      <p className="text-sm text-slate-600">Ideal: 40-70%</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Humedad medida (%)
-                    </label>
-                    <div className="flex flex-col">
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={tempMeasurements.manualHumidity}
-                        onChange={(e) => handleMeasurementChange('manualHumidity', e.target.value)}
-                        onBlur={() => saveMeasurement('manualHumidity')}
-                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="65"
-                      />
-                      <QuickValueButtons field="manualHumidity" values={[40, 50, 60, 70]} />
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                      Rango ideal: 40-70%
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-slate-200">
-              <Button
-                onClick={saveAllManualMeasurements}
-                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
-              >
-                <Clipboard className="mr-2" />
-                Guardar Medición Diaria con Correcciones
-              </Button>
-              <p className="text-xs text-slate-500 mt-3 text-center">
-                Última medición: {new Date(measurements.lastMeasurement).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {history.length > 0 && (
-          <Card className="p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="font-bold text-slate-800">Historial Reciente</h3>
-                <p className="text-slate-600">Últimas mediciones registradas con correcciones</p>
-              </div>
-              <Badge>{history.length} registros</Badge>
-            </div>
-
-            <div className="space-y-4">
-              {history.slice(0, 5).map((record, index) => (
-                <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-bold text-slate-800">
-                        {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  
+                  {needsCorrection('manualPH', localInputs.manualPH) && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-600">
+                        <strong>Valor actual:</strong> {localInputs.manualPH}
                       </p>
-                      <p className="text-sm text-slate-600">{record.notes || "Medición diaria"}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteHistoryRecord(record.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    <div className="text-center p-2 bg-purple-50 rounded-lg">
-                      <p className="text-xs text-purple-700">pH</p>
-                      <p className="font-bold text-purple-600">{record.ph}</p>
-                    </div>
-                    <div className="text-center p-2 bg-blue-50 rounded-lg">
-                      <p className="text-xs text-blue-700">EC</p>
-                      <p className="font-bold text-blue-600">{record.ec} µS/cm</p>
-                    </div>
-                    <div className="text-center p-2 bg-cyan-50 rounded-lg">
-                      <p className="text-xs text-cyan-700">Temp Agua</p>
-                      <p className="font-bold text-cyan-600">{record.temp}°C</p>
-                    </div>
-                    <div className="text-center p-2 bg-emerald-50 rounded-lg">
-                      <p className="text-xs text-emerald-700">Volumen</p>
-                      <p className="font-bold text-emerald-600">{record.volume}L</p>
-                    </div>
-                  </div>
-
-                  {/* Mostrar correcciones si existen */}
-                  {record.corrections && (
-                    <div className="mt-3 pt-3 border-t border-slate-200">
-                      <p className="text-xs font-medium text-slate-700 mb-2">Correcciones aplicadas:</p>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        <div className="text-center p-2 bg-pink-50 rounded">
-                          <p className="text-xs text-pink-700">pH-</p>
-                          <p className="font-bold text-pink-600">{record.corrections.phMinus}ml</p>
-                        </div>
-                        <div className="text-center p-2 bg-blue-50 rounded">
-                          <p className="text-xs text-blue-700">pH+</p>
-                          <p className="font-bold text-blue-600">{record.corrections.phPlus}ml</p>
-                        </div>
-                        <div className="text-center p-2 bg-emerald-50 rounded">
-                          <p className="text-xs text-emerald-700">EC A</p>
-                          <p className="font-bold text-emerald-600">{record.corrections.ecA}ml</p>
-                        </div>
-                        <div className="text-center p-2 bg-green-50 rounded">
-                          <p className="text-xs text-green-700">EC B</p>
-                          <p className="font-bold text-green-600">{record.corrections.ecB}ml</p>
-                        </div>
-                        <div className="text-center p-2 bg-cyan-50 rounded">
-                          <p className="text-xs text-cyan-700">Agua</p>
-                          <p className="font-bold text-cyan-600">{record.corrections.ecWater}ml</p>
-                        </div>
-                      </div>
+                      <p className="text-xs text-slate-600">
+                        <strong>Valor objetivo:</strong> {config.targetPH}
+                      </p>
+                      <p className="text-xs text-amber-600 font-bold">
+                        ⚠️ Requiere corrección
+                      </p>
                     </div>
                   )}
+
+                  <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+                    <p className="text-sm text-purple-700">
+                      <strong>Método de titulación:</strong>
+                      <br />
+                      • Añadir 0,5ml de ácido cítrico (≈10 gotas)
+                      <br />
+                      • Mezclar 2 minutos con aireador
+                      <br />
+                      • Esperar 30 segundos, medir
+                      <br />
+                      • Repetir hasta pH 5,8
+                    </p>
+                  </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </Card>
-        )}
-      </div>
-    );
-  };
+
+            {/* Conductividad (EC) */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                      <Zap className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-blue-700">Conductividad (EC)</h4>
+                      <p className="text-sm text-slate-600">Objetivo: 1400 µS/cm | Rango: 1350-1500</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Valor medido (µS/cm)
+                      </label>
+                      <div className="flex flex-col">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={localInputs.manualEC || ''}
+                          onChange={(e) => handleInputChange('manualEC', e.target.value)}
+                          onBlur={(e) => handleInputBlur('manualEC', e.target.value)}
+                          onKeyDown={(e) => handleKeyDown('manualEC', e)}
+                          className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            needsCorrection('manualEC', localInputs.manualEC) 
+                              ? 'border-red-500 bg-red-50' 
+                              : 'border-slate-300'
+                          }`}
+                          placeholder="1400"
+                        />
+                        <QuickValueButtons field="manualEC" values={[1350, 1400, 1450, 1500]} />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Rango fijo: 1350-1500 µS/cm | Objetivo: 1400 µS/cm
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Corrección aplicada (ml)
+                      </label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <p className="text-xs text-slate-600 mb-1">AQUA VEGA A</p>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={localInputs.ecCorrectionA || ''}
+                            onChange={(e) => handleInputChange('ecCorrectionA', e.target.value)}
+                            onBlur={(e) => handleInputBlur('ecCorrectionA', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown('ecCorrectionA', e)}
+                            className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-emerald-500 ${
+                              needsCorrection('manualEC', localInputs.manualEC) && parseDecimal(localInputs.manualEC) < 1350
+                                ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
+                                : 'border-slate-300 text-emerald-600 focus:ring-emerald-500'
+                            }`}
+                            placeholder="0,0"
+                          />
+                          <QuickValueButtons field="ecCorrectionA" values={[3.2, 6.4, 9.6]} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-600 mb-1">AQUA VEGA B</p>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={localInputs.ecCorrectionB || ''}
+                            onChange={(e) => handleInputChange('ecCorrectionB', e.target.value)}
+                            onBlur={(e) => handleInputBlur('ecCorrectionB', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown('ecCorrectionB', e)}
+                            className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-green-500 ${
+                              needsCorrection('manualEC', localInputs.manualEC) && parseDecimal(localInputs.manualEC) < 1350
+                                ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
+                                : 'border-slate-300 text-green-600 focus:ring-green-500'
+                            }`}
+                            placeholder="0,0"
+                          />
+                          <QuickValueButtons field="ecCorrectionB" values={[3.2, 6.4, 9.6]} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-600 mb-1">Agua destilada</p>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={localInputs.ecCorrectionWater || ''}
+                            onChange={(e) => handleInputChange('ecCorrectionWater', e.target.value)}
+                            onBlur={(e) => handleInputBlur('ecCorrectionWater', e.target.value)}
+                            onKeyDown={(e) => handleKeyDown('ecCorrectionWater', e)}
+                            className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
+                              needsCorrection('manualEC', localInputs.manualEC) && parseDecimal(localInputs.manualEC) > 1500
+                                ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
+                                : 'border-slate-300 text-cyan-600 focus:ring-cyan-500'
+                            }`}
+                            placeholder="0,0"
+                          />
+                          <QuickValueButtons field="ecCorrectionWater" values={[100, 200, 300]} />
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Ajuste EC: +3,2ml A+B por cada 0,1 mS/cm de diferencia
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-lg border border-slate-200">
+                  <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
+                  <div className={`p-3 rounded-lg mb-3 ${
+                    needsCorrection('manualEC', localInputs.manualEC)
+                      ? 'bg-amber-50 border border-amber-200'
+                      : 'bg-green-50 border border-green-200'
+                  }`}>
+                    <p className="text-sm font-medium text-slate-700">
+                      {getCorrectionRecommendation('manualEC', localInputs.manualEC)}
+                    </p>
+                  </div>
+                  
+                  {needsCorrection('manualEC', localInputs.manualEC) && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-600">
+                        <strong>Valor actual:</strong> {localInputs.manualEC} µS/cm
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        <strong>Rango objetivo:</strong> 1350-1500 µS/cm
+                      </p>
+                      <p className="text-xs text-amber-600 font-bold">
+                        ⚠️ Requiere corrección
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Protocolo 18L:</strong>
+                      <br />
+                      • 45ml AQUA VEGA A+B para 18L
+                      <br />
+                      • Objetivo: 1400 µS/cm (1,4 mS/cm)
+                      <br />
+                      • Rango fijo: 1350-1500 µS/cm
+                      <br />
+                      • Ajuste: +3,2ml A+B por cada 0,1 mS/cm
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Volumen de Agua */}
+            <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+                      <Droplets className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-emerald-700">Volumen de Agua</h4>
+                      <p className="text-sm text-slate-600">Depósito: {config.totalVol}L | Mínimo: {formatDecimal(parseDecimal(config.totalVol) * 0.45)}L</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Volumen actual (L)
+                      </label>
+                      <div className="flex flex-col">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={localInputs.manualVolume || ''}
+                          onChange={(e) => handleInputChange('manualVolume', e.target.value)}
+                          onBlur={(e) => handleInputBlur('manualVolume', e.target.value)}
+                          onKeyDown={(e) => handleKeyDown('manualVolume', e)}
+                          className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                            needsCorrection('manualVolume', localInputs.manualVolume) 
+                              ? 'border-red-500 bg-red-50' 
+                              : 'border-slate-300'
+                          }`}
+                          placeholder={config.currentVol}
+                        />
+                        <QuickValueButtons field="manualVolume" values={[9, 13.5, 18]} />
+                      </div>
+                      <div className="mt-3">
+                        <Progress
+                          value={(parseDecimal(localInputs.manualVolume || config.currentVol) / parseDecimal(config.totalVol)) * 100}
+                          className="h-3"
+                        />
+                        <div className="flex justify-between text-xs text-slate-500 mt-1">
+                          <span>0L</span>
+                          <span>{Math.round((parseDecimal(localInputs.manualVolume || config.currentVol) / parseDecimal(config.totalVol)) * 100)}%</span>
+                          <span>{config.totalVol}L</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Corrección agua destilada (ml)
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={localInputs.ecCorrectionWater || ''}
+                        onChange={(e) => handleInputChange('ecCorrectionWater', e.target.value)}
+                        onBlur={(e) => handleInputBlur('ecCorrectionWater', e.target.value)}
+                        onKeyDown={(e) => handleKeyDown('ecCorrectionWater', e)}
+                        className={`w-full px-4 py-3 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
+                          needsCorrection('manualVolume', localInputs.manualVolume)
+                            ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
+                            : 'border-slate-300 text-cyan-600 focus:ring-cyan-500'
+                        }`}
+                        placeholder="0,0"
+                      />
+                      <p className="text-xs text-slate-500 mt-2">
+                        ml de agua destilada añadidos para rellenar
+                      </p>
+                      <QuickValueButtons field="ecCorrectionWater" values={[500, 1000, 2000]} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-lg border border-slate-200">
+                  <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
+                  <div className={`p-3 rounded-lg mb-3 ${
+                    needsCorrection('manualVolume', localInputs.manualVolume)
+                      ? 'bg-amber-50 border border-amber-200'
+                      : 'bg-green-50 border border-green-200'
+                  }`}>
+                    <p className="text-sm font-medium text-slate-700">
+                      {getCorrectionRecommendation('manualVolume', localInputs.manualVolume)}
+                    </p>
+                  </div>
+                  
+                  {needsCorrection('manualVolume', localInputs.manualVolume) && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-600">
+                        <strong>Volumen actual:</strong> {localInputs.manualVolume}L
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        <strong>Volumen mínimo:</strong> {formatDecimal(parseDecimal(config.totalVol) * 0.45)}L
+                      </p>
+                      <p className="text-xs text-amber-600 font-bold">
+                        ⚠️ Requiere rellenar
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
+                    <p className="text-sm text-emerald-700">
+                      <strong>Nota importante:</strong>
+                      <br />
+                      • Rellenar solo con agua destilada
+                      <br />
+                      • La EC bajará ligeramente al rellenar (normal)
+                      <br />
+                      • Mantener mínimo 45% del volumen total
+                      <br />
+                      • Protocolo: 18L total, mínimo 8L
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Temperatura del Agua */}
+            <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+                      <Thermometer className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-cyan-700">Temperatura del Agua</h4>
+                      <p className="text-sm text-slate-600">Objetivo: 20°C | Rango: 18-22°C</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Temperatura medida (°C)
+                      </label>
+                      <div className="flex flex-col">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={localInputs.manualWaterTemp || ''}
+                          onChange={(e) => handleInputChange('manualWaterTemp', e.target.value)}
+                          onBlur={(e) => handleInputBlur('manualWaterTemp', e.target.value)}
+                          onKeyDown={(e) => handleKeyDown('manualWaterTemp', e)}
+                          className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                            needsCorrection('manualWaterTemp', localInputs.manualWaterTemp) 
+                              ? 'border-red-500 bg-red-50' 
+                              : 'border-slate-300'
+                          }`}
+                          placeholder="20"
+                        />
+                        <QuickValueButtons field="manualWaterTemp" values={[18, 20, 22]} />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Rango ideal: 18-22°C | Objetivo: 20°C
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="p-3 bg-cyan-50 rounded-lg">
+                        <p className="text-sm text-cyan-700">
+                          <strong>Nota:</strong> La temperatura del agua se ajusta con el calentador. 
+                          No hay corrección manual en ml. Ajustar calentador a 20°C.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white rounded-lg border border-slate-200">
+                  <h5 className="font-bold text-slate-800 mb-3">📋 Recomendación</h5>
+                  <div className={`p-3 rounded-lg mb-3 ${
+                    needsCorrection('manualWaterTemp', localInputs.manualWaterTemp)
+                      ? 'bg-amber-50 border border-amber-200'
+                      : 'bg-green-50 border border-green-200'
+                  }`}>
+                    <p className="text-sm font-medium text-slate-700">
+                      {getCorrectionRecommendation('manualWaterTemp', localInputs.manualWaterTemp)}
+                    </p>
+                  </div>
+                  
+                  {needsCorrection('manualWaterTemp', localInputs.manualWaterTemp) && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-600">
+                        <strong>Temperatura actual:</strong> {localInputs.manualWaterTemp}°C
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        <strong>Rango objetivo:</strong> 18-22°C
+                      </p>
+                      <p className="text-xs text-amber-600 font-bold">
+                        ⚠️ Ajustar calentador
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      <strong>Importancia temperatura:</strong>
+                      <br />
+                      • 18-22°C: Absorción óptima de nutrientes
+                      <br />
+                      • &lt;18°C: Crecimiento lento, riesgo de pudrición
+                      <br />
+                      • &gt;22°C: Baja oxigenación, estrés radicular
+                      <br />
+                      • Usar calentador con termostato a 20°C
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Temperatura y Humedad Ambiente */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <ThermometerSun className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-amber-700">Temperatura Ambiente</h4>
+                    <p className="text-sm text-slate-600">Ideal: 18-25°C</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Temperatura medida (°C)
+                  </label>
+                  <div className="flex flex-col">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={localInputs.manualTemp || ''}
+                      onChange={(e) => handleInputChange('manualTemp', e.target.value)}
+                      onBlur={(e) => handleInputBlur('manualTemp', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown('manualTemp', e)}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="20"
+                    />
+                    <QuickValueButtons field="manualTemp" values={[18, 22, 25, 28]} />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Rango ideal: 18-25°C
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <CloudRain className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-blue-700">Humedad Relativa</h4>
+                    <p className="text-sm text-slate-600">Ideal: 40-70%</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Humedad medida (%)
+                  </label>
+                  <div className="flex flex-col">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={localInputs.manualHumidity || ''}
+                      onChange={(e) => handleInputChange('manualHumidity', e.target.value)}
+                      onBlur={(e) => handleInputBlur('manualHumidity', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown('manualHumidity', e)}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="65"
+                    />
+                    <QuickValueButtons field="manualHumidity" values={[40, 50, 60, 70]} />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Rango ideal: 40-70%
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-slate-200">
+            <Button
+              onClick={saveAllManualMeasurements}
+              className="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
+            >
+              <Clipboard className="mr-2" />
+              Guardar Medición Diaria con Correcciones
+            </Button>
+            <p className="text-xs text-slate-500 mt-3 text-center">
+              Última medición: {new Date(measurements.lastMeasurement).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Historial de mediciones */}
+      {history.length > 0 && (
+        <Card className="p-6 rounded-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-bold text-slate-800">Historial Reciente</h3>
+              <p className="text-slate-600">Últimas mediciones registradas con correcciones</p>
+            </div>
+            <Badge>{history.length} registros</Badge>
+          </div>
+
+          <div className="space-y-4">
+            {history.slice(0, 5).map((record, index) => (
+              <div key={record.id} className="p-4 bg-white rounded-xl border border-slate-200">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-bold text-slate-800">
+                      {new Date(record.date).toLocaleDateString()} {new Date(record.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p className="text-sm text-slate-600">{record.notes || "Medición diaria"}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteHistoryRecord(record.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  <div className="text-center p-2 bg-purple-50 rounded-lg">
+                    <p className="text-xs text-purple-700">pH</p>
+                    <p className="font-bold text-purple-600">{record.ph}</p>
+                  </div>
+                  <div className="text-center p-2 bg-blue-50 rounded-lg">
+                    <p className="text-xs text-blue-700">EC</p>
+                    <p className="font-bold text-blue-600">{record.ec} µS/cm</p>
+                  </div>
+                  <div className="text-center p-2 bg-cyan-50 rounded-lg">
+                    <p className="text-xs text-cyan-700">Temp Agua</p>
+                    <p className="font-bold text-cyan-600">{record.temp}°C</p>
+                  </div>
+                  <div className="text-center p-2 bg-emerald-50 rounded-lg">
+                    <p className="text-xs text-emerald-700">Volumen</p>
+                    <p className="font-bold text-emerald-600">{record.volume}L</p>
+                  </div>
+                </div>
+
+                {/* Mostrar correcciones si existen */}
+                {record.corrections && (
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <p className="text-xs font-medium text-slate-700 mb-2">Correcciones aplicadas:</p>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                      <div className="text-center p-2 bg-pink-50 rounded">
+                        <p className="text-xs text-pink-700">pH-</p>
+                        <p className="font-bold text-pink-600">{record.corrections.phMinus}ml</p>
+                      </div>
+                      <div className="text-center p-2 bg-blue-50 rounded">
+                        <p className="text-xs text-blue-700">pH+</p>
+                        <p className="font-bold text-blue-600">{record.corrections.phPlus}ml</p>
+                      </div>
+                      <div className="text-center p-2 bg-emerald-50 rounded">
+                        <p className="text-xs text-emerald-700">EC A</p>
+                        <p className="font-bold text-emerald-600">{record.corrections.ecA}ml</p>
+                      </div>
+                      <div className="text-center p-2 bg-green-50 rounded">
+                        <p className="text-xs text-green-700">EC B</p>
+                        <p className="font-bold text-green-600">{record.corrections.ecB}ml</p>
+                      </div>
+                      <div className="text-center p-2 bg-cyan-50 rounded">
+                        <p className="text-xs text-cyan-700">Agua</p>
+                        <p className="font-bold text-cyan-600">{record.corrections.ecWater}ml</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+};
 
   // =================== RENDER POR PASOS ===================
 
