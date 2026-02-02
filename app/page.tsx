@@ -10,7 +10,7 @@ import {
   ArrowLeft, ArrowRight, Bell, CloudRain, ThermometerSun,
   RefreshCw, Skull, Info, Calculator, Filter,
   Power, Timer, Gauge, Cloud, Sun, Moon, CloudSun,
-  WindIcon, Clipboard, ThermometerSnowflake, TreePine, Settings,
+  Wind as WindIcon, Clipboard, ThermometerSnowflake, TreePine, Settings,
   Home, BarChart3, X, RotateCcw, AlertCircle,
   Droplet, Leaf, TimerReset, ThermometerCold,
   ChevronDown, ChevronUp, Eye, EyeOff, CloudRain as Rain,
@@ -2731,6 +2731,126 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
   
     // =================== COMPONENTES DE PESTAÑAS ===================
   
+    const DashboardTab = () => {
+      return (
+        <div className="space-y-8 animate-fade-in">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">Panel Principal - Sistema Hidropónico</h2>
+            <p className="text-slate-600">Vista completa del estado del sistema y alertas activas</p>
+          </div>
+  
+          {/* Panel de métricas */}
+          <div className="mb-8">
+            <DashboardMetricsPanel config={config} measurements={measurements} />
+          </div>
+  
+          {/* Calculadora de EC */}
+          <StagedECCalculator
+            plants={plants}
+            onECCalculated={handleECCalculated}
+            selectedMethod={selectedECMethod}
+            onMethodChange={handleECMethodChange}
+          />
+  
+          {/* Panel de alertas */}
+          {alerts.length > 0 && (
+            <Card className="p-6 rounded-2xl mb-8 border-2 border-red-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl flex items-center justify-center">
+                  <AlertTriangle className="text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800">Alertas Activas del Sistema</h3>
+                  <p className="text-slate-600">Atención requerida para estas alertas</p>
+                </div>
+              </div>
+  
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {alerts.map((alert, index) => (
+                  <div key={index} className={`p-4 rounded-xl ${alert.color} text-white`}>
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        {alert.icon}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-white">{alert.title}</h4>
+                        <p className="text-sm text-white/90 mt-1">{alert.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-2xl font-bold">{alert.value}</span>
+                      {alert.details && (
+                        <span className="text-xs bg-white/20 px-2 py-1 rounded">
+                          {alert.details}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+  
+          {/* Protocolo 18L */}
+          <Protocolo18LPanel
+            volume={measurements.manualVolume || config.currentVol}
+            aquaVegaDosage={aquaVegaDosage}
+          />
+  
+          {/* Estadísticas de plantas */}
+          <Card className="p-6 rounded-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+                <TreePine className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">Estadísticas del Cultivo</h3>
+                <p className="text-slate-600">Resumen de plantas y distribución por nivel</p>
+              </div>
+            </div>
+  
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border-2 border-cyan-200">
+                <h4 className="font-bold text-cyan-700 mb-3">🌱 Plántulas</h4>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-cyan-600 mb-2">{plantStats.seedlingCount}</div>
+                  <p className="text-sm text-slate-600">Nivel 1</p>
+                  <p className="text-xs text-slate-500 mt-2">Aprox. días 1-12</p>
+                </div>
+              </div>
+  
+              <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+                <h4 className="font-bold text-emerald-700 mb-3">📈 Crecimiento</h4>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-emerald-600 mb-2">{plantStats.growthCount}</div>
+                  <p className="text-sm text-slate-600">Nivel 2</p>
+                  <p className="text-xs text-slate-500 mt-2">Aprox. días 13-24</p>
+                </div>
+              </div>
+  
+              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
+                <h4 className="font-bold text-green-700 mb-3">🌿 Maduras</h4>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-green-600 mb-2">{plantStats.matureCount}</div>
+                  <p className="text-sm text-slate-600">Nivel 3</p>
+                  <p className="text-xs text-slate-500 mt-2">Aprox. días 25-36</p>
+                </div>
+              </div>
+  
+              <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+                <h4 className="font-bold text-purple-700 mb-3">📊 Total</h4>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-purple-600 mb-2">{plantStats.total}</div>
+                  <p className="text-sm text-slate-600">Plantas activas</p>
+                  <p className="text-xs text-slate-500 mt-2">Máximo 15 (5 por nivel)</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      );
+    };
+
     const DashboardMetricsPanel = ({ config, measurements }) => {
       const getStatusText = (label, value) => {
         const numValue = parseDecimal(value);
