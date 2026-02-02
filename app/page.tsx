@@ -2406,9 +2406,7 @@ Agua destilada: ${updatedMeasurements.ecCorrectionWater}ml`);
     });
   }
 
-  return res.sort((a, b) => a.priority - b.priority);  // ← ESTA LÍNEA YA EXISTÍA
-}, [config, lastClean, lastRot, history, phAdjustment, aquaVegaDosage, measurements, weatherData]);  // ← AÑADE weatherData AQUÍ
-    return res.sort((a, b) => a.priority - b.priority);
+      return res.sort((a, b) => a.priority - b.priority);
   }, [config, lastClean, lastRot, history, phAdjustment, aquaVegaDosage, measurements, weatherData]);
 
   // =================== FUNCIÓN PARA REGISTRAR LIMPIEZA ===================
