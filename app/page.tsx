@@ -1720,33 +1720,6 @@ export default function HydroAppFinal() {
     }
   };
 
-  // Función para actualizar desde slider
-  const updateMeasurementFromSlider = (field, value) => {
-    const stringValue = formatDecimal(value);
-    
-    // Actualizar ambos estados inmediatamente
-    setMeasurements(prev => ({
-      ...prev,
-      [field]: stringValue
-    }));
-    
-    setTempMeasurements(prev => ({
-      ...prev,
-      [field]: stringValue
-    }));
-
-    // Actualizar config si corresponde
-    if (field === 'manualPH') {
-      setConfig(prev => ({ ...prev, ph: stringValue }));
-    } else if (field === 'manualEC') {
-      setConfig(prev => ({ ...prev, ec: stringValue }));
-    } else if (field === 'manualTemp') {
-      setConfig(prev => ({ ...prev, temp: stringValue }));
-    } else if (field === 'manualVolume') {
-      setConfig(prev => ({ ...prev, currentVol: stringValue }));
-    }
-  };
-
   // Función para guardar todas las mediciones manuales
   const saveAllManualMeasurements = () => {
     const now = new Date().toISOString();
@@ -2609,7 +2582,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
 
           <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
             <h3 className="font-bold text-purple-800 mb-4">📊 RESUMEN DEL PROGRAMA DE RIEGO</h3>
-            <div className="grid grid-cols=1 md:grid-cols-2 gap=4">
+            <div className="grid grid-cols=1 md:grid-cols=2 gap=4">
               <div className="p-3 bg-white rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-700">Ciclos diurnos (08:30-20:30):</span>
@@ -2701,20 +2674,10 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
     );
   };
 
-  // =================== PESTAÑA DE MEDICIONES CORREGIDA ===================
+  // =================== PESTAÑA DE MEDICIONES CORREGIDA - SIN SLIDERS ===================
 
   const MeasurementsTab = () => {
-    // Helper function to get numeric value for slider
-    const getNumericValue = (value) => {
-      return parseDecimal(value);
-    };
-
-    // Helper function to format value for display
-    const formatValue = (value) => {
-      return formatDecimal(value);
-    };
-
-    // Obtener recomendaciones de corrección
+    // Helper function para obtener recomendaciones de corrección
     const getCorrectionRecommendation = (param, value) => {
       const numericValue = parseDecimal(value);
       
@@ -2775,6 +2738,28 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
       return false;
     };
 
+    // Botones rápidos para valores comunes
+    const QuickValueButtons = ({ field, values }) => (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {values.map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => {
+              const stringValue = formatDecimal(value);
+              setTempMeasurements(prev => ({
+                ...prev,
+                [field]: stringValue
+              }));
+            }}
+            className="px-3 py-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+    );
+
     return (
       <div className="space-y-8 animate-fade-in">
         <div>
@@ -2814,16 +2799,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                           Valor medido
                         </label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="range"
-                            min="4.0"
-                            max="9.0"
-                            step="0.1"
-                            value={getNumericValue(tempMeasurements.manualPH)}
-                            onChange={(e) => updateMeasurementFromSlider('manualPH', e.target.value)}
-                            className="flex-1 h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
-                          />
+                        <div className="flex flex-col">
                           <input
                             type="text"
                             inputMode="decimal"
@@ -2831,14 +2807,18 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             onChange={(e) => handleMeasurementChange('manualPH', e.target.value)}
                             onBlur={() => saveMeasurement('manualPH')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
                               needsCorrection('manualPH', tempMeasurements.manualPH) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
                             }`}
                             placeholder="5,8"
                           />
+                          <QuickValueButtons field="manualPH" values={[5.5, 5.8, 6.0, 6.5]} />
                         </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Rango ideal: 5,5 - 6,5 | Objetivo: 5,8
+                        </p>
                       </div>
 
                       <div>
@@ -2862,6 +2842,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               }`}
                               placeholder="0,0"
                             />
+                            <QuickValueButtons field="phCorrectionMinus" values={[0.5, 1.0, 2.0, 3.0]} />
                           </div>
                           <div>
                             <p className="text-xs text-slate-600 mb-1">pH+ (base)</p>
@@ -2879,6 +2860,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               }`}
                               placeholder="0,0"
                             />
+                            <QuickValueButtons field="phCorrectionPlus" values={[0.5, 1.0, 2.0]} />
                           </div>
                         </div>
                       </div>
@@ -2910,6 +2892,20 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         </p>
                       </div>
                     )}
+
+                    <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+                      <p className="text-sm text-purple-700">
+                        <strong>Método de titulación:</strong>
+                        <br />
+                        • Añadir 0,5ml de ácido cítrico (≈10 gotas)
+                        <br />
+                        • Mezclar 2 minutos con aireador
+                        <br />
+                        • Esperar 30 segundos, medir
+                        <br />
+                        • Repetir hasta pH 5,8
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2933,16 +2929,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                           Valor medido (µS/cm)
                         </label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="range"
-                            min="0"
-                            max="3000"
-                            step="50"
-                            value={getNumericValue(tempMeasurements.manualEC)}
-                            onChange={(e) => updateMeasurementFromSlider('manualEC', e.target.value)}
-                            className="flex-1 h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
-                          />
+                        <div className="flex flex-col">
                           <input
                             type="text"
                             inputMode="decimal"
@@ -2950,14 +2937,18 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             onChange={(e) => handleMeasurementChange('manualEC', e.target.value)}
                             onBlur={() => saveMeasurement('manualEC')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                               needsCorrection('manualEC', tempMeasurements.manualEC) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
                             }`}
                             placeholder="1400"
                           />
+                          <QuickValueButtons field="manualEC" values={[1350, 1400, 1450, 1500]} />
                         </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Rango fijo: 1350-1500 µS/cm | Objetivo: 1400 µS/cm
+                        </p>
                       </div>
 
                       <div>
@@ -2981,6 +2972,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               }`}
                               placeholder="0,0"
                             />
+                            <QuickValueButtons field="ecCorrectionA" values={[3.2, 6.4, 9.6]} />
                           </div>
                           <div>
                             <p className="text-xs text-slate-600 mb-1">AQUA VEGA B</p>
@@ -2998,6 +2990,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               }`}
                               placeholder="0,0"
                             />
+                            <QuickValueButtons field="ecCorrectionB" values={[3.2, 6.4, 9.6]} />
                           </div>
                           <div>
                             <p className="text-xs text-slate-600 mb-1">Agua destilada</p>
@@ -3015,8 +3008,12 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                               }`}
                               placeholder="0,0"
                             />
+                            <QuickValueButtons field="ecCorrectionWater" values={[100, 200, 300]} />
                           </div>
                         </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Ajuste EC: +3,2ml A+B por cada 0,1 mS/cm de diferencia
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -3046,6 +3043,20 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         </p>
                       </div>
                     )}
+
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Protocolo 18L:</strong>
+                        <br />
+                        • 45ml AQUA VEGA A+B para 18L
+                        <br />
+                        • Objetivo: 1400 µS/cm (1,4 mS/cm)
+                        <br />
+                        • Rango fijo: 1350-1500 µS/cm
+                        <br />
+                        • Ajuste: +3,2ml A+B por cada 0,1 mS/cm
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3069,16 +3080,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                           Volumen actual (L)
                         </label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="range"
-                            min="0"
-                            max={config.totalVol}
-                            step="1"
-                            value={getNumericValue(tempMeasurements.manualVolume)}
-                            onChange={(e) => updateMeasurementFromSlider('manualVolume', e.target.value)}
-                            className="flex-1 h-2 bg-gradient-to-r from-emerald-300 to-green-400 rounded-lg appearance-none cursor-pointer"
-                          />
+                        <div className="flex flex-col">
                           <input
                             type="text"
                             inputMode="decimal"
@@ -3086,22 +3088,23 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             onChange={(e) => handleMeasurementChange('manualVolume', e.target.value)}
                             onBlur={() => saveMeasurement('manualVolume')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
                               needsCorrection('manualVolume', tempMeasurements.manualVolume) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
                             }`}
                             placeholder={config.currentVol}
                           />
+                          <QuickValueButtons field="manualVolume" values={[9, 13.5, 18]} />
                         </div>
-                        <div className="mt-2">
+                        <div className="mt-3">
                           <Progress
-                            value={(getNumericValue(tempMeasurements.manualVolume) / parseDecimal(config.totalVol)) * 100}
-                            className="h-2"
+                            value={(parseDecimal(tempMeasurements.manualVolume) / parseDecimal(config.totalVol)) * 100}
+                            className="h-3"
                           />
                           <div className="flex justify-between text-xs text-slate-500 mt-1">
                             <span>0L</span>
-                            <span>{Math.round((getNumericValue(tempMeasurements.manualVolume) / parseDecimal(config.totalVol)) * 100)}%</span>
+                            <span>{Math.round((parseDecimal(tempMeasurements.manualVolume) / parseDecimal(config.totalVol)) * 100)}%</span>
                             <span>{config.totalVol}L</span>
                           </div>
                         </div>
@@ -3118,16 +3121,17 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                           onChange={(e) => handleMeasurementChange('ecCorrectionWater', e.target.value)}
                           onBlur={() => saveMeasurement('ecCorrectionWater')}
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                          className={`w-full px-3 py-2 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:border-cyan-500 ${
                             needsCorrection('manualVolume', tempMeasurements.manualVolume)
                               ? 'border-red-500 bg-red-50 text-red-600 focus:ring-red-500'
                               : 'border-slate-300 text-cyan-600 focus:ring-cyan-500'
                           }`}
                           placeholder="0,0"
                         />
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-slate-500 mt-2">
                           ml de agua destilada añadidos para rellenar
                         </p>
+                        <QuickValueButtons field="ecCorrectionWater" values={[500, 1000, 2000]} />
                       </div>
                     </div>
                   </div>
@@ -3157,6 +3161,20 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         </p>
                       </div>
                     )}
+
+                    <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
+                      <p className="text-sm text-emerald-700">
+                        <strong>Nota importante:</strong>
+                        <br />
+                        • Rellenar solo con agua destilada
+                        <br />
+                        • La EC bajará ligeramente al rellenar (normal)
+                        <br />
+                        • Mantener mínimo 45% del volumen total
+                        <br />
+                        • Protocolo: 18L total, mínimo 8L
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3180,16 +3198,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                           Temperatura medida (°C)
                         </label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="range"
-                            min="10"
-                            max="30"
-                            step="0.5"
-                            value={getNumericValue(tempMeasurements.manualWaterTemp)}
-                            onChange={(e) => updateMeasurementFromSlider('manualWaterTemp', e.target.value)}
-                            className="flex-1 h-2 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 rounded-lg appearance-none cursor-pointer"
-                          />
+                        <div className="flex flex-col">
                           <input
                             type="text"
                             inputMode="decimal"
@@ -3197,14 +3206,18 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                             onChange={(e) => handleMeasurementChange('manualWaterTemp', e.target.value)}
                             onBlur={() => saveMeasurement('manualWaterTemp')}
                             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                            className={`w-24 px-3 py-2 border rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg text-center font-bold text-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 ${
                               needsCorrection('manualWaterTemp', tempMeasurements.manualWaterTemp) 
                                 ? 'border-red-500 bg-red-50' 
                                 : 'border-slate-300'
                             }`}
                             placeholder="20"
                           />
+                          <QuickValueButtons field="manualWaterTemp" values={[18, 20, 22]} />
                         </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Rango ideal: 18-22°C | Objetivo: 20°C
+                        </p>
                       </div>
 
                       <div>
@@ -3243,6 +3256,20 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         </p>
                       </div>
                     )}
+
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Importancia temperatura:</strong>
+                        <br />
+                        • 18-22°C: Absorción óptima de nutrientes
+                        <br />
+                        • &lt;18°C: Crecimiento lento, riesgo de pudrición
+                        <br />
+                        • &gt;22°C: Baja oxigenación, estrés radicular
+                        <br />
+                        • Usar calentador con termostato a 20°C
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3264,16 +3291,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Temperatura medida (°C)
                     </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="10"
-                        max="35"
-                        step="0.5"
-                        value={getNumericValue(tempMeasurements.manualTemp)}
-                        onChange={(e) => updateMeasurementFromSlider('manualTemp', e.target.value)}
-                        className="flex-1 h-2 bg-gradient-to-r from-blue-400 via-amber-400 to-red-400 rounded-lg appearance-none cursor-pointer"
-                      />
+                    <div className="flex flex-col">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -3281,10 +3299,14 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         onChange={(e) => handleMeasurementChange('manualTemp', e.target.value)}
                         onBlur={() => saveMeasurement('manualTemp')}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         placeholder="20"
                       />
+                      <QuickValueButtons field="manualTemp" values={[18, 22, 25, 28]} />
                     </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Rango ideal: 18-25°C
+                    </p>
                   </div>
                 </div>
 
@@ -3303,16 +3325,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Humedad medida (%)
                     </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="20"
-                        max="90"
-                        step="1"
-                        value={getNumericValue(tempMeasurements.manualHumidity)}
-                        onChange={(e) => updateMeasurementFromSlider('manualHumidity', e.target.value)}
-                        className="flex-1 h-2 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-lg appearance-none cursor-pointer"
-                      />
+                    <div className="flex flex-col">
                       <input
                         type="text"
                         inputMode="decimal"
@@ -3320,10 +3333,14 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                         onChange={(e) => handleMeasurementChange('manualHumidity', e.target.value)}
                         onBlur={() => saveMeasurement('manualHumidity')}
                         onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="65"
                       />
+                      <QuickValueButtons field="manualHumidity" values={[40, 50, 60, 70]} />
                     </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Rango ideal: 40-70%
+                    </p>
                   </div>
                 </div>
               </div>
@@ -3691,19 +3708,20 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Agua Actual en Depósito
                     </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max={config.totalVol}
-                      step="1"
-                      value={parseDecimal(config.currentVol)}
-                      onChange={(e) => setConfig({ ...config, currentVol: formatDecimal(e.target.value) })}
-                      className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <div className="flex justify-between text-sm text-slate-600 mt-2">
-                      <span>0L</span>
-                      <span className="font-bold text-blue-600">{config.currentVol}L</span>
-                      <span>{config.totalVol}L</span>
+                    <div className="flex flex-col">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={config.currentVol}
+                        onChange={(e) => setConfig({ ...config, currentVol: e.target.value })}
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-blue-600"
+                        placeholder="18"
+                      />
+                      <div className="flex justify-between text-sm text-slate-600 mt-2">
+                        <span>0L</span>
+                        <span className="font-bold text-blue-600">{config.currentVol}L</span>
+                        <span>{config.totalVol}L</span>
+                      </div>
                     </div>
                     <div className="mt-2">
                       <Progress
@@ -3809,20 +3827,20 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                       </span>
                     </div>
 
-                    <input
-                      type="range"
-                      min="4.0"
-                      max="9.0"
-                      step="0.1"
-                      value={parseDecimal(config.ph)}
-                      onChange={(e) => setConfig({ ...config, ph: formatDecimal(e.target.value) })}
-                      className="w-full h-2 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-lg appearance-none cursor-pointer"
-                    />
-
-                    <div className="flex justify-between text-sm text-slate-600 mt-2">
-                      <span>4.0</span>
-                      <span className="font-bold text-green-600">5.5-6.5</span>
-                      <span>9.0</span>
+                    <div className="flex flex-col">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={config.ph}
+                        onChange={(e) => setConfig({ ...config, ph: e.target.value })}
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="5,8"
+                      />
+                      <div className="flex justify-between text-sm text-slate-600 mt-2">
+                        <span>4.0</span>
+                        <span className="font-bold text-green-600">5.5-6.5</span>
+                        <span>9.0</span>
+                      </div>
                     </div>
 
                     <div className="mt-4 p-3 bg-purple-50 rounded-lg">
@@ -3866,20 +3884,20 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
                       </span>
                     </div>
 
-                    <input
-                      type="range"
-                      min="0"
-                      max="3000"
-                      step="50"
-                      value={parseDecimal(config.ec)}
-                      onChange={(e) => setConfig({ ...config, ec: formatDecimal(e.target.value) })}
-                      className="w-full h-2 bg-gradient-to-r from-blue-300 via-green-300 to-red-300 rounded-lg appearance-none cursor-pointer"
-                    />
-
-                    <div className="flex justify-between text-sm text-slate-600 mt-2">
-                      <span>0</span>
-                      <span className="font-bold text-green-600">1350-1500</span>
-                      <span>3000</span>
+                    <div className="flex flex-col">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={config.ec}
+                        onChange={(e) => setConfig({ ...config, ec: e.target.value })}
+                        className="w-full px-4 py-3 border border-slate-300 rounded-lg text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="1400"
+                      />
+                      <div className="flex justify-between text-sm text-slate-600 mt-2">
+                        <span>0</span>
+                        <span className="font-bold text-green-600">1350-1500</span>
+                        <span>3000</span>
+                      </div>
                     </div>
 
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg">
@@ -5763,7 +5781,7 @@ Próxima recarga: en 10 días o cuando EC baje a ~1.0 mS/cm`);
 
       {/* Modal de Rotación */}
       <RotationModal
-        isOpen={showRotationModal}
+         isOpen={showRotationModal}
         onClose={() => setShowRotationModal(false)}
         onConfirm={handleRotationConfirm}
         plants={plants}
